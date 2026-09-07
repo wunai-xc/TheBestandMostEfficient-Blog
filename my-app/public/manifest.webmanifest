@@ -1,0 +1,12 @@
+{
+  "name": "wunai's blog",
+  "short_name": "wunai",
+  "description": "学习笔记与生活思考",
+  "start_url": "/zh/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}

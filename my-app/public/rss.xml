@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>wunai's blog</title>
+    <link>https://newblog.wunai.top</link>
+    <description>学习笔记与生活思考</description>
+    <language>zh-CN</language>
+    <lastBuildDate>Mon, 07 Sep 2026 09:33:16 GMT</lastBuildDate>
+    <item>
+      <title><![CDATA[博客：定义、意义与为什么它不该交给 AI]]></title>
+      <link>https://newblog.wunai.top/zh/posts/%E5%8D%9A%E5%AE%A2/</link>
+      <guid>https://newblog.wunai.top/zh/posts/%E5%8D%9A%E5%AE%A2/</guid>
+      <pubDate>Thu, 06 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[博客的本质是什么？它对作者和读者各有什么意义？在 AI 能一键生成文章的今天，我们为什么反而更应该坚持自己写？本文从词源、媒介特性与作者性三个层面展开讨论。]]></description>
+    </item>
+    <item>
+      <title><![CDATA[你好，世界]]></title>
+      <link>https://newblog.wunai.top/zh/posts/%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C/</link>
+      <guid>https://newblog.wunai.top/zh/posts/%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C/</guid>
+      <pubDate>Sun, 02 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[这是博客的第一篇文章，介绍我为什么选择 Hugo 以及本站未来会写哪些内容。]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Hello, World]]></title>
+      <link>https://newblog.wunai.top/en/posts/hello-world/</link>
+      <guid>https://newblog.wunai.top/en/posts/hello-world/</guid>
+      <pubDate>Sun, 02 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[This is the first post of my blog, introducing why I chose Hugo and what I plan to write about.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Turing Machine: The Cornerstone of Computation, the Busy Beaver, and the Undecidable Halting Problem]]></title>
+      <link>https://newblog.wunai.top/en/posts/turing-machine/</link>
+      <guid>https://newblog.wunai.top/en/posts/turing-machine/</guid>
+      <pubDate>Sun, 02 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[This article explores the principles and algorithms of Turing machines, analyzes the mind-boggling 6-state Busy Beaver problem, and presents a rigorous proof of the undecidability of the Halting Problem.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Markdown 基本语法]]></title>
+      <link>https://newblog.wunai.top/zh/posts/markdown%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95/</link>
+      <guid>https://newblog.wunai.top/zh/posts/markdown%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95/</guid>
+      <pubDate>Mon, 03 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[Markdown 是一种轻量级标记语言，排版语法简洁，让人们更多地关注内容本身而非排版。本文压缩整理自 markdown.com.cn 官方教程，涵盖标题、段落、强调、引用、列表、代码、链接、图片、分隔线与转义字符等全部基本语法。]]></description>
+    </item>
+    <item>
+      <title><![CDATA[国际基本单位换算]]></title>
+      <link>https://newblog.wunai.top/zh/posts/%E5%9B%BD%E9%99%85%E5%9F%BA%E6%9C%AC%E5%8D%95%E4%BD%8D%E6%8D%A2%E7%AE%97/</link>
+      <guid>https://newblog.wunai.top/zh/posts/%E5%9B%BD%E9%99%85%E5%9F%BA%E6%9C%AC%E5%8D%95%E4%BD%8D%E6%8D%A2%E7%AE%97/</guid>
+      <pubDate>Mon, 03 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[本文系统整理国际单位制（SI）七个基本单位中长度、质量、时间和电流的常用换算关系，涵盖公制、英制、市制及衍生单位。]]></description>
+    </item>
+    <item>
+      <title><![CDATA[抗生素发展史：从磺胺到喹诺酮的百年征程]]></title>
+      <link>https://newblog.wunai.top/zh/posts/%E6%8A%97%E7%94%9F%E7%B4%A0%E5%8F%91%E5%B1%95%E5%8F%B2/</link>
+      <guid>https://newblog.wunai.top/zh/posts/%E6%8A%97%E7%94%9F%E7%B4%A0%E5%8F%91%E5%B1%95%E5%8F%B2/</guid>
+      <pubDate>Mon, 03 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[回顾抗生素发展的十个里程碑：磺胺类、青霉素、链霉素、四环素、氯霉素、红霉素、万古霉素、头孢菌素、半合成青霉素、硫霉素和喹诺酮类药物的发现与应用。]]></description>
+    </item>
+    <item>
+      <title><![CDATA[Math, Chemistry & Code Blocks Demo]]></title>
+      <link>https://newblog.wunai.top/en/posts/math-chem-code-demo/</link>
+      <guid>https://newblog.wunai.top/en/posts/math-chem-code-demo/</guid>
+      <pubDate>Mon, 03 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[Demonstrates KaTeX math, mhchem chemistry notation, and syntax-highlighted code blocks with copy buttons.]]></description>
+    </item>
+    <item>
+      <title><![CDATA[希腊字符]]></title>
+      <link>https://newblog.wunai.top/zh/posts/%E5%B8%8C%E8%85%8A%E5%AD%97%E7%AC%A6/</link>
+      <guid>https://newblog.wunai.top/zh/posts/%E5%B8%8C%E8%85%8A%E5%AD%97%E7%AC%A6/</guid>
+      <pubDate>Mon, 03 Aug 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[希腊字符在科学、数学和工程领域中无处不在。本文整理全部 24 个希腊字母的大小写形式、国际音标读音、常用领域，以及 Markdown 中的快捷输入方式，方便随时查阅。]]></description>
+    </item>
+  </channel>
+</rss>
