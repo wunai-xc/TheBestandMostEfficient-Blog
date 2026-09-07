@@ -1,7 +1,6 @@
 // 生成搜索索引到 public/ 目录
 import fs from "fs";
 import path from "path";
-import matter from "gray-matter";
 
 const CONTENT_ROOT = path.join(process.cwd(), "content");
 const PUBLIC_ROOT = path.join(process.cwd(), "public");
@@ -13,8 +12,27 @@ function readMarkdown(filePath) {
     const body = raw.slice(tomlMatch[0].length);
     return { data: parseToml(tomlMatch[1]), content: body };
   }
-  const m = matter(raw);
-  return { data: m.data, content: m.content };
+  // 简易 YAML frontmatter 解析
+  const yamlMatch = raw.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
+  if (yamlMatch) {
+    const body = raw.slice(yamlMatch[0].length);
+    return { data: parseYaml(yamlMatch[1]), content: body };
+  }
+  return { data: {}, content: raw };
+}
+
+function parseYaml(block) {
+  const result = {};
+  for (const line of block.split("\n")) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const i = t.indexOf(":");
+    if (i === -1) continue;
+    const key = t.slice(0, i).trim();
+    const val = t.slice(i + 1).trim();
+    result[key] = parseVal(val);
+  }
+  return result;
 }
 
 function parseToml(block) {

@@ -1,7 +1,6 @@
 // 生成 RSS feed 到 public/rss.xml
 import fs from "fs";
 import path from "path";
-import matter from "gray-matter";
 
 const CONTENT_ROOT = path.join(process.cwd(), "content");
 const PUBLIC_ROOT = path.join(process.cwd(), "public");
@@ -11,8 +10,18 @@ function readMd(fp) {
   const raw = fs.readFileSync(fp, "utf8");
   const toml = raw.match(/^\+\+\+\s*\n([\s\S]*?)\n\+\+\+\s*\n?/);
   if (toml) return { data: parseToml(toml[1]), content: raw.slice(toml[0].length) };
-  const m = matter(raw);
-  return { data: m.data, content: m.content };
+  const yaml = raw.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
+  if (yaml) return { data: parseYaml(yaml[1]), content: raw.slice(yaml[0].length) };
+  return { data: {}, content: raw };
+}
+function parseYaml(b) {
+  const r = {};
+  for (const l of b.split("\n")) {
+    const t = l.trim(); if (!t || t.startsWith("#")) continue;
+    const i = t.indexOf(":"); if (i === -1) continue;
+    r[t.slice(0, i).trim()] = parseVal(t.slice(i + 1).trim());
+  }
+  return r;
 }
 function parseToml(b) {
   const r = {};
