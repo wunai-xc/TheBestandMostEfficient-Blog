@@ -15,26 +15,26 @@
   text-rendering: optimizeLegibility;
 }
 
-/* ===== 页面打开：所有文字从右向左滑入 + 水波波动收尾 ===== */
+/* ===== 页面打开：所有文字从右向左匀速直线滑入 + 水波波动收尾 ===== */
 @keyframes slide-in-from-right {
   0% {
-    transform: translateX(20px) scale(0.95);
+    transform: translateX(30px) scale(0.95);
     opacity: 0;
     filter: blur(3px);
   }
-  55% {
+  60% {
     transform: translateX(0) scale(1);
     opacity: 1;
     filter: blur(0);
   }
-  66% {
-    transform: translateX(-3px) scale(1.005);
+  70% {
+    transform: translateX(-4px) scale(1.005);
   }
-  78% {
-    transform: translateX(1.5px) scale(1);
+  80% {
+    transform: translateX(2px) scale(1);
   }
-  88% {
-    transform: translateX(-0.5px) scale(1);
+  90% {
+    transform: translateX(-1px) scale(1);
   }
   100% {
     transform: translateX(0) scale(1);
@@ -43,7 +43,7 @@
   }
 }
 
-/* 标题、段落、列表、引用等文字元素入场 */
+/* 标题、段落、列表、引用等文字元素入场（匀速直线运动） */
 .hero h1, .hero p,
 .post-card .title, .post-card .summary, .post-card .meta,
 .article h1, .article h2, .article h3, .article h4,
@@ -57,31 +57,31 @@
 .search-box,
 .toc a,
 .footer {
-  animation: slide-in-from-right 0.25s var(--ease-silk) both;
+  animation: slide-in-from-right 0.5s linear both;
 }
 
 /* 错位入场：不同区块延迟不同，营造层次感 */
 .article h1 { animation-delay: 0s; }
-.article h2 { animation-delay: 0.02s; }
-.article h3 { animation-delay: 0.03s; }
-.article p { animation-delay: 0.01s; }
-.article li { animation-delay: 0.025s; }
-.article blockquote { animation-delay: 0.035s; }
+.article h2 { animation-delay: 0.04s; }
+.article h3 { animation-delay: 0.06s; }
+.article p { animation-delay: 0.02s; }
+.article li { animation-delay: 0.05s; }
+.article blockquote { animation-delay: 0.07s; }
 
-.post-card:nth-child(1) { animation-delay: 0.01s; }
-.post-card:nth-child(2) { animation-delay: 0.035s; }
-.post-card:nth-child(3) { animation-delay: 0.06s; }
-.post-card:nth-child(4) { animation-delay: 0.085s; }
-.post-card:nth-child(5) { animation-delay: 0.11s; }
-.post-card:nth-child(6) { animation-delay: 0.135s; }
-.post-card:nth-child(n+7) { animation-delay: 0.16s; }
+.post-card:nth-child(1) { animation-delay: 0.02s; }
+.post-card:nth-child(2) { animation-delay: 0.07s; }
+.post-card:nth-child(3) { animation-delay: 0.12s; }
+.post-card:nth-child(4) { animation-delay: 0.17s; }
+.post-card:nth-child(5) { animation-delay: 0.22s; }
+.post-card:nth-child(6) { animation-delay: 0.27s; }
+.post-card:nth-child(n+7) { animation-delay: 0.32s; }
 
-.archive-list li:nth-child(1) { animation-delay: 0.01s; }
-.archive-list li:nth-child(2) { animation-delay: 0.025s; }
-.archive-list li:nth-child(3) { animation-delay: 0.04s; }
-.archive-list li:nth-child(4) { animation-delay: 0.055s; }
-.archive-list li:nth-child(5) { animation-delay: 0.07s; }
-.archive-list li:nth-child(n+6) { animation-delay: 0.085s; }
+.archive-list li:nth-child(1) { animation-delay: 0.02s; }
+.archive-list li:nth-child(2) { animation-delay: 0.05s; }
+.archive-list li:nth-child(3) { animation-delay: 0.08s; }
+.archive-list li:nth-child(4) { animation-delay: 0.11s; }
+.archive-list li:nth-child(5) { animation-delay: 0.14s; }
+.archive-list li:nth-child(n+6) { animation-delay: 0.17s; }
 
 /* 尊重用户偏好：减少动画 */
 @media (prefers-reduced-motion: reduce) {
