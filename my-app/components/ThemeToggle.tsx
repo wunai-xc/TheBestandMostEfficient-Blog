@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "@iconify/react";
+
+const ICONS = {
+  light: "mdi:weather-sunny",
+  dark: "mdi:weather-night",
+  auto: "mdi:theme-light-dark",
+} as const;
 
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark" | "auto">("auto");
@@ -26,7 +33,7 @@ export default function ThemeToggle() {
       title={`Theme: ${theme}`}
       aria-label="Toggle theme"
     >
-      {theme === "dark" ? "🌙" : theme === "light" ? "☀️" : "🌓"}
+      <Icon icon={ICONS[theme]} width="1.2em" height="1.2em" />
     </button>
   );
 }
