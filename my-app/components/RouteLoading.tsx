@@ -61,18 +61,24 @@ export default function RouteLoading() {
   const panelH = Math.max(1, vh - 10);
   // 扫描距离：面板对角线一半 + 屏幕对角线一半，确保从屏外到屏外
   const diag = Math.sqrt(panelW * panelW + panelH * panelH) / 2 + Math.sqrt(vw * vw + vh * vh) / 2;
+  // 始终沿面板最长边的垂直方向移动
+  // 横屏（宽>=高）：最长边水平，垂直方向=Y轴，translate(0, ±diag)
+  // 竖屏（高>宽）：最长边垂直，垂直方向=X轴，translate(±diag, 0)
+  const isLandscape = panelW >= panelH;
+  const enter = isLandscape ? `translate(0, -${diag}px)` : `translate(-${diag}px, 0)`;
+  const exit = isLandscape ? `translate(0, ${diag}px)` : `translate(${diag}px, 0)`;
 
   return (
     <>
       <style>{`
         @keyframes panel-sweep-${key} {
           0% {
-            transform: rotate(${angle}deg) translate(0, -${diag}px) scale(0.85);
+            transform: rotate(${angle}deg) ${enter} scale(0.85);
             opacity: 0;
           }
           15% {
             opacity: 0.95;
-            transform: rotate(${angle}deg) translate(0, -${diag}px) scale(0.9);
+            transform: rotate(${angle}deg) ${enter} scale(0.9);
           }
           50% {
             transform: rotate(${angle}deg) translate(0, 0) scale(1);
@@ -80,10 +86,10 @@ export default function RouteLoading() {
           }
           85% {
             opacity: 0.95;
-            transform: rotate(${angle}deg) translate(0, ${diag}px) scale(0.9);
+            transform: rotate(${angle}deg) ${exit} scale(0.9);
           }
           100% {
-            transform: rotate(${angle}deg) translate(0, ${diag}px) scale(0.85);
+            transform: rotate(${angle}deg) ${exit} scale(0.85);
             opacity: 0;
           }
         }
