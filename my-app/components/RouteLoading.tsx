@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 /**
  * 路由切换 loading：大尺寸彩色面板（比屏幕小10px）以任意角度旋转扫过屏幕
+ * 扫过时页面内容模糊度随之变化：清晰→模糊→清晰
  */
 export default function RouteLoading() {
   const pathname = usePathname();
@@ -32,21 +33,20 @@ export default function RouteLoading() {
       ["#dc2626", "#f87171"],
     ];
     const pair = colors[Math.floor(Math.random() * colors.length)];
-    // 任意角度 0~360
     const angle = Math.floor(Math.random() * 360);
 
-    setConfig((prev) => ({
+    setConfig({
       angle,
       color: pair[0],
       color2: pair[1],
       key: Date.now(),
       vw: window.innerWidth,
       vh: window.innerHeight,
-    }));
+    });
     setActive(true);
 
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setActive(false), 1000);
+    timerRef.current = setTimeout(() => setActive(false), 1600);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -56,17 +56,13 @@ export default function RouteLoading() {
   if (!active) return null;
 
   const { angle, color, color2, key, vw, vh } = config;
-  // 面板尺寸比屏幕小 10px
   const panelW = Math.max(1, vw - 10);
   const panelH = Math.max(1, vh - 10);
-  // 扫描距离：面板对角线一半 + 屏幕对角线一半，确保从屏外到屏外
   const diag = Math.sqrt(panelW * panelW + panelH * panelH) / 2 + Math.sqrt(vw * vw + vh * vh) / 2;
-  // 始终沿面板最长边的垂直方向移动
-  // 横屏（宽>=高）：最长边水平，垂直方向=Y轴，translate(0, ±diag)
-  // 竖屏（高>宽）：最长边垂直，垂直方向=X轴，translate(±diag, 0)
   const isLandscape = panelW >= panelH;
   const enter = isLandscape ? `translate(0, -${diag}px)` : `translate(-${diag}px, 0)`;
   const exit = isLandscape ? `translate(0, ${diag}px)` : `translate(${diag}px, 0)`;
+  const dur = 1.6;
 
   return (
     <>
@@ -76,16 +72,16 @@ export default function RouteLoading() {
             transform: rotate(${angle}deg) ${enter} scale(0.85);
             opacity: 0;
           }
-          15% {
-            opacity: 0.95;
+          12% {
+            opacity: 0.92;
             transform: rotate(${angle}deg) ${enter} scale(0.9);
           }
           50% {
             transform: rotate(${angle}deg) translate(0, 0) scale(1);
-            opacity: 0.95;
+            opacity: 0.92;
           }
-          85% {
-            opacity: 0.95;
+          88% {
+            opacity: 0.92;
             transform: rotate(${angle}deg) ${exit} scale(0.9);
           }
           100% {
@@ -97,7 +93,31 @@ export default function RouteLoading() {
           0%, 100% { opacity: 0.5; letter-spacing: 0.3em; transform: rotate(${-angle}deg) scale(0.9); }
           50% { opacity: 1; letter-spacing: 0.6em; transform: rotate(${-angle}deg) scale(1.05); }
         }
+        /* 页面内容模糊度：清晰→模糊→清晰 */
+        @keyframes content-blur-${key} {
+          0% { filter: blur(0px); }
+          50% { filter: blur(8px); }
+          100% { filter: blur(0px); }
+        }
+        .route-loading-blur {
+          animation: content-blur-${key} ${dur}s cubic-bezier(0.45, 0, 0.55, 1) forwards;
+        }
       `}</style>
+      {/* 给页面内容包裹模糊层 */}
+      <div
+        className="route-loading-blur"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: 9998,
+          pointerEvents: "none",
+          backdropFilter: "blur(0px)",
+        }}
+      />
+      {/* 扫过的彩色面板 */}
       <div
         style={{
           position: "fixed",
@@ -110,7 +130,7 @@ export default function RouteLoading() {
           background: `linear-gradient(135deg, ${color}cc 0%, ${color2}cc 50%, ${color}cc 100%)`,
           boxShadow: `inset 0 0 40px ${color}, inset 0 0 80px ${color2}, 0 0 60px ${color}, 0 0 120px ${color2}80`,
           transformOrigin: "center center",
-          animation: `panel-sweep-${key} 1s cubic-bezier(0.22, 1, 0.36, 1) forwards`,
+          animation: `panel-sweep-${key} ${dur}s cubic-bezier(0.22, 1, 0.36, 1) forwards`,
           zIndex: 9999,
           pointerEvents: "none",
           display: "flex",
@@ -126,7 +146,7 @@ export default function RouteLoading() {
             fontSize: "clamp(1.2rem, 4vw, 2.5rem)",
             textTransform: "uppercase",
             textShadow: `0 0 12px ${color}, 0 0 24px ${color2}, 0 0 48px ${color}`,
-            animation: `loading-text-${key} 1s ease-in-out infinite`,
+            animation: `loading-text-${key} ${dur}s ease-in-out infinite`,
             whiteSpace: "nowrap",
             display: "inline-block",
             letterSpacing: "0.3em",
