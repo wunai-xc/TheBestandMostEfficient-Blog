@@ -46,7 +46,7 @@ export default function RouteLoading() {
     setActive(true);
 
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setActive(false), 1600);
+    timerRef.current = setTimeout(() => setActive(false), 250);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -62,7 +62,7 @@ export default function RouteLoading() {
   const isLandscape = panelW >= panelH;
   const enter = isLandscape ? `translate(0, -${diag}px)` : `translate(-${diag}px, 0)`;
   const exit = isLandscape ? `translate(0, ${diag}px)` : `translate(${diag}px, 0)`;
-  const dur = 1.6;
+  const dur = 0.25;
 
   return (
     <>
@@ -72,7 +72,7 @@ export default function RouteLoading() {
             transform: rotate(${angle}deg) ${enter} scale(0.85);
             opacity: 0;
           }
-          12% {
+          10% {
             opacity: 0.92;
             transform: rotate(${angle}deg) ${enter} scale(0.9);
           }
@@ -80,7 +80,7 @@ export default function RouteLoading() {
             transform: rotate(${angle}deg) translate(0, 0) scale(1);
             opacity: 0.92;
           }
-          88% {
+          90% {
             opacity: 0.92;
             transform: rotate(${angle}deg) ${exit} scale(0.9);
           }
