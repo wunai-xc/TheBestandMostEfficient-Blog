@@ -100,7 +100,7 @@
   --primary: #0a0a0a;
   --border: #e5e5e5;
   --muted: #737373;
-  --code-bg: #f5f5f5;
+  --code-bg: #272822;
   --accent: #2563eb;
   --ai-color: #2563eb;
   --card: #fafafa;
@@ -122,7 +122,7 @@ html.dark {
   --primary: #ededed;
   --border: #2a2a2e;
   --muted: #a3a3a3;
-  --code-bg: #f6f8fa;
+  --code-bg: #272822;
   --accent: #60a5fa;
   --ai-color: #60a5fa;
   --card: #161618;
@@ -542,6 +542,9 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   white-space: nowrap;
 }
 .article th, .article td { padding: 8px 12px; border: 1px solid var(--border); text-align: left; }
+/* 尊重 GFM 表格的 align 属性（:---: 居中 / ---: 右对齐） */
+.article th[align="center"], .article td[align="center"] { text-align: center; }
+.article th[align="right"], .article td[align="right"] { text-align: right; }
 .article th { background: var(--card); font-weight: 600; }
 .article tr:nth-child(even) td { background: var(--card); }
 .article img { max-width: 100%; height: auto; border-radius: 0; }
@@ -553,13 +556,13 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   background: var(--code-bg); padding: 14px 16px; border-radius: 0;
   overflow-x: auto; margin: 1em 0; position: relative;
   font-size: 0.88rem; line-height: 1.5;
-  color: #24292f;
+  color: #f8f8f2;
 }
 .article code {
   font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
   background: var(--code-bg); padding: 2px 6px; border-radius: 0;
   font-size: 0.88em;
-  color: #24292f;
+  color: #f8f8f2;
 }
 .article pre code { background: none; padding: 0; }
 .copy-btn {
@@ -574,6 +577,11 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .article .footnotes { font-size: 0.88rem; color: var(--muted); margin-top: 2em; }
 .article .footnotes hr { margin-bottom: 1em; }
 .article a.footnote-backref { font-size: 0.75rem; }
+.article .footnote-ref { font-size: 0.75rem; vertical-align: super; }
+
+/* GFM 任务列表 */
+.article .task-list-item { list-style: none; margin-left: -1.2em; }
+.article .task-list-item input { margin-right: 6px; vertical-align: middle; }
 
 /* 参考文献 */
 .article .references { margin-top: 2em; padding-top: 1em; border-top: 1px solid var(--border); }
@@ -1038,9 +1046,18 @@ html.dark .article .katex {
 /* KaTeX 错误：夜间模式可见 */
 html.dark .katex-error { color: #fca5a5; }
 
-/* ===== Mermaid / ECharts 容器 ===== */
-.mermaid, .echarts { background: var(--bg); text-align: center; padding: 12px; margin: 1em 0; }
-.chem canvas { display: block; margin: 8px auto; }
+/* ===== Mermaid / ECharts / Graphviz / abc.js 容器 ===== */
+.mermaid, .echarts, .graphviz, .abc {
+  background: var(--bg);
+  text-align: center;
+  padding: 12px;
+  margin: 1em 0;
+  overflow-x: auto;
+}
+.echarts { min-height: 360px; }
+.graphviz svg { max-width: 100%; height: auto; }
+.abc svg { max-width: 100%; height: auto; }
+.chem canvas { display: block; margin: 8px auto; max-width: 100%; height: auto; }
 
 /* ===== 缓存红点（SW） ===== */
 .cache-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; margin-left: 4px; }

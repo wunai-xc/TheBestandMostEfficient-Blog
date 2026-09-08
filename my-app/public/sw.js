@@ -1,5 +1,5 @@
 /* 全站 Service Worker — 预缓存首页，页面 SWR，静态资源 cache-first，CDN network-first */
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `static-${VERSION}`;
 const PAGE_CACHE = `pages-${VERSION}`;
 const CDN_CACHE = `cdn-${VERSION}`;

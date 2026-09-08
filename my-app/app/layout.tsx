@@ -52,10 +52,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css"
           crossOrigin="anonymous"
         />
-        {/* highlight.js 主题：始终用 github 亮色（夜间模式代码块也用亮色背景，确保可读） */}
+        {/* highlight.js 主题：monokai（深色背景 + 浅色文字，日/夜间模式均清晰可读） */}
         <link
           rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
+          href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/monokai.min.css"
         />
         <link rel="alternate" type="application/rss+xml" title="wunai's blog RSS" href="/rss.xml" />
       </head>

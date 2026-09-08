@@ -5,7 +5,14 @@
     <link>https://newblog.wunai.top</link>
     <description>学习笔记与生活思考</description>
     <language>zh-CN</language>
-    <lastBuildDate>Tue, 08 Sep 2026 04:43:42 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 08 Sep 2026 12:07:54 GMT</lastBuildDate>
+    <item>
+      <title><![CDATA[Markdown 功能综合演示]]></title>
+      <link>https://newblog.wunai.top/zh/posts/markdown-%E5%8A%9F%E8%83%BD%E7%BB%BC%E5%90%88%E6%BC%94%E7%A4%BA/</link>
+      <guid>https://newblog.wunai.top/zh/posts/markdown-%E5%8A%9F%E8%83%BD%E7%BB%BC%E5%90%88%E6%BC%94%E7%A4%BA/</guid>
+      <pubDate>Tue, 08 Sep 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[完整演示本站支持的所有 Markdown 扩展功能：GFM、KaTeX、代码高亮、图表、短代码等。]]></description>
+    </item>
     <item>
       <title><![CDATA[你好，世界]]></title>
       <link>https://newblog.wunai.top/zh/posts/%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C/</link>
