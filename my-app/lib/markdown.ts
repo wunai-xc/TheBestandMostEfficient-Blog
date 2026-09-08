@@ -10,7 +10,19 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeStringify from "rehype-stringify";
 import remarkRehype from "remark-rehype";
+// mhchem 扩展：为 KaTeX 注册 \ce{} 化学方程式语法（ESM 副作用导入，挂载到共享 katex 实例）
+import "katex/contrib/mhchem";
 import type { Post } from "./content";
+
+// KaTeX 自定义宏：常用数学符号简写
+const KATEX_MACROS: Record<string, string> = {
+  "\\RR": "\\mathbb{R}",
+  "\\CC": "\\mathbb{C}",
+  "\\ZZ": "\\mathbb{Z}",
+  "\\NN": "\\mathbb{N}",
+  "\\QQ": "\\mathbb{Q}",
+  "\\dd": "\\mathrm{d}",
+};
 
 // 安全遍历：跳过 undefined/null 节点（rehypeRaw 可能产生）
 function walk(tree: any, type: string, fn: (node: any) => void) {
@@ -131,17 +143,29 @@ function rehypeDiagramBlocks() {
 }
 
 // 中文文本优化：CJK 与英文/数字之间加空格、标点转换
+// 关键：跳过 KaTeX 渲染出的 HTML 内部文本，避免破坏公式排版
 function rehypeCjkOpt() {
   const PUNCT: Record<string, string> = {
     ",": "，", ".": "。", "?": "？", "!": "！", ";": "；", ":": "：",
     "(": "（", ")": "）", "[": "【", "]": "】",
   };
-  return (tree: any) => {
-    walk(tree, "text", (node: any) => {
-      if (!node.value) return;
+  // 判断节点的 className 是否含 katex（KaTeX 渲染容器）
+  const hasKatexClass = (node: any): boolean => {
+    const cls = node?.properties?.className;
+    if (!cls) return false;
+    const s = Array.isArray(cls) ? cls.join(" ") : String(cls);
+    return s.includes("katex") || s.includes("MathJax");
+  };
+  // 带祖先链遍历，跳过 katex 内部文本
+  function walkCjk(node: any, ancestors: any[]) {
+    if (!node || typeof node !== "object") return;
+    // 当前节点若是 katex 容器，其子树全部跳过
+    const inKatex = hasKatexClass(node) || ancestors.some(hasKatexClass);
+    if (node.type === "text" && node.value && !inKatex) {
+      let s = node.value;
       // CJK 与 ASCII 之间加空格
-      let s = node.value.replace(/([\u4e00-\u9fff])([A-Za-z0-9])/g, "$1 $2")
-                       .replace(/([A-Za-z0-9])([\u4e00-\u9fff])/g, "$1 $2");
+      s = s.replace(/([\u4e00-\u9fff])([A-Za-z0-9])/g, "$1 $2")
+           .replace(/([A-Za-z0-9])([\u4e00-\u9fff])/g, "$1 $2");
       // 行内标点转换（只在中文语境）
       if (/[\u4e00-\u9fff]/.test(s)) {
         s = s.replace(/([\u4e00-\u9fff]),\s?/g, "$1，")
@@ -150,14 +174,21 @@ function rehypeCjkOpt() {
              .replace(/([\u4e00-\u9fff])!\s?/g, "$1！");
       }
       node.value = s;
-    });
-  };
+    }
+    const children = node.children;
+    if (Array.isArray(children)) {
+      for (const child of children) {
+        if (child) walkCjk(child, [...ancestors, node]);
+      }
+    }
+  }
+  return (tree: any) => walkCjk(tree, []);
 }
 
-// 提取 TOC（标题列表）
+// 提取 TOC（标题列表）：兼容 id 在标签任意位置的情况
 export function extractToc(html: string): { id: string; text: string; level: number }[] {
   const toc: { id: string; text: string; level: number }[] = [];
-  const regex = /<h([1-6])\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g;
+  const regex = /<h([1-6])\b[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(html))) {
     const text = m[3].replace(/<[^>]+>/g, "").trim();
@@ -177,7 +208,7 @@ export async function renderMarkdown(post: Post): Promise<string> {
     .use(rehypeRaw)
     .use(rehypeDiagramBlocks as any)
     .use(rehypeHighlight, { detect: true, ignoreMissing: true })
-    .use(rehypeKatex, { throwOnError: false, errorColor: "#cc0000" })
+    .use(rehypeKatex, { throwOnError: false, errorColor: "#cc0000", macros: KATEX_MACROS, strict: false })
     .use(rehypeSlug)
     .use(rehypeAutolinkHeadings, { behavior: "wrap" })
     .use(rehypeImages(post) as any)

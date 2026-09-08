@@ -59,6 +59,23 @@ function parseTomlValue(val: string): any {
   return val;
 }
 
+// 规范化日期：gray-matter 会把 YAML 中的 date 解析为 Date 对象，
+// String(dateObj) 会输出 "Sun Aug 02 2026 00:00:00 GMT+0000..." 这种丑陋字符串。
+// 统一转为 YYYY-MM-DD 字符串，便于排序、归档切片与一致显示。
+function normalizeDate(date: any): string {
+  if (date instanceof Date) {
+    // YAML 时间戳按 UTC 解析，用 UTC getter 保证日期正确
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  const s = String(date || "");
+  // 提取 YYYY-MM-DD 部分（兼容 "2026-08-02 14:30" 等带时间的写法）
+  const m = s.match(/(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : (s || "1970-01-01");
+}
+
 function wordCount(content: string): number {
   const zh = (content.match(/[\u4e00-\u9fff]/g) || []).length;
   const en = (content.match(/[A-Za-z0-9]+/g) || []).length;
@@ -84,7 +101,7 @@ function loadPostsForLang(lang: Lang): Post[] {
       slug,
       lang,
       title: fm.title || slug,
-      date: String(fm.date || "1970-01-01"),
+      date: normalizeDate(fm.date),
       author: fm.author,
       tags: fm.tags || [],
       categories: fm.categories || [],

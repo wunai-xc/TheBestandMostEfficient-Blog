@@ -46,10 +46,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 `,
           }}
         />
-        {/* KaTeX 样式 */}
+        {/* KaTeX 样式（版本与 rehype-katex 使用的 katex 实例保持一致） */}
         <link
           rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+          href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css"
           crossOrigin="anonymous"
         />
         {/* highlight.js 主题：始终用 github 亮色（夜间模式代码块也用亮色背景，确保可读） */}

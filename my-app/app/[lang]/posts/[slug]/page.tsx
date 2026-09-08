@@ -4,7 +4,7 @@ import {
 } from "@/lib/content";
 import { renderMarkdown, extractToc } from "@/lib/markdown";
 import PostBody from "@/components/PostBody";
-import Toc from "@/components/Toc";
+import PostNav from "@/components/PostNav";
 import Comments from "@/components/Comments";
 
 export const dynamicParams = false;
@@ -115,10 +115,8 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
         <Comments />
       </article>
 
-      {/* 右栏：TOC */}
-      <aside className="sidebar-col">
-        {toc.length > 0 && <Toc items={toc} />}
-      </aside>
+      {/* 浮动导航：左侧目录按钮 + 右侧进度条 + 回到顶部 */}
+      <PostNav items={toc} />
 
       <script
         type="application/ld+json"

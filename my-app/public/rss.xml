@@ -5,7 +5,14 @@
     <link>https://newblog.wunai.top</link>
     <description>学习笔记与生活思考</description>
     <language>zh-CN</language>
-    <lastBuildDate>Tue, 08 Sep 2026 04:15:30 GMT</lastBuildDate>
+    <lastBuildDate>Tue, 08 Sep 2026 04:43:42 GMT</lastBuildDate>
+    <item>
+      <title><![CDATA[你好，世界]]></title>
+      <link>https://newblog.wunai.top/zh/posts/%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C/</link>
+      <guid>https://newblog.wunai.top/zh/posts/%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C/</guid>
+      <pubDate>Tue, 08 Sep 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[这是博客的第一篇文章，介绍本站的技术栈、内容方向以及近期上线的阅读增强功能。]]></description>
+    </item>
     <item>
       <title><![CDATA[博客：定义、意义与为什么它不该交给 AI]]></title>
       <link>https://newblog.wunai.top/zh/posts/%E5%8D%9A%E5%AE%A2/</link>
@@ -47,13 +54,6 @@
       <guid>https://newblog.wunai.top/en/posts/math-chem-code-demo/</guid>
       <pubDate>Mon, 03 Aug 2026 00:00:00 GMT</pubDate>
       <description><![CDATA[Demonstrates KaTeX math, mhchem chemistry notation, and syntax-highlighted code blocks with copy buttons.]]></description>
-    </item>
-    <item>
-      <title><![CDATA[你好，世界]]></title>
-      <link>https://newblog.wunai.top/zh/posts/%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C/</link>
-      <guid>https://newblog.wunai.top/zh/posts/%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C/</guid>
-      <pubDate>Sun, 02 Aug 2026 00:00:00 GMT</pubDate>
-      <description><![CDATA[这是博客的第一篇文章，介绍我为什么选择 Hugo 以及本站未来会写哪些内容。]]></description>
     </item>
     <item>
       <title><![CDATA[Hello, World]]></title>
