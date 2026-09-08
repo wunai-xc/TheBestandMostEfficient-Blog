@@ -297,3 +297,24 @@ C C G G | A A G2 | F F E E | D D C2 |
 ### 键盘按键
 
 按 <kbd>Ctrl</kbd> + <kbd>C</kbd> 复制。
+
+---
+
+## 十三、路由 Loading 效果演示
+
+本站在页面切换时会展示一个带拖尾效果的 loading 动画。点击下方按钮可触发演示（1.5 秒后自动退出）：
+
+<button data-loading-trigger style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;font-size:16px;font-weight:600;color:#fff;background:linear-gradient(135deg,#2563eb,#7c3aed);border:none;border-radius:8px;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.4);transition:transform .15s,box-shadow .15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(37,99,235,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(37,99,235,0.4)'">
+  <span style="display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span>
+  点击触发 Loading 效果
+</button>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+> **特性说明：**
+> - 全程匀速直线运动（linear timing）
+> - 移动方向后方叠加 **1/2、1/4、1/8、1/16** 短边比例的渐隐拖尾
+> - 随机配色与旋转角度，每次切换不同效果
+> - 直角（无圆角）面板，内嵌光晕与外发光
