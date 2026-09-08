@@ -1114,12 +1114,108 @@ html.dark .katex-error { color: #fca5a5; }
 }
 
 /* ===== 打印 ===== */
+/* 屏幕下隐藏打印专用元素 */
+.print-header, .print-footer, .print-controls { display: none; }
+
+/* 屏幕下：标题与打印按钮同行 */
+.post-header-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+}
+.post-header-row h1 { margin: 0; flex: 1; min-width: 0; }
+
+/* 屏幕下打印按钮样式 */
+.print-controls {
+  display: inline-flex; gap: 6px; flex-shrink: 0;
+}
+.print-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.print-btn:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+.print-btn:active { transform: translateY(1px); }
+@media (max-width: 640px) {
+  .print-btn span { display: none; }
+  .print-btn { padding: 6px 8px; }
+}
+
 @media print {
+  /* 隐藏不需要打印的元素：站点导航/页脚/侧栏/面包屑/评论/浮动 TOC 与进度条/章节固定标题/打印按钮 */
   .site-header, .site-footer, .sidebar-col, .post-nav, .comments-section, .breadcrumbs,
-  .toc-fab-wrap, .scroll-rail, .back-to-top { display: none !important; }
+  .toc-fab-wrap, .scroll-rail, .back-to-top,
+  .toc-fab, .toc-panel, .sticky-heading,
+  .print-controls { display: none !important; }
+
+  /* 取消 sticky/固定布局，恢复顺序流 */
   .post-layout { display: block; }
+  .post-content { display: block; }
   body { background: #fff; color: #000; }
   .article a { color: #000; text-decoration: underline; }
+
+  /* 页面 margin：上下留 1.8cm 给页眉/页脚，左右 1.5cm */
+  @page {
+    margin: 1.8cm 1.5cm;
+  }
+
+  /* 打印时显示页眉页脚，fixed 让其在每页重复 */
+  .print-header, .print-footer { display: flex; }
+
+  /* 页眉：顶部固定，左侧时间和作者 */
+  .print-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 1.1cm;
+    align-items: center;
+    font-size: 10pt; color: #444;
+    border-bottom: 0.5pt solid #ccc;
+    padding: 0 0.2cm;
+    box-sizing: border-box;
+  }
+
+  /* 页脚：底部固定，左侧标题 + 页码位置（单面居中 / 双面靠右） */
+  .print-footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 1.1cm;
+    align-items: center;
+    font-size: 10pt; color: #444;
+    border-top: 0.5pt solid #ccc;
+    padding: 0 0.2cm;
+    box-sizing: border-box;
+  }
+  .print-footer-title {
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .print-pagenum {
+    flex: 0 0 auto;
+    /* 页码格式：数字 | 总页数（CSS 计数器在 fixed 元素中由浏览器自动维护） */
+  }
+  .print-pagenum::before {
+    content: counter(page) " | " counter(pages);
+  }
+
+  /* 单面打印（默认）：页码居中（覆盖整行宽度，标题让位） */
+  .print-footer-mode-single .print-footer { justify-content: flex-start; }
+  .print-footer-mode-single .print-footer-title { visibility: hidden; }
+  .print-footer-mode-single .print-pagenum {
+    position: absolute; left: 0; right: 0;
+    text-align: center;
+  }
+
+  /* 双面打印：标题在左，页码始终靠右 */
+  .print-footer-mode-duplex .print-footer { justify-content: space-between; }
+  .print-footer-mode-duplex .print-pagenum { margin-left: auto; }
+
+  /* 防止正文被页眉/页脚遮挡 */
+  .post-content { padding-top: 0.4cm; }
 }
 
 /* ===== 404 ===== */

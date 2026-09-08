@@ -8,6 +8,7 @@ import { renderMarkdown, extractToc } from "@/lib/markdown";
 import PostBody from "@/components/PostBody";
 import PostNav from "@/components/PostNav";
 import Comments from "@/components/Comments";
+import PrintControls from "@/components/PrintControls";
 
 export const dynamicParams = false;
 
@@ -74,7 +75,10 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
         </nav>
 
         <header className="post-header">
-          <h1>{post.title}</h1>
+          <div className="post-header-row">
+            <h1>{post.title}</h1>
+            <PrintControls singleLabel={t.printSingle} duplexLabel={t.printDuplex} />
+          </div>
           <div className="post-meta">
             <span><Icon icon={icons["mdi:calendar-month-outline"]} width="1em" height="1em" /> {post.date}</span>
             <span><Icon icon={icons["mdi:clock-outline"]} width="1em" height="1em" /> {readingTime} {t.readingTime}</span>
@@ -119,6 +123,19 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
 
       {/* 浮动导航：左侧目录按钮 + 右侧进度条 + 回到顶部 */}
       <PostNav items={toc} />
+
+      {/* 打印专用页眉：左侧日期 + 作者 */}
+      <div className="print-header" aria-hidden="true">
+        <span className="print-header-text">
+          {post.date}{post.author ? `  |  ${post.isAI ? t.aiWarning : post.author}` : ""}
+        </span>
+      </div>
+
+      {/* 打印专用页脚：左侧标题 + 页码（单面居中 / 双面靠右） */}
+      <div className="print-footer" aria-hidden="true">
+        <span className="print-footer-title">{post.title}</span>
+        <span className="print-pagenum" />
+      </div>
 
       <script
         type="application/ld+json"
