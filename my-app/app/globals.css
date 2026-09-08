@@ -629,21 +629,22 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   max-width: calc(100vw - 80px);
 }
 
-/* ===== TOC 按钮（固定在 header 左下方，hamburger 三条杠图标） ===== */
+/* ===== TOC 按钮（固定在 header 左下方，hamburger 三条杠图标，80% 透明） ===== */
 .toc-fab {
   position: fixed;
   left: 12px;
   top: 64px;
   z-index: 49;
   width: 34px; height: 34px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background: color-mix(in srgb, var(--bg) 20%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
   cursor: pointer;
   border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: transform 0.25s var(--ease-silk),
               box-shadow 0.25s var(--ease-silk),
               background 0.2s var(--ease-silk),
@@ -652,7 +653,7 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .toc-fab:hover {
   transform: scale(1.06);
   border-color: var(--accent);
-  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 .toc-fab:active { transform: scale(0.94); }
@@ -686,19 +687,16 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   transform: translateY(-5px) rotate(-45deg);
 }
 
-/* ===== 展开面板（80% 透明） ===== */
+/* ===== 展开面板（实色不透明） ===== */
 .toc-panel {
   position: fixed;
   left: 12px;
   top: 104px;
   width: 260px; max-height: calc(100vh - 120px);
-  background: color-mix(in srgb, var(--bg) 20%, transparent);
-  backdrop-filter: blur(14px) saturate(1.4);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15),
-              inset 0 1px 0 rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
   overflow: hidden;
   opacity: 0; pointer-events: none;
   transform: translateY(-8px) scale(0.96);
@@ -716,7 +714,7 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
   color: var(--muted);
   padding: 10px 14px 6px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  border-bottom: 1px solid var(--border);
 }
 .toc-panel-list {
   list-style: none; margin: 0; padding: 6px 0;
@@ -728,7 +726,7 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .toc-panel-list li { margin: 0; }
 .toc-panel-list a {
   display: flex; align-items: center; gap: 8px;
-  color: color-mix(in srgb, var(--fg) 85%, transparent);
+  color: var(--muted);
   font-size: 0.82rem; line-height: 1.55;
   padding: 4px 14px; border-left: 2px solid transparent;
   text-decoration: none; cursor: pointer; white-space: normal;
@@ -742,7 +740,7 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .toc-panel-list .lvl-5 a { padding-left: 44px; font-size: 0.74rem; }
 .toc-bullet {
   width: 4px; height: 4px; border-radius: 50%;
-  background: color-mix(in srgb, var(--muted) 80%, transparent); flex-shrink: 0;
+  background: var(--border); flex-shrink: 0;
   transition: background 0.2s, transform 0.2s;
 }
 .toc-panel-list a:hover .toc-bullet { background: var(--accent); transform: scale(1.4); }
