@@ -185,6 +185,10 @@ button, label, .nav a, .icon-btn, .tag, .term-item,
 .article a, .article span, .article p, .article li, .article td, .article th {
   white-space: normal;
 }
+/* KaTeX 公式内部必须保持 nowrap，否则公式会被拆成竖向排列 */
+.article .katex, .article .katex * {
+  white-space: nowrap;
+}
 
 /* 字号调节（在 clamp 基础上叠加缩放系数） */
 html[data-font-scale="0.85"] { font-size: clamp(11.05px, 2.21vw, 13.6px); }
