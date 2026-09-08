@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SITE } from "@/lib/content";
+import RouteLoading from "@/components/RouteLoading";
 
 export const metadata: Metadata = {
   title: { default: SITE.title, template: `%s | ${SITE.title}` },
@@ -126,6 +127,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </filter>
           </defs>
         </svg>
+        <RouteLoading />
         {children}
         <script
           dangerouslySetInnerHTML={{
