@@ -824,21 +824,14 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .progress-dot-core {
   position: absolute; inset: 3px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--bg) 0%, var(--muted) 100%);
-  box-shadow:
-    0 1px 2px rgba(0,0,0,0.25),
-    inset 0 1px 1px rgba(255,255,255,0.4),
-    inset 0 -1px 1px rgba(0,0,0,0.2);
+  background: var(--muted);
   transition: background 0.3s, box-shadow 0.3s;
 }
 .progress-dot.lvl-1, .progress-dot.lvl-2 { width: 16px; height: 16px; }
 .progress-dot.lvl-3 { width: 13px; height: 13px; margin-left: -6.5px; margin-top: -6.5px; }
 .progress-dot.lvl-4, .progress-dot.lvl-5, .progress-dot.lvl-6 { width: 10px; height: 10px; margin-left: -5px; margin-top: -5px; }
 .progress-dot.reached .progress-dot-core {
-  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--accent) 100%);
-  box-shadow:
-    0 0 6px color-mix(in srgb, var(--accent) 60%, transparent),
-    inset 0 1px 1px rgba(255,255,255,0.6);
+  background: var(--accent);
 }
 /* 滑块靠近该节点时的状态 */
 .progress-dot.near {
@@ -846,24 +839,18 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   z-index: 4;
 }
 .progress-dot.near .progress-dot-core {
-  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--accent) 50%, var(--accent) 100%);
-  box-shadow:
-    0 0 10px var(--accent),
-    0 0 18px color-mix(in srgb, var(--accent) 50%, transparent),
-    inset 0 1px 1px rgba(255,255,255,0.7);
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 .progress-dot.active { transform: scale(1.5); z-index: 3; }
 .progress-dot.active .progress-dot-core {
-  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--accent) 60%, var(--accent) 100%);
-  box-shadow:
-    0 0 12px var(--accent),
-    0 0 24px color-mix(in srgb, var(--accent) 50%, transparent),
-    inset 0 1px 1px rgba(255,255,255,0.7);
+  background: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
   animation: dot-pulse 1.8s ease-in-out infinite;
 }
 @keyframes dot-pulse {
-  0%, 100% { box-shadow: 0 0 8px var(--accent), 0 0 16px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1px 1px rgba(255,255,255,0.7); }
-  50%      { box-shadow: 0 0 14px var(--accent), 0 0 28px color-mix(in srgb, var(--accent) 60%, transparent), inset 0 1px 1px rgba(255,255,255,0.7); }
+  0%, 100% { box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 40%, transparent); }
+  50%      { box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent); }
 }
 .progress-dot:hover { transform: scale(1.4); }
 .progress-dot.active:hover { transform: scale(1.6); }
