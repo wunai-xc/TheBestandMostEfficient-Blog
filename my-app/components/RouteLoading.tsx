@@ -4,30 +4,40 @@ import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 /**
- * 路由切换时显示彩色条状 loading 页面
- * 条从屏幕任意边缘向对边移动，带 "loading" 字样
+ * 路由切换 loading：细长彩色光束从屏幕外以任意角度旋转扫过屏幕
  */
 export default function RouteLoading() {
   const pathname = usePathname();
   const [active, setActive] = useState(false);
-  const [config, setConfig] = useState({ from: "left", color: "#2563eb" });
+  const [config, setConfig] = useState({
+    angle: 0,
+    color: "#2563eb",
+    color2: "#7c3aed",
+    key: 0,
+  });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // 首次挂载不触发
     if (!pathname) return;
 
-    // 随机选边缘与颜色
-    const edges = ["left", "right", "top", "bottom"];
-    const colors = ["#2563eb", "#7c3aed", "#db2777", "#ea580c", "#16a34a", "#0891b2"];
-    const from = edges[Math.floor(Math.random() * edges.length)];
-    const color = colors[Math.floor(Math.random() * colors.length)];
+    const colors = [
+      ["#2563eb", "#60a5fa"],
+      ["#7c3aed", "#c084fc"],
+      ["#db2777", "#f472b6"],
+      ["#ea580c", "#fb923c"],
+      ["#16a34a", "#4ade80"],
+      ["#0891b2", "#22d3ee"],
+      ["#dc2626", "#f87171"],
+    ];
+    const pair = colors[Math.floor(Math.random() * colors.length)];
+    // 任意角度 0~360
+    const angle = Math.floor(Math.random() * 360);
 
-    setConfig({ from, color });
+    setConfig({ angle, color: pair[0], color2: pair[1], key: Date.now() });
     setActive(true);
 
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setActive(false), 700);
+    timerRef.current = setTimeout(() => setActive(false), 900);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -36,80 +46,74 @@ export default function RouteLoading() {
 
   if (!active) return null;
 
-  const { from, color } = config;
-
-  // 根据起始边确定条的尺寸与起止位置
-  const isHorizontal = from === "left" || from === "right";
-  const barStyle: React.CSSProperties = {
-    position: "fixed",
-    zIndex: 9999,
-    background: `linear-gradient(90deg, ${color}, ${color}cc, ${color})`,
-    boxShadow: `0 0 24px ${color}, 0 0 48px ${color}80`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#fff",
-    fontWeight: 700,
-    letterSpacing: "0.3em",
-    textTransform: "uppercase",
-    fontSize: "clamp(0.75rem, 2vw, 1rem)",
-    overflow: "hidden",
-    pointerEvents: "none",
-    animation: `routebar-${from} 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards`,
-  };
-
-  if (isHorizontal) {
-    barStyle.left = 0;
-    barStyle.right = 0;
-    barStyle.height = "28px";
-    barStyle.top = "50%";
-    barStyle.marginTop = "-14px";
-  } else {
-    barStyle.top = 0;
-    barStyle.bottom = 0;
-    barStyle.width = "28px";
-    barStyle.left = "50%";
-    barStyle.marginLeft = "-14px";
-  }
+  const { angle, color, color2, key } = config;
 
   return (
     <>
       <style>{`
-        @keyframes routebar-left {
-          0% { transform: translateX(-100vw); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateX(100vw); opacity: 0; }
+        @keyframes beam-sweep-${key} {
+          0% {
+            transform: rotate(${angle}deg) translate(0, -120vh) scaleX(0.3);
+            opacity: 0;
+          }
+          15% {
+            opacity: 1;
+            transform: rotate(${angle}deg) translate(0, -120vh) scaleX(0.6);
+          }
+          50% {
+            transform: rotate(${angle}deg) translate(0, 0) scaleX(1);
+            opacity: 1;
+          }
+          85% {
+            opacity: 1;
+            transform: rotate(${angle}deg) translate(0, 120vh) scaleX(0.6);
+          }
+          100% {
+            transform: rotate(${angle}deg) translate(0, 120vh) scaleX(0.3);
+            opacity: 0;
+          }
         }
-        @keyframes routebar-right {
-          0% { transform: translateX(100vw); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateX(-100vw); opacity: 0; }
-        }
-        @keyframes routebar-top {
-          0% { transform: translateY(-100vh); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateY(100vh); opacity: 0; }
-        }
-        @keyframes routebar-bottom {
-          0% { transform: translateY(100vh); opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { transform: translateY(-100vh); opacity: 0; }
+        @keyframes loading-text-${key} {
+          0%, 100% { opacity: 0.4; letter-spacing: 0.2em; }
+          50% { opacity: 1; letter-spacing: 0.5em; }
         }
       `}</style>
-      <div style={barStyle}>
-        <span style={{ animation: "loading-pulse 0.7s ease-in-out infinite" }}>
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          width: "180vw",
+          height: "6px",
+          marginTop: "-3px",
+          marginLeft: "-90vw",
+          background: `linear-gradient(90deg, transparent 0%, ${color} 20%, ${color2} 50%, ${color} 80%, transparent 100%)`,
+          boxShadow: `0 0 12px ${color}, 0 0 32px ${color2}, 0 0 64px ${color}80`,
+          transformOrigin: "center center",
+          animation: `beam-sweep-${key} 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards`,
+          zIndex: 9999,
+          pointerEvents: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <span
+          style={{
+            color: "#fff",
+            fontWeight: 800,
+            fontSize: "clamp(0.7rem, 1.6vw, 0.95rem)",
+            textTransform: "uppercase",
+            textShadow: `0 0 8px ${color}, 0 0 16px ${color2}`,
+            animation: `loading-text-${key} 0.9s ease-in-out infinite`,
+            whiteSpace: "nowrap",
+            // 让文字反向旋转，保持水平阅读
+            transform: `rotate(${-angle}deg)`,
+            display: "inline-block",
+          }}
+        >
           loading
         </span>
-        <style>{`
-          @keyframes loading-pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-          }
-        `}</style>
       </div>
     </>
   );
