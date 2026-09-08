@@ -8,6 +8,11 @@ interface TocItem { id: string; text: string; level: number; }
 
 interface DotPos { id: string; text: string; level: number; pos: number; }
 
+// 吸附阈值（占轨道高度的比例）：距离节点超过此值不吸附
+const SNAP_THRESHOLD = 0.06;
+// 近距离标签阈值：滑块靠近节点此范围内显示标题
+const NEAR_THRESHOLD = 0.05;
+
 export default function PostNav({ items }: { items: TocItem[] }) {
   const [active, setActive] = useState("");
   const [tocOpen, setTocOpen] = useState(false);
@@ -15,8 +20,13 @@ export default function PostNav({ items }: { items: TocItem[] }) {
   const [showTop, setShowTop] = useState(false);
   const [dots, setDots] = useState<DotPos[]>([]);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [nearDotId, setNearDotId] = useState<string | null>(null);
+
   const barRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const thumbYOffsetRef = useRef(0);
 
   // IntersectionObserver：跟踪当前活跃标题
   useEffect(() => {
@@ -29,7 +39,6 @@ export default function PostNav({ items }: { items: TocItem[] }) {
       (entries) => {
         const visible = entries.filter((e) => e.isIntersecting);
         if (visible.length) {
-          // 选最靠近顶部的那个（rootMargin -80px 刚好是 sticky heading 的位置）
           visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
           setActive(visible[0].target.id);
         }
@@ -40,7 +49,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
     return () => observer.disconnect();
   }, [items]);
 
-  // 计算每个标题在文档中的相对位置（用于进度条圆点定位）
+  // 计算每个标题在文档中的相对位置
   const computeDots = useCallback(() => {
     if (!items.length) { setDots([]); return; }
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -65,6 +74,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
   useEffect(() => {
     let ticking = false;
     const onScroll = () => {
+      if (isDraggingRef.current) return; // 拖动时不更新进度（由拖动控制）
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
@@ -85,12 +95,82 @@ export default function PostNav({ items }: { items: TocItem[] }) {
     };
   }, []);
 
+  // 找到距离给定进度最近的节点
+  const findNearestDot = useCallback((p: number): DotPos | null => {
+    if (!dots.length) return null;
+    let best = dots[0];
+    let bestDist = Math.abs(best.pos - p);
+    for (let i = 1; i < dots.length; i++) {
+      const d = Math.abs(dots[i].pos - p);
+      if (d < bestDist) { best = dots[i]; bestDist = d; }
+    }
+    return best;
+  }, [dots]);
+
+  // ===== 滑块拖拽 =====
+  const onThumbMouseDown = useCallback((e: ReactMouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingRef.current = true;
+    setIsDragging(true);
+
+    // 记录鼠标相对滑块中心的偏移，避免拖动时跳动
+    const bar = barRef.current;
+    if (bar) {
+      const rect = bar.getBoundingClientRect();
+      const thumbCenter = rect.top + progress * rect.height;
+      thumbYOffsetRef.current = e.clientY - thumbCenter;
+    }
+
+    const onMove = (ev: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const bar = barRef.current;
+      if (!bar) return;
+      const rect = bar.getBoundingClientRect();
+      let ratio = (ev.clientY - thumbYOffsetRef.current - rect.top) / rect.height;
+      ratio = Math.min(1, Math.max(0, ratio));
+
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const newScroll = ratio * maxScroll;
+      window.scrollTo({ top: newScroll, behavior: "auto" });
+      setProgress(ratio);
+
+      // 计算最近节点并更新 nearDotId
+      const nearest = findNearestDot(ratio);
+      if (nearest && Math.abs(nearest.pos - ratio) <= NEAR_THRESHOLD) {
+        setNearDotId(nearest.id);
+      } else {
+        setNearDotId(null);
+      }
+    };
+
+    const onUp = () => {
+      isDraggingRef.current = false;
+      const currentProgress = progress;
+      const nearest = findNearestDot(currentProgress);
+      if (nearest && Math.abs(nearest.pos - currentProgress) <= SNAP_THRESHOLD) {
+        // 吸附到最近节点
+        const el = document.getElementById(nearest.id);
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: "smooth" });
+        }
+      }
+      setIsDragging(false);
+      setNearDotId(null);
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }, [progress, findNearestDot]);
+
   // 点击外部关闭目录面板
   useEffect(() => {
     if (!tocOpen) return;
     const onClickOutside = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        // 排除按钮本身
         const btn = document.querySelector(".toc-fab");
         if (btn && btn.contains(e.target as Node)) return;
         setTocOpen(false);
@@ -119,6 +199,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
 
   // 点击进度条空白处
   const onBarClick = useCallback((e: ReactMouseEvent) => {
+    if (isDraggingRef.current) return;
     const bar = barRef.current;
     if (!bar) return;
     const rect = bar.getBoundingClientRect();
@@ -129,6 +210,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
 
   const hasToc = items.length > 0;
   const activeItem = items.find((i) => i.id === active);
+  const nearDot = nearDotId ? dots.find((d) => d.id === nearDotId) : null;
 
   return (
     <>
@@ -139,7 +221,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
         </div>
       )}
 
-      {/* ===== TOC 按钮 + 面板（移到 header 下方） ===== */}
+      {/* ===== TOC 按钮 + 面板 ===== */}
       {hasToc && (
         <>
           <button
@@ -149,13 +231,11 @@ export default function PostNav({ items }: { items: TocItem[] }) {
             aria-expanded={tocOpen}
             title="目录"
           >
-            {/* 纯 CSS hamburger 三条杠：三条 span 组成，open 态变为 X */}
             <span className="hb-icon" aria-hidden="true">
               <span /><span /><span />
             </span>
           </button>
 
-          {/* 展开面板 */}
           <div
             ref={panelRef}
             className={`toc-panel${tocOpen ? " open" : ""}`}
@@ -185,21 +265,28 @@ export default function PostNav({ items }: { items: TocItem[] }) {
         </>
       )}
 
-      {/* ===== 右侧滑动进度条 + 标题凸起圆点 ===== */}
+      {/* ===== 右侧滑动进度条 + 标题凸起圆点 + 滑块 ===== */}
       {hasToc && (
-        <div className="scroll-rail" ref={barRef} onClick={onBarClick}>
+        <div
+          className={`scroll-rail${isDragging ? " dragging" : ""}`}
+          ref={barRef}
+          onClick={onBarClick}
+        >
           <div className="scroll-rail-track" />
           <div
             className="scroll-rail-fill"
             style={{ height: `${progress * 100}%` }}
           />
+
+          {/* 凸起圆点 */}
           {dots.map((d) => {
             const isActive = active === d.id;
             const reached = d.pos <= progress;
+            const isNear = nearDotId === d.id;
             return (
               <button
                 key={d.id}
-                className={`progress-dot lvl-${d.level}${isActive ? " active" : ""}${reached ? " reached" : ""}`}
+                className={`progress-dot lvl-${d.level}${isActive ? " active" : ""}${reached ? " reached" : ""}${isNear ? " near" : ""}`}
                 style={{ top: `${d.pos * 100}%` }}
                 onClick={(e) => { e.stopPropagation(); scrollTo(d.id); }}
                 onMouseEnter={() => setHovered(d.id)}
@@ -208,12 +295,32 @@ export default function PostNav({ items }: { items: TocItem[] }) {
                 title={d.text}
               >
                 <span className="progress-dot-core" />
+                {/* 原有 hover 标签 */}
                 <span className={`progress-dot-label${hovered === d.id ? " show" : ""}`}>
                   {d.text}
                 </span>
+                {/* 拖动靠近时的左侧透明小标签 */}
+                {isNear && (
+                  <span className="progress-dot-near-label">{d.text}</span>
+                )}
               </button>
             );
           })}
+
+          {/* 滑块 thumb */}
+          <div
+            className="scroll-thumb"
+            style={{ top: `${progress * 100}%` }}
+            onMouseDown={onThumbMouseDown}
+            role="slider"
+            aria-label="阅读进度滑块"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress * 100)}
+            tabIndex={0}
+          />
+
+          {/* 底部百分比 */}
           <div className="scroll-rail-pct">{Math.round(progress * 100)}%</div>
         </div>
       )}
