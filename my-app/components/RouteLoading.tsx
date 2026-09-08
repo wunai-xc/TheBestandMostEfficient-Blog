@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 /**
- * 路由切换 loading：细长彩色光束从屏幕外以任意角度旋转扫过屏幕
+ * 路由切换 loading：大尺寸彩色面板（比屏幕小10px）以任意角度旋转扫过屏幕
  */
 export default function RouteLoading() {
   const pathname = usePathname();
@@ -14,6 +14,8 @@ export default function RouteLoading() {
     color: "#2563eb",
     color2: "#7c3aed",
     key: 0,
+    vw: 0,
+    vh: 0,
   });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -33,11 +35,18 @@ export default function RouteLoading() {
     // 任意角度 0~360
     const angle = Math.floor(Math.random() * 360);
 
-    setConfig({ angle, color: pair[0], color2: pair[1], key: Date.now() });
+    setConfig((prev) => ({
+      angle,
+      color: pair[0],
+      color2: pair[1],
+      key: Date.now(),
+      vw: window.innerWidth,
+      vh: window.innerHeight,
+    }));
     setActive(true);
 
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setActive(false), 900);
+    timerRef.current = setTimeout(() => setActive(false), 1000);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -46,36 +55,41 @@ export default function RouteLoading() {
 
   if (!active) return null;
 
-  const { angle, color, color2, key } = config;
+  const { angle, color, color2, key, vw, vh } = config;
+  // 面板尺寸比屏幕小 10px
+  const panelW = Math.max(1, vw - 10);
+  const panelH = Math.max(1, vh - 10);
+  // 扫描距离：面板对角线一半 + 屏幕对角线一半，确保从屏外到屏外
+  const diag = Math.sqrt(panelW * panelW + panelH * panelH) / 2 + Math.sqrt(vw * vw + vh * vh) / 2;
 
   return (
     <>
       <style>{`
-        @keyframes beam-sweep-${key} {
+        @keyframes panel-sweep-${key} {
           0% {
-            transform: rotate(${angle}deg) translate(0, -120vh) scaleX(0.3);
+            transform: rotate(${angle}deg) translate(0, -${diag}px) scale(0.85);
             opacity: 0;
           }
           15% {
-            opacity: 1;
-            transform: rotate(${angle}deg) translate(0, -120vh) scaleX(0.6);
+            opacity: 0.95;
+            transform: rotate(${angle}deg) translate(0, -${diag}px) scale(0.9);
           }
           50% {
-            transform: rotate(${angle}deg) translate(0, 0) scaleX(1);
-            opacity: 1;
+            transform: rotate(${angle}deg) translate(0, 0) scale(1);
+            opacity: 0.95;
           }
           85% {
-            opacity: 1;
-            transform: rotate(${angle}deg) translate(0, 120vh) scaleX(0.6);
+            opacity: 0.95;
+            transform: rotate(${angle}deg) translate(0, ${diag}px) scale(0.9);
           }
           100% {
-            transform: rotate(${angle}deg) translate(0, 120vh) scaleX(0.3);
+            transform: rotate(${angle}deg) translate(0, ${diag}px) scale(0.85);
             opacity: 0;
           }
         }
         @keyframes loading-text-${key} {
-          0%, 100% { opacity: 0.4; letter-spacing: 0.2em; }
-          50% { opacity: 1; letter-spacing: 0.5em; }
+          0%, 100% { opacity: 0.5; letter-spacing: 0.3em; transform: rotate(${-angle}deg) scale(0.9); }
+          50% { opacity: 1; letter-spacing: 0.6em; transform: rotate(${-angle}deg) scale(1.05); }
         }
       `}</style>
       <div
@@ -83,33 +97,33 @@ export default function RouteLoading() {
           position: "fixed",
           top: "50%",
           left: "50%",
-          width: "180vw",
-          height: "6px",
-          marginTop: "-3px",
-          marginLeft: "-90vw",
-          background: `linear-gradient(90deg, transparent 0%, ${color} 20%, ${color2} 50%, ${color} 80%, transparent 100%)`,
-          boxShadow: `0 0 12px ${color}, 0 0 32px ${color2}, 0 0 64px ${color}80`,
+          width: `${panelW}px`,
+          height: `${panelH}px`,
+          marginTop: `-${panelH / 2}px`,
+          marginLeft: `-${panelW / 2}px`,
+          background: `linear-gradient(135deg, ${color}cc 0%, ${color2}cc 50%, ${color}cc 100%)`,
+          boxShadow: `inset 0 0 40px ${color}, inset 0 0 80px ${color2}, 0 0 60px ${color}, 0 0 120px ${color2}80`,
           transformOrigin: "center center",
-          animation: `beam-sweep-${key} 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards`,
+          animation: `panel-sweep-${key} 1s cubic-bezier(0.22, 1, 0.36, 1) forwards`,
           zIndex: 9999,
           pointerEvents: "none",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          border: `2px solid ${color}`,
         }}
       >
         <span
           style={{
             color: "#fff",
             fontWeight: 800,
-            fontSize: "clamp(0.7rem, 1.6vw, 0.95rem)",
+            fontSize: "clamp(1.2rem, 4vw, 2.5rem)",
             textTransform: "uppercase",
-            textShadow: `0 0 8px ${color}, 0 0 16px ${color2}`,
-            animation: `loading-text-${key} 0.9s ease-in-out infinite`,
+            textShadow: `0 0 12px ${color}, 0 0 24px ${color2}, 0 0 48px ${color}`,
+            animation: `loading-text-${key} 1s ease-in-out infinite`,
             whiteSpace: "nowrap",
-            // 让文字反向旋转，保持水平阅读
-            transform: `rotate(${-angle}deg)`,
             display: "inline-block",
+            letterSpacing: "0.3em",
           }}
         >
           loading
