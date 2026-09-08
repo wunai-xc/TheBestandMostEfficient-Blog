@@ -773,42 +773,38 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   transition: height 0.1s linear;
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
 }
-/* ===== 滑块 thumb ===== */
+/* ===== 滑块 thumb（方形） ===== */
 .scroll-thumb {
   position: absolute;
   left: 50%;
-  width: 18px; height: 18px;
-  margin-left: -9px; margin-top: -9px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--accent) 70%, var(--accent) 100%);
+  width: 16px; height: 10px;
+  margin-left: -8px; margin-top: -5px;
+  border-radius: 3px;
+  background: var(--accent);
   box-shadow:
-    0 0 8px var(--accent),
-    0 0 16px color-mix(in srgb, var(--accent) 50%, transparent),
-    inset 0 1px 1px rgba(255,255,255,0.6),
-    inset 0 -1px 1px rgba(0,0,0,0.15);
+    0 0 6px color-mix(in srgb, var(--accent) 50%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.3);
   cursor: grab;
   z-index: 5;
   transition: transform 0.15s var(--ease-silk),
               box-shadow 0.2s var(--ease-silk);
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
 }
 .scroll-thumb:hover {
   transform: scale(1.2);
   box-shadow:
-    0 0 12px var(--accent),
-    0 0 24px color-mix(in srgb, var(--accent) 60%, transparent),
-    inset 0 1px 1px rgba(255,255,255,0.7),
-    inset 0 -1px 1px rgba(0,0,0,0.15);
+    0 0 10px color-mix(in srgb, var(--accent) 60%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.4);
 }
 .scroll-rail.dragging .scroll-thumb {
   cursor: grabbing;
   transform: scale(1.3);
   box-shadow:
-    0 0 14px var(--accent),
-    0 0 28px color-mix(in srgb, var(--accent) 70%, transparent),
-    inset 0 1px 1px rgba(255,255,255,0.8),
-    inset 0 -1px 1px rgba(0,0,0,0.2);
+    0 0 12px color-mix(in srgb, var(--accent) 70%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.4);
 }
 .progress-dot {
   position: absolute;

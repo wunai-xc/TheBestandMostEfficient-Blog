@@ -107,64 +107,91 @@ export default function PostNav({ items }: { items: TocItem[] }) {
     return best;
   }, [dots]);
 
-  // ===== 滑块拖拽 =====
-  const onThumbMouseDown = useCallback((e: ReactMouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // ===== 滑块拖拽（鼠标 + 触屏） =====
+  const startDrag = useCallback((clientY: number) => {
     isDraggingRef.current = true;
     setIsDragging(true);
-
-    // 记录鼠标相对滑块中心的偏移，避免拖动时跳动
     const bar = barRef.current;
     if (bar) {
       const rect = bar.getBoundingClientRect();
       const thumbCenter = rect.top + progress * rect.height;
-      thumbYOffsetRef.current = e.clientY - thumbCenter;
+      thumbYOffsetRef.current = clientY - thumbCenter;
     }
+  }, [progress]);
 
-    const onMove = (ev: MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      const bar = barRef.current;
-      if (!bar) return;
-      const rect = bar.getBoundingClientRect();
-      let ratio = (ev.clientY - thumbYOffsetRef.current - rect.top) / rect.height;
-      ratio = Math.min(1, Math.max(0, ratio));
+  const moveDrag = useCallback((clientY: number) => {
+    if (!isDraggingRef.current) return;
+    const bar = barRef.current;
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    let ratio = (clientY - thumbYOffsetRef.current - rect.top) / rect.height;
+    ratio = Math.min(1, Math.max(0, ratio));
 
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      const newScroll = ratio * maxScroll;
-      window.scrollTo({ top: newScroll, behavior: "auto" });
-      setProgress(ratio);
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo({ top: ratio * maxScroll, behavior: "auto" });
+    setProgress(ratio);
 
-      // 计算最近节点并更新 nearDotId
-      const nearest = findNearestDot(ratio);
-      if (nearest && Math.abs(nearest.pos - ratio) <= NEAR_THRESHOLD) {
-        setNearDotId(nearest.id);
-      } else {
-        setNearDotId(null);
-      }
-    };
-
-    const onUp = () => {
-      isDraggingRef.current = false;
-      const currentProgress = progress;
-      const nearest = findNearestDot(currentProgress);
-      if (nearest && Math.abs(nearest.pos - currentProgress) <= SNAP_THRESHOLD) {
-        // 吸附到最近节点
-        const el = document.getElementById(nearest.id);
-        if (el) {
-          const top = el.getBoundingClientRect().top + window.scrollY - 80;
-          window.scrollTo({ top, behavior: "smooth" });
-        }
-      }
-      setIsDragging(false);
+    const nearest = findNearestDot(ratio);
+    if (nearest && Math.abs(nearest.pos - ratio) <= NEAR_THRESHOLD) {
+      setNearDotId(nearest.id);
+    } else {
       setNearDotId(null);
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-    };
+    }
+  }, [findNearestDot]);
 
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
+  const endDrag = useCallback(() => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    const currentProgress = progress;
+    const nearest = findNearestDot(currentProgress);
+    if (nearest && Math.abs(nearest.pos - currentProgress) <= SNAP_THRESHOLD) {
+      const el = document.getElementById(nearest.id);
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+    }
+    setIsDragging(false);
+    setNearDotId(null);
   }, [progress, findNearestDot]);
+
+  // 鼠标事件
+  const onThumbMouseDown = useCallback((e: ReactMouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    startDrag(e.clientY);
+  }, [startDrag]);
+
+  // 触摸事件
+  const onThumbTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!e.touches.length) return;
+    startDrag(e.touches[0].clientY);
+  }, [startDrag]);
+
+  // 全局移动 / 松开监听（鼠标 + 触屏）
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => moveDrag(e.clientY);
+    const onMouseUp = () => endDrag();
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isDraggingRef.current || !e.touches.length) return;
+      e.preventDefault();
+      moveDrag(e.touches[0].clientY);
+    };
+    const onTouchEnd = () => endDrag();
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd);
+    document.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [moveDrag, endDrag]);
 
   // 点击外部关闭目录面板
   useEffect(() => {
@@ -312,6 +339,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
             className="scroll-thumb"
             style={{ top: `${progress * 100}%` }}
             onMouseDown={onThumbMouseDown}
+            onTouchStart={onThumbTouchStart}
             role="slider"
             aria-label="阅读进度滑块"
             aria-valuemin={0}
