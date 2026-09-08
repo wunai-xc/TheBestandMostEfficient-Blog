@@ -1,5 +1,7 @@
 import { SITE, getPinnedPosts, getHomePosts, type Lang } from "@/lib/content";
 import PostCard from "@/components/PostCard";
+import { Icon } from "@iconify/react/offline";
+import { icons } from "@/lib/icons";
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
   const p = await params; const lang = p.lang as Lang;
@@ -11,7 +13,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   return (
     <div className="container" style={{ paddingTop: 0 }}>
       <section className="hero">
-        <h1>{info.title}</h1>
+        <h1>{info.title} <Icon icon={icons["mdi:hand-wave-outline"]} width="1em" height="1em" /></h1>
         <p>{info.content}</p>
       </section>
 

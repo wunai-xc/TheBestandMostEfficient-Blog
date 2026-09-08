@@ -34,7 +34,7 @@ export default function PostBody({ html, slug }: { html: string; slug: string })
           (window as any).mermaid?.initialize({ startOnLoad: true, theme: "default" });
           (window as any).mermaid?.run?.();
         },
-        () => mermaids.forEach((m: any) => { m.textContent = "⚠️ Mermaid 加载失败"; })
+        () => mermaids.forEach((m: any) => { m.textContent = "Mermaid 加载失败"; })
       );
     }
 
@@ -56,11 +56,11 @@ export default function PostBody({ html, slug }: { html: string; slug: string })
               const ro = new ResizeObserver(() => chart.resize());
               ro.observe(c);
             } catch (e) {
-              c.textContent = "⚠️ ECharts 数据解析失败";
+              c.textContent = "ECharts 数据解析失败";
             }
           });
         },
-        () => echarts.forEach((c: any) => { c.textContent = "⚠️ ECharts 加载失败"; })
+        () => echarts.forEach((c: any) => { c.textContent = "ECharts 加载失败"; })
       );
     }
 
@@ -73,21 +73,35 @@ export default function PostBody({ html, slug }: { html: string; slug: string })
           chems.forEach((c: any) => {
             const smiles = c.getAttribute("data-smiles");
             if (!smiles) return;
+            const caption = c.getAttribute("data-caption");
+            // 默认画布缩小；支持短代码指定 width/height
+            const w = parseInt(c.getAttribute("data-width") || "220", 10);
+            const h = parseInt(c.getAttribute("data-height") || "150", 10);
             try {
               (window as any).SmilesDrawer.parse(
                 smiles,
                 (tree: any) => {
-                  const drawer = new (window as any).SmilesDrawer.Drawer();
+                  const wrapper = document.createElement("div");
+                  wrapper.style.cssText = "text-align:center;margin:1em 0;";
+                  // 将尺寸传入 Drawer 构造函数，避免 draw 方法覆盖为默认 500x500
+                  const drawer = new (window as any).SmilesDrawer.Drawer({ width: w, height: h });
                   const canvas = document.createElement("canvas");
                   // smiles-drawer 的 draw 方法接收 canvas 的 id 字符串（传 DOM 元素会失败）
                   const canvasId = `chem-canvas-${Math.random().toString(36).slice(2, 9)}`;
                   canvas.id = canvasId;
-                  canvas.width = 300;
-                  canvas.height = 200;
-                  c.appendChild(canvas);
+                  canvas.style.maxWidth = "100%";
+                  canvas.style.height = "auto";
+                  wrapper.appendChild(canvas);
+                  if (caption) {
+                    const cap = document.createElement("div");
+                    cap.style.cssText = "font-size:0.85em;color:var(--text-secondary);margin-top:6px;";
+                    cap.textContent = caption;
+                    wrapper.appendChild(cap);
+                  }
+                  c.appendChild(wrapper);
                   drawer.draw(tree, canvasId, "light");
                 },
-                (err: any) => {
+                () => {
                   c.textContent = smiles;
                 }
               );
@@ -113,11 +127,11 @@ export default function PostBody({ html, slug }: { html: string; slug: string })
               const svg = viz.renderSVGElement(src);
               (c as any).appendChild(svg);
             } catch (e) {
-              (c as any).textContent = "⚠️ Graphviz 渲染失败";
+              (c as any).textContent = "Graphviz 渲染失败";
             }
           }
         },
-        () => vizs.forEach((c: any) => { c.textContent = "⚠️ Graphviz 加载失败"; })
+        () => vizs.forEach((c: any) => { c.textContent = "Graphviz 加载失败"; })
       );
     }
 
@@ -135,11 +149,11 @@ export default function PostBody({ html, slug }: { html: string; slug: string })
                 staffwidth: 600,
               });
             } catch (e) {
-              c.textContent = "⚠️ 乐谱渲染失败";
+              c.textContent = "乐谱渲染失败";
             }
           });
         },
-        () => abcs.forEach((c: any) => { c.textContent = "⚠️ abc.js 加载失败"; })
+        () => abcs.forEach((c: any) => { c.textContent = "abc.js 加载失败"; })
       );
     }
   }, [html]);

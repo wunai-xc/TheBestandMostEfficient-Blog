@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Icon } from "@iconify/react";
+import { Icon } from "@iconify/react/offline";
+import { icons } from "@/lib/icons";
 
 export default function LangSwitcher() {
   const pathname = usePathname() || "/";
@@ -12,7 +13,7 @@ export default function LangSwitcher() {
 
   return (
     <a href={target} className="icon-btn" title="Language" aria-label="Switch language">
-      <Icon icon="mdi:translate" width="1.2em" height="1.2em" />
+      <Icon icon={icons["mdi:translate"]} data-icon="mdi:translate" width="1.2em" height="1.2em" />
     </a>
   );
 }

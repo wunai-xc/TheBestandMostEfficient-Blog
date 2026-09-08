@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { Icon } from "@iconify/react";
+import { Icon } from "@iconify/react/offline";
+import { icons } from "@/lib/icons";
 
 interface TocItem { id: string; text: string; level: number; }
 
@@ -269,7 +270,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
             aria-hidden={!tocOpen}
           >
             <div className="toc-panel-head">
-              <Icon icon="mdi:table-of-contents" width="1em" height="1em" />
+              <Icon icon={icons["mdi:table-of-contents"]} width="1em" height="1em" />
               <span>目录</span>
             </div>
             <ul className="toc-panel-list">
@@ -360,7 +361,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
         aria-label="回到顶部"
         title="回到顶部"
       >
-        <Icon icon="mdi:arrow-up" width="1.3em" height="1.3em" className="back-top-icon" />
+        <Icon icon={icons["mdi:arrow-up"]} width="1.3em" height="1.3em" className="back-top-icon" />
         <span className="back-top-ring" aria-hidden="true" />
       </button>
     </>

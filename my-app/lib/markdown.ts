@@ -58,9 +58,22 @@ function remarkCustomShortcodes() {
       text = text.replace(/==([^=]+)==/g, '<mark>$1</mark>');
       // [reference:N] -> <sup><a href="#ref-N">[N]</a></sup>
       text = text.replace(/\[reference:(\d+)\]/g, '<sup><a href="#ref-$1" class="ref-link">[$1]</a></sup>');
-      // {{< chem "..." >}} -> <span class="chem">...</span> (SmilesDrawer 处理)
+      // chem 短代码：支持三种格式
+      // 1. {{< chem "SMILES" >}}
+      // 2. {{< chem SMILES >}}
+      // 3. {{< chem smiles="SMILES" caption="..." width="W" height="H" >}}
       text = text.replace(/\{\{< chem "([^"]+)" >\}\}/g, '<span class="chem" data-smiles="$1"></span>');
       text = text.replace(/\{\{< chem ([^ >]+) >\}\}/g, '<span class="chem" data-smiles="$1"></span>');
+      text = text.replace(
+        /\{\{< chem smiles="([^"]+)"(?:\s+caption="([^"]*)")?(?:\s+width="(\d+)")?(?:\s+height="(\d+)")?\s*>\}\}/g,
+        (_m: string, smiles: string, caption: string, w: string, h: string) => {
+          const attrs = [`class="chem"`, `data-smiles="${smiles}"`];
+          if (caption) attrs.push(`data-caption="${caption}"`);
+          if (w) attrs.push(`data-width="${w}"`);
+          if (h) attrs.push(`data-height="${h}"`);
+          return `<span ${attrs.join(" ")}></span>`;
+        }
+      );
       // {{< color "text" "#hex" >}} -> <span style="color:#hex">text</span>
       text = text.replace(/\{\{< color "([^"]+)" "([^"]+)" >\}\}/g, '<span style="color:$2">$1</span>');
       // {{< mark "text" >}} -> <mark>text</mark>

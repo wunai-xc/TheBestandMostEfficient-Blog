@@ -2,6 +2,8 @@
 
 import { useRef, type MouseEvent } from "react";
 import Link from "next/link";
+import { Icon } from "@iconify/react/offline";
+import { icons } from "@/lib/icons";
 import type { Post } from "../lib/site";
 import { SITE } from "../lib/site";
 
@@ -51,7 +53,7 @@ export default function PostCard({ post, lang }: { post: Post; lang: "zh" | "en"
         <span>{post.date}</span>
         <span>{readingTime} {t.readingTime}</span>
         <span>{post.wordCount} {t.words}</span>
-        {post.author && <span>✍️ {post.author}</span>}
+        {post.author && <span><Icon icon={icons["mdi:account-outline"]} width="1em" height="1em" /> {post.author}</span>}
       </div>
       {post.summary && <p className="summary">{post.summary}</p>}
     </article>

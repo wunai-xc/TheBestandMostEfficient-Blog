@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import { Icon } from "@iconify/react/offline";
+import { icons } from "@/lib/icons";
 import {
   getPost, getAllSlugs, getPrevNext, getPosts, SITE, type Lang,
 } from "@/lib/content";
@@ -74,12 +76,12 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
         <header className="post-header">
           <h1>{post.title}</h1>
           <div className="post-meta">
-            <span>📅 {post.date}</span>
-            <span>⏱️ {readingTime} {t.readingTime}</span>
-            <span>📝 {post.wordCount} {t.words}</span>
+            <span><Icon icon={icons["mdi:calendar-month-outline"]} width="1em" height="1em" /> {post.date}</span>
+            <span><Icon icon={icons["mdi:clock-outline"]} width="1em" height="1em" /> {readingTime} {t.readingTime}</span>
+            <span><Icon icon={icons["mdi:file-document-outline"]} width="1em" height="1em" /> {post.wordCount} {t.words}</span>
             {post.author && (
               <span className={`author-badge ${post.isAI ? "ai" : "normal"}`}>
-                {post.isAI ? `⚠️ ${t.aiWarning}` : `作者：${post.author}`}
+                {post.isAI ? <><Icon icon={icons["mdi:alert-outline"]} width="1em" height="1em" /> {t.aiWarning}</> : `作者：${post.author}`}
               </span>
             )}
           </div>

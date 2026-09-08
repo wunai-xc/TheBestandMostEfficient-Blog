@@ -1040,7 +1040,7 @@ html.dark .katex-display {
   padding: 12px 16px;
   border: 1px solid var(--border);
 }
-html.dark .katex { color: #1f2328; }
+html.dark .katex { color: #e8eaed; }
 /* 行内公式在夜间模式下加底色，避免浅色符号看不清 */
 html.dark .article .katex {
   background: var(--code-bg);
