@@ -87,40 +87,6 @@ const PAPER_TEXTURE = `url("data:image/svg+xml;utf8,${encodeURIComponent(
   </svg>`
 )}")`;
 
-// ============ 毛边多边形 clip-path ============
-function makeRoughClip(seed: number): string {
-  const rng = (i: number) => {
-    const v = Math.sin(seed * 9301.0 + i * 49297.0) * 233280.0;
-    return v - Math.floor(v);
-  };
-  const N = 24;
-  const j = 0.012;
-  const pts: string[] = [];
-  const cl = (v: number) => Math.max(0, Math.min(100, v * 100));
-
-  // 顶边 左→右
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    pts.push(`${cl(t).toFixed(2)}% ${cl(0.5 + (rng(i + 1) - 0.5) * j * 2).toFixed(2)}%`);
-  }
-  // 右边 上→下
-  for (let i = 1; i <= N; i++) {
-    const t = i / N;
-    pts.push(`${cl(1 + (rng(i + 11) - 0.5) * j * 2).toFixed(2)}% ${cl(t).toFixed(2)}%`);
-  }
-  // 底边 右→左
-  for (let i = 1; i <= N; i++) {
-    const t = 1 - i / N;
-    pts.push(`${cl(t).toFixed(2)}% ${cl(1 + (rng(i + 23) - 0.5) * j * 2).toFixed(2)}%`);
-  }
-  // 左边 下→上
-  for (let i = 1; i < N; i++) {
-    const t = 1 - i / N;
-    pts.push(`${cl((rng(i + 31) - 0.5) * j * 2).toFixed(2)}% ${cl(t).toFixed(2)}%`);
-  }
-  return `polygon(${pts.join(", ")})`;
-}
-
 // ============ 类型 ============
 type Phase = "done" | "enter-init" | "enter" | "loading" | "complete" | "flash" | "fade" | "exit";
 
@@ -130,7 +96,6 @@ export default function RouteLoading() {
   const [phase, setPhase] = useState<Phase>("done");
   const [dims, setDims] = useState({ vw: 0, vh: 0 });
   const [animKey, setAnimKey] = useState(0);
-  const [clipPath, setClipPath] = useState(() => makeRoughClip(Date.now() % 100000));
   const pendingRef = useRef<string | null>(null);
   const mountedRef = useRef(false);
   const autoExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -152,7 +117,6 @@ export default function RouteLoading() {
     const seed = Date.now() % 100000;
 
     setDims({ vw, vh });
-    setClipPath(makeRoughClip(seed));
     setAnimKey((k) => k + 1);
     setPhase("enter-init");
     clearTimers();
@@ -363,8 +327,8 @@ export default function RouteLoading() {
       `}</style>
 
       {/* 弹窗容器 */}
-      <div
-        style={{
+      {(() => {
+        const popupStyle: React.CSSProperties = {
           position: "absolute",
           top: "50%",
           right: `${POPUP_RIGHT}px`,
@@ -373,11 +337,7 @@ export default function RouteLoading() {
           transform: `translateY(-50%) translateX(${translateX}px)`,
           opacity,
           transition,
-          // 弹窗背景：深色，文字镂空位置透出下层页面
           background: "var(--card, #2a2a2e)",
-          // clip-path（毛边）+ mask（文字镂空）共存
-          clipPath,
-          WebkitClipPath: clipPath,
           maskImage: maskUrl,
           WebkitMaskImage: maskUrl,
           maskMode: "luminance",
@@ -387,10 +347,14 @@ export default function RouteLoading() {
           WebkitMaskPosition: "center",
           maskSize: "100% 100%",
           WebkitMaskSize: "100% 100%",
-          // 隔离 stacking context，纸质纹理只在弹窗内混合
           isolation: "isolate",
           boxShadow: "0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2)",
-        }}
+        };
+        // WebkitMaskMode 不在 React CSS 类型中，用扩展注入
+        const popupStyleExt = { ...popupStyle, WebkitMaskMode: "luminance" } as React.CSSProperties;
+        return (
+      <div
+        style={popupStyleExt}
       >
         {/* 纸质纹理 - 第一层（粗颗粒，multiply） */}
         <div
@@ -469,6 +433,8 @@ export default function RouteLoading() {
           />
         )}
       </div>
+        );
+      })()}
     </div>
   );
 }
