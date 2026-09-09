@@ -51,26 +51,30 @@ const PAPER_TEXTURE = `url("data:image/svg+xml;utf8,${encodeURIComponent(
   </svg>`
 )}")`;
 
-// "LOADING" 字样 SVG mask：用于把三角形头部挖空出字符
-// 用 luminance 模式：白色 = 显示，黑色 = 镂空
-// 三角形为瘦高形（宽:高 = 1:3），viewBox 也用 1:3 比例匹配
-// 字符垂直排列适配瘦高形状
-function loadingMaskSvg(): string {
+// "LOADING" 字样图：用于在三角形头部叠加显示
+// 三角形为瘦高形（宽:高 = 1:3），用三角形内接长方形放置字
+// 内接长方形：在三角形内部居中放一个长方形区域，字在长方形内
+// 三角形顶点向左，右边是底，内接长方形放在右半部分（底附近）
+// 字为浅色（带描边），直接画在三角形上
+function loadingTextSvg(): string {
   // viewBox 120 x 360（宽:高 = 1:3 匹配三角形）
-  // LOADING 7 个字母垂直排列，每字占约 50 高，字间距 5
+  // LOADING 7 个字母垂直排列，放在三角形内接长方形区域
+  // 三角形顶点(0,180) 右上(120,0) 右下(120,360)
+  // 内接长方形：右半部分，约 x: 60-110, y: 30-330
   const letters = "LOADING".split("");
-  const letterH = 48;
-  const startY = 20;
-  const cx = 60; // 水平居中
+  const letterH = 42;
+  const startY = 30;
+  const cx = 88; // 靠右，避开三角形顶点
   const letterSvg = letters
     .map((ch, i) => {
       const y = startY + i * letterH;
-      return `<text x='${cx}' y='${y}' fill='black' font-family='Arial Black, Impact, sans-serif'
-        font-size='42' font-weight='900' text-anchor='middle' dominant-baseline='hanging'>${ch}</text>`;
+      return `<text x='${cx}' y='${y}' fill='#f5f3ee' stroke='#000' stroke-width='1.2'
+        font-family='Arial Black, Impact, sans-serif'
+        font-size='34' font-weight='900' text-anchor='middle' dominant-baseline='hanging'
+        paint-order='stroke'>${ch}</text>`;
     })
     .join("");
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 360'>
-    <rect width='120' height='360' fill='white'/>
     ${letterSvg}
   </svg>`;
   return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
@@ -293,37 +297,25 @@ export default function RouteLoading() {
   const rowW = shapes.reduce((sum, s) => sum + s.w, 0) + gap * (shapes.length - 1);
   const animName = `loading-once-${animKey}`;
 
-  // 用 CSS class 写入 clip-path + 头部 mask，避免 React 内联 style 解析问题
+  // 用 CSS class 写入 clip-path，避免 React 内联 style 解析问题
   // 每次 animKey 变化时 class 名也变化，CSS 规则不会被旧规则污染
+  // 三角形头部不加 mask，三角形完整可见，LOADING 字样作为独立层叠加
   const shapeClass = (i: number) => `loading-shape-${animKey}-${i}`;
   const texClass = (i: number) => `loading-tex-${animKey}-${i}`;
-  const headMask = loadingMaskSvg();
+  const textClass = `loading-text-${animKey}`;
   const clipCss = shapes
-    .map((s, i) => {
-      const isHead = i === 0;
-      return `
+    .map(
+      (s, i) => `
       .${shapeClass(i)} {
         clip-path: ${s.clip};
         -webkit-clip-path: ${s.clip};
-        ${isHead ? `
-          mask-image: ${headMask};
-          mask-mode: luminance;
-          mask-repeat: no-repeat;
-          mask-position: center;
-          mask-size: 100% 100%;
-          -webkit-mask-image: ${headMask};
-          -webkit-mask-mode: luminance;
-          -webkit-mask-repeat: no-repeat;
-          -webkit-mask-position: center;
-          -webkit-mask-size: 100% 100%;
-        ` : ""}
       }
       .${texClass(i)} {
         clip-path: ${s.clip};
         -webkit-clip-path: ${s.clip};
       }
-    `;
-    })
+    `
+    )
     .join("\n");
 
   return (
@@ -353,6 +345,7 @@ export default function RouteLoading() {
         }}
       >
         {shapes.map((s, i) => {
+          const isHead = i === 0; // 三角形头部
           return (
             <div
               key={i}
@@ -394,6 +387,21 @@ export default function RouteLoading() {
                   pointerEvents: "none",
                 }}
               />
+              {/* 三角形头部：LOADING 字样层（带三角形 clip-path，字只显示在三角形内部） */}
+              {isHead && (
+                <div
+                  className={`${shapeClass(i)} ${textClass}`}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundImage: loadingTextSvg(),
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    backgroundSize: "100% 100%",
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
             </div>
           );
         })}
