@@ -42,6 +42,12 @@ export default function PostNav({ items }: { items: TocItem[] }) {
         if (visible.length) {
           visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
           setActive(visible[0].target.id);
+        } else {
+          // 没有标题进入可视区：若已回到页面顶部，清空 active 让粘性标题消失
+          if (window.scrollY < 40) {
+            setActive("");
+          }
+          // 否则保留当前 active（滚动中途的过渡态）
         }
       },
       { rootMargin: "-80px 0px -60% 0px", threshold: [0, 1] }

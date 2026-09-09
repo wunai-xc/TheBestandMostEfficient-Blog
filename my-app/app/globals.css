@@ -622,7 +622,7 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   z-index: 48;
   height: 36px;
   display: flex; align-items: center;
-  padding: 0 24px 0 64px;
+  padding: 0 24px 0 56px;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
@@ -650,7 +650,7 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .toc-fab {
   position: fixed;
   left: 12px;
-  top: 64px;
+  top: 57px;
   z-index: 49;
   width: 34px; height: 34px;
   border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
@@ -708,8 +708,8 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .toc-panel {
   position: fixed;
   left: 12px;
-  top: 104px;
-  width: 260px; max-height: calc(100vh - 120px);
+  top: 96px;
+  width: 260px; max-height: calc(100vh - 112px);
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -974,10 +974,10 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 
 /* ===== 浮动导航响应式 ===== */
 @media (max-width: 768px) {
-  .sticky-heading { padding: 0 16px 0 52px; }
-  .toc-fab { left: 8px; top: 60px; width: 30px; height: 30px; border-radius: 7px; }
+  .sticky-heading { padding: 0 16px 0 48px; }
+  .toc-fab { left: 8px; top: 57px; width: 30px; height: 30px; border-radius: 7px; }
   .hb-icon { width: 14px; height: 10px; }
-  .toc-panel { left: 8px; top: 96px; width: 220px; }
+  .toc-panel { left: 8px; top: 92px; width: 220px; }
   .scroll-rail { right: 4px; width: 22px; }
   .scroll-rail-pct { font-size: 0.55rem; }
   .back-to-top { width: 40px; height: 40px; right: 12px; bottom: 12px; }
@@ -1335,6 +1335,20 @@ html.dark .katex-error { color: #fca5a5; }
 
   /* mark 高亮打印改浅灰底 */
   .article mark { background: #f0f0f0 !important; box-shadow: none !important; }
+
+  /* 标签不打印 */
+  .post-tags { display: none !important; }
+
+  /* 作者徽章：去掉边框，单独一行与时间日期错开 */
+  .author-badge {
+    border: none !important;
+    background: none !important;
+    padding: 2px 0 !important;
+    display: block !important;
+    margin-top: 2px !important;
+    text-align: left;
+  }
+  .author-badge.normal { color: #000 !important; }
 
   /* AI 徽章不进 PDF */
   .author-badge.ai { display: none !important; }
