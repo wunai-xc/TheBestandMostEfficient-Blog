@@ -11,7 +11,9 @@ import { usePathname } from "next/navigation";
  * - 元素间固定间隔（GAP_PX）
  * - 纸质纹理：fractalNoise SVG + 多层叠加
  * - 毛边：clip-path polygon 多点抖动（每个形状独立 seed）
- * - 动画：仅从右向左匀速滑动（linear），双副本无缝循环
+ * - 三角形头部"挖空"出 LOADING 字样（SVG mask + destination-out）
+ * - 动画：单次右 → 左匀速滑动（linear forwards），跑完即结束
+ *   起点在屏幕右外，终点在屏幕左外，时长 = loading 总时长
  *
  * 页面结构（左 → 右）：
  *   头   : 等腰三角形，底 = vh，水平高 = vh / 3，顶点向左
@@ -22,7 +24,7 @@ import { usePathname } from "next/navigation";
  */
 
 // ============== 配置 ==============
-const DURATION = 1.6;             // 单次右 → 左匀速滑动时长（秒）
+const DURATION = 1.6;             // 单次右 → 左匀速滑动时长（秒）= loading 总时长
 const GAP_PX = 12;                 // 元素之间固定间隔（像素）
 const PAPER_OPACITY = 0.22;        // 纸质纹理叠加不透明度
 const EDGE_POINTS = 28;           // 每条边毛边采样点数
@@ -48,6 +50,18 @@ const PAPER_TEXTURE = `url("data:image/svg+xml;utf8,${encodeURIComponent(
     <rect width='100%' height='100%' filter='url(%23n)' opacity='1'/>
   </svg>`
 )}")`;
+
+// "LOADING" 字样 SVG mask：用于把三角形头部挖空出字符
+// 白色 = 显示，黑色 = 挖空；用白色字 + 黑底实现"字被掏空"
+function loadingMaskSvg(): string {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 120'>
+    <rect width='600' height='120' fill='black'/>
+    <text x='50%' y='50%' fill='white' font-family='Arial Black, Impact, sans-serif'
+      font-size='92' font-weight='900' text-anchor='middle' dominant-baseline='central'
+      letter-spacing='6'>LOADING</text>
+  </svg>`;
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+}
 
 // ============== 工具函数 ==============
 function clamp01(v: number): number {
@@ -264,13 +278,14 @@ export default function RouteLoading() {
   const { vw, vh } = dims;
   const gap = GAP_PX;
   const rowW = shapes.reduce((sum, s) => sum + s.w, 0) + gap * (shapes.length - 1);
-  const animName = `loading-rtl-${animKey}`;
-  const COPIES = 2;
+  const animName = `loading-once-${animKey}`;
 
   // 用 CSS class 写入 clip-path，避免 React 内联 style 解析问题
   // 每次 animKey 变化时 class 名也变化，CSS 规则不会被旧规则污染
   const shapeClass = (i: number) => `loading-shape-${animKey}-${i}`;
   const texClass = (i: number) => `loading-tex-${animKey}-${i}`;
+  // 三角形头部专用 class：用 LOADING 字样 mask 把字符挖空
+  const headClass = `loading-head-${animKey}`;
   const clipCss = shapes
     .map(
       (s, i) => `
@@ -307,71 +322,80 @@ export default function RouteLoading() {
           height: `${vh}px`,
           display: "flex",
           alignItems: "stretch",
-          gap: `${gap}px`, // 副本之间也保持固定间隔，确保无缝循环时间距一致
+          gap: `${gap}px`,
           willChange: "transform",
-          animation: `${animName} ${DURATION}s linear infinite`,
+          animation: `${animName} ${DURATION}s linear forwards`,
         }}
       >
-        {Array.from({ length: COPIES }).map((_, ci) => (
-          <div
-            key={ci}
-            style={{
-              display: "flex",
-              alignItems: "stretch",
-              flexShrink: 0,
-              gap: `${gap}px`,
-            }}
-          >
-            {shapes.map((s, i) => (
+        {shapes.map((s, i) => {
+          const isHead = i === 0; // 三角形头部
+          return (
+            <div
+              key={i}
+              className={shapeClass(i)}
+              style={{
+                position: "relative",
+                width: `${s.w}px`,
+                height: `${s.h}px`,
+                background: s.color,
+                flexShrink: 0,
+              }}
+            >
+              {/* 纸质纹理叠加 - 第一层（粗颗粒，multiply） */}
               <div
-                key={`${ci}-${i}`}
-                className={shapeClass(i)}
+                className={texClass(i)}
                 style={{
-                  position: "relative",
-                  width: `${s.w}px`,
-                  height: `${s.h}px`,
-                  background: s.color,
-                  flexShrink: 0,
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage: PAPER_TEXTURE,
+                  backgroundRepeat: "repeat",
+                  backgroundSize: "240px 240px",
+                  mixBlendMode: "multiply",
+                  opacity: PAPER_OPACITY,
+                  pointerEvents: "none",
                 }}
-              >
-                {/* 纸质纹理叠加 - 第一层（粗颗粒，multiply） */}
+              />
+              {/* 纸质纹理叠加 - 第二层（细颗粒，soft-light） */}
+              <div
+                className={texClass(i)}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage: PAPER_TEXTURE,
+                  backgroundRepeat: "repeat",
+                  backgroundSize: "120px 120px",
+                  mixBlendMode: "soft-light",
+                  opacity: PAPER_OPACITY * 0.6,
+                  pointerEvents: "none",
+                }}
+              />
+              {/* 三角形头部：LOADING 字样挖空层 */}
+              {isHead && (
                 <div
-                  className={texClass(i)}
+                  className={headClass}
                   style={{
                     position: "absolute",
                     inset: 0,
-                    backgroundImage: PAPER_TEXTURE,
-                    backgroundRepeat: "repeat",
-                    backgroundSize: "240px 240px",
-                    mixBlendMode: "multiply",
-                    opacity: PAPER_OPACITY,
+                    backgroundImage: loadingMaskSvg(),
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                    backgroundSize: "contain",
+                    mixBlendMode: "destination-out" as React.CSSProperties["mixBlendMode"],
+                    opacity: 1,
                     pointerEvents: "none",
                   }}
                 />
-                {/* 纸质纹理叠加 - 第二层（细颗粒，soft-light） */}
-                <div
-                  className={texClass(i)}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    backgroundImage: PAPER_TEXTURE,
-                    backgroundRepeat: "repeat",
-                    backgroundSize: "120px 120px",
-                    mixBlendMode: "soft-light",
-                    opacity: PAPER_OPACITY * 0.6,
-                    pointerEvents: "none",
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
       <style>{`
         @keyframes ${animName} {
-          /* 起始位置偏移一个周期(rowW+gap)，使 t=0 时 copy1 已在屏幕内可见 */
-          from { transform: translateX(${vw - rowW - gap}px); }
-          to { transform: translateX(${vw - 2 * (rowW + gap)}px); }
+          /* 起点：整行在屏幕右侧外（左端紧贴屏幕右缘） */
+          from { transform: translateX(${vw}px); }
+          /* 终点：整行完全滑出屏幕左侧外（右端紧贴屏幕左缘） */
+          to { transform: translateX(${-rowW}px); }
         }
       `}</style>
     </div>
