@@ -337,7 +337,7 @@ export default function RouteLoading() {
           transform: `translateY(-50%) translateX(${translateX}px)`,
           opacity,
           transition,
-          background: "var(--card, #2a2a2e)",
+          background: "#b81104", // 米兰红
           maskImage: maskUrl,
           WebkitMaskImage: maskUrl,
           maskMode: "luminance",
@@ -406,9 +406,9 @@ export default function RouteLoading() {
               right: 0,
               height: `${barPct}%`,
               background:
-                "linear-gradient(to top, var(--accent, #5b8def), color-mix(in srgb, var(--accent, #5b8def) 60%, white))",
+                "linear-gradient(to top, #a3e635, #d9f99d)", // 鲜艳黄绿色
               transition: barTransition,
-              boxShadow: "0 0 6px var(--accent, #5b8def), 0 0 12px color-mix(in srgb, var(--accent, #5b8def) 40%, transparent)",
+              boxShadow: "0 0 6px #a3e635, 0 0 12px rgba(163, 230, 53, 0.6)",
               borderRadius: "3px",
             }}
           />
