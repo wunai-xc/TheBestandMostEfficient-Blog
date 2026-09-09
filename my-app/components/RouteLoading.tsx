@@ -119,7 +119,7 @@ function rng(seed: number) {
 
 /**
  * 生成矩形毛边多边形 clip-path（4 条边各采样 N 点 + 抖动）
- * 坐标空间 [0,1]x[0,1]
+ * 坐标空间 [0,1]x[0,1]，输出带 % 单位
  */
 function makeRoughRectClip(seed: number): string {
   const r = rng(seed);
@@ -130,28 +130,29 @@ function makeRoughRectClip(seed: number): string {
   // 顶边 左→右
   for (let i = 0; i <= N; i++) {
     const t = i / N;
-    pts.push(`${t.toFixed(4)} ${clamp01(0.5 + (r(i + 1) - 0.5) * j * 2).toFixed(4)}`);
+    pts.push(`${(t * 100).toFixed(4)}% ${(clamp01(0.5 + (r(i + 1) - 0.5) * j * 2) * 100).toFixed(4)}%`);
   }
   // 右边 上→下
   for (let i = 1; i <= N; i++) {
     const t = i / N;
-    pts.push(`${clamp01(1 + (r(i + 11) - 0.5) * j * 2).toFixed(4)} ${t.toFixed(4)}`);
+    pts.push(`${(clamp01(1 + (r(i + 11) - 0.5) * j * 2) * 100).toFixed(4)}% ${(t * 100).toFixed(4)}%`);
   }
   // 底边 右→左
   for (let i = 1; i <= N; i++) {
     const t = 1 - i / N;
-    pts.push(`${t.toFixed(4)} ${clamp01(1 + (r(i + 23) - 0.5) * j * 2).toFixed(4)}`);
+    pts.push(`${(t * 100).toFixed(4)}% ${(clamp01(1 + (r(i + 23) - 0.5) * j * 2) * 100).toFixed(4)}%`);
   }
   // 左边 下→上
   for (let i = 1; i < N; i++) {
     const t = 1 - i / N;
-    pts.push(`${clamp01((r(i + 31) - 0.5) * j * 2).toFixed(4)} ${t.toFixed(4)}`);
+    pts.push(`${(clamp01((r(i + 31) - 0.5) * j * 2) * 100).toFixed(4)}% ${(t * 100).toFixed(4)}%`);
   }
   return `polygon(${pts.join(", ")})`;
 }
 
 /**
- * 生成三角形毛边多边形（顶点向左：顶点(0,0.5) → 右上(1,0) → 右下(1,1)）
+ * 生成三角形毛边多边形（顶点向左：顶点(0%,50%) → 右上(100%,0%) → 右下(100%,100%)）
+ * 输出带 % 单位
  */
 function makeRoughTriClip(seed: number): string {
   const r = rng(seed);
@@ -164,19 +165,19 @@ function makeRoughTriClip(seed: number): string {
     const t = i / N;
     const x = clamp01(t + (r(i + 1) - 0.5) * j * 2);
     const y = clamp01(0.5 - t * 0.5 + (r(i + 1) - 0.5) * j * 2);
-    pts.push(`${x.toFixed(4)} ${y.toFixed(4)}`);
+    pts.push(`${(x * 100).toFixed(4)}% ${(y * 100).toFixed(4)}%`);
   }
   // 边 2：右上(1,0) → 右下(1,1)
   for (let i = 1; i <= N; i++) {
     const t = i / N;
-    pts.push(`${clamp01(1 + (r(i + 11) - 0.5) * j * 2).toFixed(4)} ${t.toFixed(4)}`);
+    pts.push(`${(clamp01(1 + (r(i + 11) - 0.5) * j * 2) * 100).toFixed(4)}% ${(t * 100).toFixed(4)}%`);
   }
   // 边 3：右下(1,1) → 顶点(0,0.5)
   for (let i = 1; i < N; i++) {
     const t = 1 - i / N;
     const x = clamp01(t + (r(i + 23) - 0.5) * j * 2);
     const y = clamp01(1 - t * 0.5 + (r(i + 23) - 0.5) * j * 2);
-    pts.push(`${x.toFixed(4)} ${y.toFixed(4)}`);
+    pts.push(`${(x * 100).toFixed(4)}% ${(y * 100).toFixed(4)}%`);
   }
   return `polygon(${pts.join(", ")})`;
 }
