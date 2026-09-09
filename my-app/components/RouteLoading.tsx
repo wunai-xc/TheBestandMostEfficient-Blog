@@ -45,12 +45,26 @@ const FLASH_DURATION = 0.35;       // 闪光扫过时长
 const FADE_DURATION = 0.4;          // 透明淡出时长
 const EXIT_DURATION = 0.4;         // 向右淡出时长
 
-const POPUP_WIDTH = 96;            // 弹窗宽度（px）
-const BAR_WIDTH = 6;               // 进度条宽度（px）
+// 响应式尺寸：基于屏幕尺寸的百分比 + 最小/最大值边界
+// 弹窗宽度 = 屏幕宽的 8%，范围 [80, 160]px
+function computePopupW(vw: number): number {
+  return Math.round(Math.max(80, Math.min(160, vw * 0.08)));
+}
+// 弹窗上下边距 = 屏幕高的 5%，范围 [24, 64]px
+function computeMarginV(vh: number): number {
+  return Math.round(Math.max(24, Math.min(64, vh * 0.05)));
+}
+// 进度条宽度 = 弹窗宽的 6%，范围 [4, 10]px
+function computeBarW(popupW: number): number {
+  return Math.round(Math.max(4, Math.min(10, popupW * 0.06)));
+}
+// 闪光宽度 = 弹窗宽的 15%，范围 [8, 24]px
+function computeFlashW(popupW: number): number {
+  return Math.round(Math.max(8, Math.min(24, popupW * 0.15)));
+}
+
 const BAR_GAP = 0;                 // 进度条贴弹窗右边缘
-const SCREEN_MARGIN_V = 48;       // 弹窗与屏幕上下边缘距离（px）
 const POPUP_RIGHT = 0;            // 弹窗最终位置距屏幕右边缘（px）- 完全贴右
-const FLASH_WIDTH = 14;           // 闪光宽度（px）
 
 // ============ LOADING 文字 mask（镂空）============
 // 白色背景 = 弹窗显示，黑色文字 = 镂空（透出下层页面）
@@ -213,14 +227,31 @@ export default function RouteLoading() {
     stopLoading();
   }, [pathname, stopLoading]);
 
+  // 屏幕尺寸变化（旋转、窗口缩放）→ 实时更新弹窗尺寸
+  useEffect(() => {
+    if (phase === "done") return;
+    function onResize() {
+      setDims({ vw: window.innerWidth, vh: window.innerHeight });
+    }
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, [phase]);
+
   // 清理
   useEffect(() => () => clearTimers(), [clearTimers]);
 
   if (phase === "done") return null;
 
   const { vw, vh } = dims;
-  const popupH = Math.max(200, vh - 2 * SCREEN_MARGIN_V);
-  const popupW = POPUP_WIDTH;
+  const marginV = computeMarginV(vh);
+  const popupH = Math.max(200, vh - 2 * marginV);
+  const popupW = computePopupW(vw);
+  const barW = computeBarW(popupW);
+  const flashW = computeFlashW(popupW);
   const maskUrl = loadingMaskSvg(popupW, popupH);
   const flashAnimName = `loading-flash-${animKey}`;
 
@@ -302,7 +333,7 @@ export default function RouteLoading() {
   }
 
   // 闪光起点：进度条左侧位置
-  const flashStartX = popupW - BAR_GAP - BAR_WIDTH - FLASH_WIDTH;
+  const flashStartX = popupW - BAR_GAP - barW - flashW;
   const flashEndX = 0;
   const showFlash = phase === "flash";
 
@@ -401,7 +432,7 @@ export default function RouteLoading() {
             right: `${BAR_GAP}px`,
             top: "20px",
             bottom: "20px",
-            width: `${BAR_WIDTH}px`,
+            width: `${barW}px`,
             background: "rgba(255,255,255,0.08)",
             borderRadius: "3px",
             overflow: "hidden",
@@ -432,7 +463,7 @@ export default function RouteLoading() {
               position: "absolute",
               top: 0,
               bottom: 0,
-              width: `${FLASH_WIDTH}px`,
+              width: `${flashW}px`,
               background:
                 "linear-gradient(to right, transparent, rgba(255,255,255,0.9) 40%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.9) 60%, transparent)",
               filter: "blur(1.5px)",
