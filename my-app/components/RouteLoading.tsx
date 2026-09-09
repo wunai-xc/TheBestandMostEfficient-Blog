@@ -47,7 +47,7 @@ const EXIT_DURATION = 0.4;         // 向右淡出时长
 
 const POPUP_WIDTH = 96;            // 弹窗宽度（px）
 const BAR_WIDTH = 6;               // 进度条宽度（px）
-const BAR_GAP = 10;                // 进度条与弹窗右边缘距离（px）
+const BAR_GAP = 0;                 // 进度条贴弹窗右边缘
 const SCREEN_MARGIN_V = 48;       // 弹窗与屏幕上下边缘距离（px）
 const POPUP_RIGHT = 0;            // 弹窗最终位置距屏幕右边缘（px）- 完全贴右
 const FLASH_WIDTH = 14;           // 闪光宽度（px）
