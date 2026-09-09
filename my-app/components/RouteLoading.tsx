@@ -53,13 +53,25 @@ const PAPER_TEXTURE = `url("data:image/svg+xml;utf8,${encodeURIComponent(
 
 // "LOADING" 字样 SVG mask：用于把三角形头部挖空出字符
 // 用 luminance 模式：白色 = 显示，黑色 = 镂空
-// 白色背景 + 黑色字 → 字位置镂空，其他位置显示
+// 三角形为瘦高形（宽:高 = 1:3），viewBox 也用 1:3 比例匹配
+// 字符垂直排列适配瘦高形状
 function loadingMaskSvg(): string {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 120'>
-    <rect width='600' height='120' fill='white'/>
-    <text x='50%' y='50%' fill='black' font-family='Arial Black, Impact, sans-serif'
-      font-size='92' font-weight='900' text-anchor='middle' dominant-baseline='central'
-      letter-spacing='6'>LOADING</text>
+  // viewBox 120 x 360（宽:高 = 1:3 匹配三角形）
+  // LOADING 7 个字母垂直排列，每字占约 50 高，字间距 5
+  const letters = "LOADING".split("");
+  const letterH = 48;
+  const startY = 20;
+  const cx = 60; // 水平居中
+  const letterSvg = letters
+    .map((ch, i) => {
+      const y = startY + i * letterH;
+      return `<text x='${cx}' y='${y}' fill='black' font-family='Arial Black, Impact, sans-serif'
+        font-size='42' font-weight='900' text-anchor='middle' dominant-baseline='hanging'>${ch}</text>`;
+    })
+    .join("");
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 360'>
+    <rect width='120' height='360' fill='white'/>
+    ${letterSvg}
   </svg>`;
   return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
 }
@@ -285,7 +297,6 @@ export default function RouteLoading() {
   // 每次 animKey 变化时 class 名也变化，CSS 规则不会被旧规则污染
   const shapeClass = (i: number) => `loading-shape-${animKey}-${i}`;
   const texClass = (i: number) => `loading-tex-${animKey}-${i}`;
-  const headClass = `loading-head-${animKey}`;
   const headMask = loadingMaskSvg();
   const clipCss = shapes
     .map((s, i) => {
@@ -299,12 +310,12 @@ export default function RouteLoading() {
           mask-mode: luminance;
           mask-repeat: no-repeat;
           mask-position: center;
-          mask-size: contain;
+          mask-size: 100% 100%;
           -webkit-mask-image: ${headMask};
           -webkit-mask-mode: luminance;
           -webkit-mask-repeat: no-repeat;
           -webkit-mask-position: center;
-          -webkit-mask-size: contain;
+          -webkit-mask-size: 100% 100%;
         ` : ""}
       }
       .${texClass(i)} {
