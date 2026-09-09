@@ -52,11 +52,12 @@ const PAPER_TEXTURE = `url("data:image/svg+xml;utf8,${encodeURIComponent(
 )}")`;
 
 // "LOADING" 字样 SVG mask：用于把三角形头部挖空出字符
-// 白色 = 显示，黑色 = 挖空；用白色字 + 黑底实现"字被掏空"
+// 用 luminance 模式：白色 = 显示，黑色 = 镂空
+// 白色背景 + 黑色字 → 字位置镂空，其他位置显示
 function loadingMaskSvg(): string {
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 120'>
-    <rect width='600' height='120' fill='black'/>
-    <text x='50%' y='50%' fill='white' font-family='Arial Black, Impact, sans-serif'
+    <rect width='600' height='120' fill='white'/>
+    <text x='50%' y='50%' fill='black' font-family='Arial Black, Impact, sans-serif'
       font-size='92' font-weight='900' text-anchor='middle' dominant-baseline='central'
       letter-spacing='6'>LOADING</text>
   </svg>`;
@@ -280,25 +281,38 @@ export default function RouteLoading() {
   const rowW = shapes.reduce((sum, s) => sum + s.w, 0) + gap * (shapes.length - 1);
   const animName = `loading-once-${animKey}`;
 
-  // 用 CSS class 写入 clip-path，避免 React 内联 style 解析问题
+  // 用 CSS class 写入 clip-path + 头部 mask，避免 React 内联 style 解析问题
   // 每次 animKey 变化时 class 名也变化，CSS 规则不会被旧规则污染
   const shapeClass = (i: number) => `loading-shape-${animKey}-${i}`;
   const texClass = (i: number) => `loading-tex-${animKey}-${i}`;
-  // 三角形头部专用 class：用 LOADING 字样 mask 把字符挖空
   const headClass = `loading-head-${animKey}`;
+  const headMask = loadingMaskSvg();
   const clipCss = shapes
-    .map(
-      (s, i) => `
+    .map((s, i) => {
+      const isHead = i === 0;
+      return `
       .${shapeClass(i)} {
         clip-path: ${s.clip};
         -webkit-clip-path: ${s.clip};
+        ${isHead ? `
+          mask-image: ${headMask};
+          mask-mode: luminance;
+          mask-repeat: no-repeat;
+          mask-position: center;
+          mask-size: contain;
+          -webkit-mask-image: ${headMask};
+          -webkit-mask-mode: luminance;
+          -webkit-mask-repeat: no-repeat;
+          -webkit-mask-position: center;
+          -webkit-mask-size: contain;
+        ` : ""}
       }
       .${texClass(i)} {
         clip-path: ${s.clip};
         -webkit-clip-path: ${s.clip};
       }
-    `
-    )
+    `;
+    })
     .join("\n");
 
   return (
@@ -310,7 +324,7 @@ export default function RouteLoading() {
         zIndex: 9999,
         overflow: "hidden",
         pointerEvents: "none",
-        background: "#f5f3ee", // 纸张底色
+        background: "transparent", // 整体透明，不挡下层页面
       }}
     >
       <style dangerouslySetInnerHTML={{ __html: clipCss }} />
@@ -328,7 +342,6 @@ export default function RouteLoading() {
         }}
       >
         {shapes.map((s, i) => {
-          const isHead = i === 0; // 三角形头部
           return (
             <div
               key={i}
@@ -339,6 +352,7 @@ export default function RouteLoading() {
                 height: `${s.h}px`,
                 background: s.color,
                 flexShrink: 0,
+                isolation: "isolate", // 创建独立 stacking context，纸质纹理 mix-blend-mode 只在形状内部混合，不穿透到下层页面
               }}
             >
               {/* 纸质纹理叠加 - 第一层（粗颗粒，multiply） */}
@@ -369,23 +383,6 @@ export default function RouteLoading() {
                   pointerEvents: "none",
                 }}
               />
-              {/* 三角形头部：LOADING 字样挖空层 */}
-              {isHead && (
-                <div
-                  className={headClass}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    backgroundImage: loadingMaskSvg(),
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "center",
-                    backgroundSize: "contain",
-                    mixBlendMode: "destination-out" as React.CSSProperties["mixBlendMode"],
-                    opacity: 1,
-                    pointerEvents: "none",
-                  }}
-                />
-              )}
             </div>
           );
         })}
