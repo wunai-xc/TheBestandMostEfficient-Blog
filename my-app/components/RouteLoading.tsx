@@ -224,20 +224,19 @@ export default function RouteLoading() {
   const maskUrl = loadingMaskSvg(popupW, popupH);
   const flashAnimName = `loading-flash-${animKey}`;
 
-  // 计算位移和透明度
+  // 计算位移、透明度、背景色
   let translateX = 0;
   let opacity = 1;
+  let popupBg = "#b81104"; // 米兰红
   let transition = "none";
 
   switch (phase) {
     case "enter-init":
-      // 初始位置：屏幕右外
       translateX = popupW + POPUP_RIGHT + 20;
       opacity = 0;
       transition = "none";
       break;
     case "enter":
-      // 滑入到目标位置
       translateX = 0;
       opacity = 1;
       transition = `transform ${ENTER_DURATION}s cubic-bezier(0.22, 0.61, 0.36, 1), opacity ${ENTER_DURATION}s ease-out`;
@@ -246,21 +245,26 @@ export default function RouteLoading() {
     case "complete":
       translateX = 0;
       opacity = 1;
+      popupBg = "#b81104";
       transition = "none";
       break;
     case "flash":
+      // 闪光扫过时背景色从米兰红渐变到浅蓝色
       translateX = 0;
       opacity = 1;
-      transition = "none";
+      popupBg = "#7dd3fc"; // 浅蓝色（天色-300）
+      transition = `background-color ${FLASH_DURATION}s ease-out`;
       break;
     case "fade":
       translateX = 0;
       opacity = 0;
+      popupBg = "#7dd3fc";
       transition = `opacity ${FADE_DURATION}s ease-out`;
       break;
     case "exit":
       translateX = popupW + POPUP_RIGHT + 20;
       opacity = 0;
+      popupBg = "#7dd3fc";
       transition = `transform ${EXIT_DURATION}s cubic-bezier(0.4, 0, 1, 1), opacity ${EXIT_DURATION}s ease-out`;
       break;
   }
@@ -337,7 +341,7 @@ export default function RouteLoading() {
           transform: `translateY(-50%) translateX(${translateX}px)`,
           opacity,
           transition,
-          background: "#b81104", // 米兰红
+          background: popupBg,
           maskImage: maskUrl,
           WebkitMaskImage: maskUrl,
           maskMode: "luminance",
