@@ -9,6 +9,30 @@ import PostBody from "@/components/PostBody";
 import PostNav from "@/components/PostNav";
 import Comments from "@/components/Comments";
 import PrintControls from "@/components/PrintControls";
+import type { Post } from "@/lib/site";
+
+// 重建完整 Markdown（YAML frontmatter + 正文），供下载按钮使用
+function buildFullMarkdown(post: Post): string {
+  const lines: string[] = [];
+  lines.push("---");
+  lines.push(`title: ${toYamlString(post.title)}`);
+  lines.push(`date: ${post.date}`);
+  lines.push(`draft: false`);
+  if (post.author) lines.push(`author: ${toYamlString(post.author)}`);
+  if (post.tags.length) lines.push(`tags: ${toYamlArray(post.tags)}`);
+  if (post.categories.length) lines.push(`categories: ${toYamlArray(post.categories)}`);
+  if (post.summary) lines.push(`summary: ${toYamlString(post.summary)}`);
+  lines.push("---");
+  lines.push("");
+  return lines.join("\n") + post.content;
+}
+function toYamlString(s: string): string {
+  if (/[:#"'{}\[\],&*?!|>%@`]/.test(s)) return JSON.stringify(s);
+  return s;
+}
+function toYamlArray(arr: string[]): string {
+  return `[${arr.map((s) => toYamlString(s)).join(", ")}]`;
+}
 
 export const dynamicParams = false;
 
@@ -42,6 +66,9 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
     mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE.url}/${lang}/posts/${encodeURIComponent(post.slug)}/` },
     publisher: { "@type": "Organization", name: SITE.title },
   };
+
+  // 重建完整 Markdown（含 YAML frontmatter + 正文），供下载
+  const mdContent = buildFullMarkdown(post);
 
   return (
     <div className="post-layout">
@@ -77,7 +104,7 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
         <header className="post-header">
           <div className="post-header-row">
             <h1>{post.title}</h1>
-            <PrintControls singleLabel={t.printSingle} duplexLabel={t.printDuplex} />
+            <PrintControls printLabel={t.printSingle} mdDownloadLabel={t.mdDownload} mdContent={mdContent} mdFileName={post.slug} />
           </div>
           <div className="post-meta">
             <span><Icon icon={icons["mdi:calendar-month-outline"]} width="1em" height="1em" /> {post.date}</span>

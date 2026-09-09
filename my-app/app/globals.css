@@ -1164,69 +1164,62 @@ html.dark .katex-error { color: #fca5a5; }
   body { background: #fff; color: #000; }
   .article a { color: #000; text-decoration: underline; }
 
-  /* 页面 margin：上下留 1.8cm 给页眉/页脚，左右 1.5cm */
+  /* 页面 margin：上下各 0.9cm（页眉 0.7cm + 页脚 0.7cm 各留 0.2cm 缓冲），左右 1.5cm
+     @page margin 决定每页内容区边界，fixed 页眉页脚从纸张边缘画起，
+     必须让 margin-top >= 页眉高度 + 缓冲，否则正文会被遮盖 */
   @page {
-    margin: 1.8cm 1.5cm;
+    margin-top: 0.9cm;
+    margin-bottom: 0.9cm;
+    margin-left: 1.5cm;
+    margin-right: 1.5cm;
   }
 
   /* 打印时显示页眉页脚，fixed 让其在每页重复 */
   .print-header, .print-footer { display: flex; }
 
-  /* 页眉：顶部固定，左侧时间和作者 */
+  /* 页眉：顶部固定，左侧日期与作者 */
   .print-header {
     position: fixed;
     top: 0; left: 0; right: 0;
-    height: 1.1cm;
+    height: 0.7cm;
     align-items: center;
-    font-size: 10pt; color: #444;
+    font-size: 10px; color: #444;
     border-bottom: 0.5pt solid #ccc;
-    padding: 0 0.2cm;
+    padding: 0 0.3cm;
     box-sizing: border-box;
+    background: #fff;
+    z-index: 9999;
   }
 
-  /* 页脚：底部固定，左侧标题 + 页码位置（单面居中 / 双面靠右） */
+  /* 页脚：底部固定，左侧标题 + 页码 */
   .print-footer {
     position: fixed;
     bottom: 0; left: 0; right: 0;
-    height: 1.1cm;
+    height: 0.7cm;
     align-items: center;
-    font-size: 10pt; color: #444;
+    font-size: 10px; color: #444;
     border-top: 0.5pt solid #ccc;
-    padding: 0 0.2cm;
+    padding: 0 0.3cm;
     box-sizing: border-box;
+    background: #fff;
+    z-index: 9999;
+    justify-content: space-between;
   }
   .print-footer-title {
     flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    margin-right: 10px;
   }
   .print-pagenum {
     flex: 0 0 auto;
-    /* 页码格式：数字 | 总页数（CSS 计数器在 fixed 元素中由浏览器自动维护） */
   }
   .print-pagenum::before {
     content: counter(page) " | " counter(pages);
   }
 
-  /* 单面打印（默认）：页码居中（覆盖整行宽度，标题让位） */
-  .print-footer-mode-single .print-footer { justify-content: flex-start; }
-  .print-footer-mode-single .print-footer-title { visibility: hidden; }
-  .print-footer-mode-single .print-pagenum {
-    position: absolute; left: 0; right: 0;
-    text-align: center;
-  }
-
-  /* 双面打印：标题在左，页码始终靠右 */
-  .print-footer-mode-duplex .print-footer { justify-content: space-between; }
-  .print-footer-mode-duplex .print-pagenum { margin-left: auto; }
-
-  /* 页眉页脚加固：白色背景 + 最高 z-index，防止被正文遮挡 */
-  .print-header, .print-footer {
-    z-index: 9999;
-    background: #fff;
-  }
-
-  /* 防止正文被页眉/页脚遮挡 */
-  .post-content { padding-top: 0.4cm; padding-bottom: 0.4cm; }
+  /* 正文区域：向内收缩，双重保险不被页眉页脚遮盖
+     @page margin 已经设了 0.9cm，这里再加 0.4cm 安全垫 */
+  .post-content { padding-top: 0.5cm; padding-bottom: 0.5cm; }
 
   /* ===== 正文字号（参考 Hugo 原版打印样式：A4 密度合理） ===== */
   /* 正文 11px(≈3mm)，标题明显大于正文，代码/表格可读 */

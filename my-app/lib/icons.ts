@@ -16,6 +16,7 @@ import mdiThemeLightDark from "@iconify/icons-mdi/theme-light-dark";
 import mdiPrinterOutline from "@iconify/icons-mdi/printer-outline";
 import mdiFlipToFront from "@iconify/icons-mdi/flip-to-front";
 import mdiBookOpenOutline from "@iconify/icons-mdi/book-open-outline";
+import mdiFileDownloadOutline from "@iconify/icons-mdi/file-download-outline";
 
 export const icons = {
   "mdi:calendar-month-outline": mdiCalendarMonthOutline,
@@ -35,6 +36,7 @@ export const icons = {
   "mdi:printer-outline": mdiPrinterOutline,
   "mdi:flip-to-front": mdiFlipToFront,
   "mdi:book-open-outline": mdiBookOpenOutline,
+  "mdi:file-download-outline": mdiFileDownloadOutline,
 } as const;
 
 export type IconName = keyof typeof icons;
