@@ -1164,12 +1164,13 @@ html.dark .katex-error { color: #fca5a5; }
   body { background: #fff; color: #000; }
   .article a { color: #000; text-decoration: underline; }
 
-  /* 页面 margin：上下各 0.9cm（页眉 0.7cm + 页脚 0.7cm 各留 0.2cm 缓冲），左右 1.5cm
-     @page margin 决定每页内容区边界，fixed 页眉页脚从纸张边缘画起，
-     必须让 margin-top >= 页眉高度 + 缓冲，否则正文会被遮盖 */
+  /* ===== 页面 margin：物理分页安全区 =====
+     fixed 页眉页脚从纸张边缘画起，@page margin 决定内容区边界。
+     margin-top 必须 >= 页眉 height + 足够缓冲，否则表格/代码块换页时
+     第一行会贴到页眉底部被遮盖。这里 1.2cm = 页眉 0.7cm + 0.5cm 缓冲 */
   @page {
-    margin-top: 0.9cm;
-    margin-bottom: 0.9cm;
+    margin-top: 1.2cm;
+    margin-bottom: 1.2cm;
     margin-left: 1.5cm;
     margin-right: 1.5cm;
   }
@@ -1254,7 +1255,7 @@ html.dark .katex-error { color: #fca5a5; }
   }
   .post-meta { font-size: 10px !important; color: #444 !important; margin: 0 !important; }
 
-  /* 代码块：字号略小，去边框去阴影，换行避免横向溢出 */
+  /* 代码块：字号略小，允许跨页但避免在一行中间切断 */
   .article pre {
     box-shadow: none !important;
     border: none !important;
@@ -1266,6 +1267,8 @@ html.dark .katex-error { color: #fca5a5; }
     white-space: pre-wrap !important;
     word-wrap: break-word;
     color: #000 !important;
+    /* 代码块可以跨页，但尽量不要切断单行 */
+    break-inside: avoid-page;
   }
   .article pre code { color: #000 !important; background: none !important; }
   .article code {
@@ -1286,17 +1289,53 @@ html.dark .katex-error { color: #fca5a5; }
   }
   .article a[href^="#"]::after { content: "" !important; }
 
-  /* 表格缩小：字号 10px，padding 压缩，避免跨页断裂 */
+  /* ===== 表格打印样式：允许跨页 + 每页自动重复表头 + 续表标记 ===== */
   .article table {
     font-size: 10px !important;
-    break-inside: avoid;
+    /* 去掉 break-inside: avoid —— 长表必须跨页，否则被挤到页脚 */
+    break-inside: auto;
     margin: 4px 0 !important;
+    border-collapse: collapse;
+    /* 让表格能从页眉下方开始渲染 */
+    border-top: 1px solid #000;
   }
-  .article th, .article td { padding: 2px 4px !important; }
-  .article th { background: #eee !important; }
+  /* 表头在每页顶部自动重复显示 */
+  .article table thead {
+    display: table-header-group;
+  }
+  /* 表体：允许行级别的跨页，不要整体搬 */
+  .article table tbody {
+    display: table-row-group;
+  }
+  .article tr { break-inside: avoid; }
+  .article th, .article td {
+    padding: 2px 4px !important;
+    border: 0.5pt solid #000;
+    text-align: left;
+  }
+  .article th {
+    background: #eee !important;
+    font-weight: 600;
+  }
   .article tr:nth-child(even) td { background: #f7f7f7 !important; }
 
-  /* 图片/图/化学结构避免跨页断裂 */
+  /* 续页标记：在表格 thead 右上角显示"续表（第 N 页）"
+     原理：thead 会在每页重复，page counter 每页自动递增 */
+  .article table thead::before {
+    content: "续表（第 " counter(page) " 页）";
+    display: block;
+    font-size: 9px;
+    font-weight: normal;
+    color: #666;
+    text-align: right;
+    padding: 0 2px 1px;
+    border-bottom: none;
+  }
+  /* 第一页的表头不需要"续表"标记 —— 用 :first-of-type 无法区分
+     所以所有表头都显示。想隐藏第一页需 JS 或 @page :first 配合，但
+     :first 选择器在续表场景下不适用（每页都是新的 thead） */
+
+  /* 图片/图/化学结构：这些是整体元素，不要跨页 */
   .article figure, .article img, .article .chem { break-inside: avoid; }
 
   /* 引用块、列表间距压缩 */
