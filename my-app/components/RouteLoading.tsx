@@ -381,7 +381,6 @@ export default function RouteLoading() {
           maskImage: maskUrl,
           WebkitMaskImage: maskUrl,
           maskMode: "luminance",
-          WebkitMaskMode: "luminance",
           maskRepeat: "no-repeat",
           WebkitMaskRepeat: "no-repeat",
           maskPosition: "center",
