@@ -239,14 +239,21 @@ export default function RouteLoading() {
     case "enter":
       translateX = 0;
       opacity = 1;
+      // 入场：滑入 + 淡入 + 背景色预留给后续渐变
       transition = `transform ${ENTER_DURATION}s cubic-bezier(0.22, 0.61, 0.36, 1), opacity ${ENTER_DURATION}s ease-out`;
       break;
     case "loading":
-    case "complete":
       translateX = 0;
       opacity = 1;
       popupBg = "#b81104";
       transition = "none";
+      break;
+    case "complete":
+      translateX = 0;
+      opacity = 1;
+      popupBg = "#b81104";
+      // 提前声明 background-color 过渡，确保 flash 阶段变色能触发
+      transition = `background-color ${FLASH_DURATION}s ease-out`;
       break;
     case "flash":
       // 闪光扫过时背景色从米兰红渐变到浅蓝色
