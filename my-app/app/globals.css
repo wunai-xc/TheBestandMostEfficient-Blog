@@ -1156,10 +1156,13 @@ html.dark .katex-error { color: #fca5a5; }
   .print-btn { padding: 6px 8px; }
 }
 
-/* ===== @page：控制页面四周物理 margin（左右边距 + 上下留白） ===== */
+/* ===== @page：上下 margin 为页眉页脚预留空间 =====
+   Chrome 将 position:fixed 定位在 page box 内（即 @page margin 之内），
+   所以 top:0 的 fixed 元素与正文内容同处 page box 顶部 → 重叠。
+   解决：用负 top/bottom 把页眉页脚推入 margin 区域，正文在 page box 内正常流动。 */
 @page {
-  margin-top: 1.5cm;
-  margin-bottom: 1.5cm;
+  margin-top: 2cm;
+  margin-bottom: 2cm;
   margin-left: 1.5cm;
   margin-right: 1.5cm;
 }
@@ -1171,62 +1174,52 @@ html.dark .katex-error { color: #fca5a5; }
   .toc-fab, .toc-panel, .sticky-heading,
   .print-controls { display: none !important; }
 
-  /* ===== CSS 表格模型：页眉每页顶部重复、页脚每页底部重复、内容在中间流动 =====
-     原理：display:table-header-group 类似 <thead>，打印时每页顶部重复；
-           display:table-footer-group 类似 <tfoot>，每页底部重复；
-           内容在 table-row-group 中流动，与页眉页脚物理隔离，绝不重叠。
-     不再依赖 position:fixed + @page margin（浏览器支持不一致）。 */
-  .post-layout {
-    display: table;
-    width: 100%;
-    border-collapse: collapse;
-  }
+  .post-layout { display: block; padding: 0 !important; }
+  .post-content { display: block; padding: 0 !important; }
+  body { background: #fff; color: #000; }
+  .article a { color: #000; text-decoration: underline; }
 
-  /* 页眉组：每页顶部重复 */
+  /* 打印时显示页眉页脚 */
+  .print-header, .print-footer { display: flex; }
+
+  /* 页眉：position:fixed 每页重复；top 负值推入 @page margin 区域（纸张边缘），
+     正文从 page box 顶部（margin 内侧）开始，与页眉物理隔离。 */
   .print-header {
-    display: table-header-group;
-  }
-  .print-header-text {
-    display: table-cell;
+    position: fixed;
+    top: -2cm; left: 0; right: 0;
+    height: 1.5cm;
+    align-items: flex-end;
     font-size: 10px; color: #444;
     border-bottom: 0.5pt solid #ccc;
-    padding: 2px 0.3cm;
+    padding: 0 0.3cm;
+    box-sizing: border-box;
     background: #fff;
-    text-align: left;
+    z-index: 9999;
   }
 
-  /* 页脚组：每页底部重复 */
+  /* 页脚：bottom 负值推入 @page 底部 margin 区域 */
   .print-footer {
-    display: table-footer-group;
+    position: fixed;
+    bottom: -2cm; left: 0; right: 0;
+    height: 1.5cm;
+    align-items: flex-start;
+    font-size: 10px; color: #444;
+    border-top: 0.5pt solid #ccc;
+    padding: 0 0.3cm;
+    box-sizing: border-box;
+    background: #fff;
+    z-index: 9999;
+    justify-content: space-between;
   }
   .print-footer-title {
-    display: table-cell;
-    font-size: 10px; color: #444;
-    border-top: 0.5pt solid #ccc;
-    padding: 2px 0.3cm;
-    text-align: left;
-    width: 100%;
+    flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    background: #fff;
+    margin-right: 10px;
   }
-  .print-pagenum {
-    display: table-cell;
-    font-size: 10px; color: #444;
-    border-top: 0.5pt solid #ccc;
-    padding: 2px 0.3cm;
-    text-align: right;
-    white-space: nowrap;
-    background: #fff;
-  }
+  .print-pagenum { flex: 0 0 auto; }
   .print-pagenum::before {
     content: counter(page) " | " counter(pages);
   }
-
-  /* 正文：内容在页眉页脚之间流动，浏览器自动生成匿名 table-row/cell 包裹 */
-  .post-content { display: block; padding: 0 !important; }
-
-  body { background: #fff; color: #000; }
-  .article a { color: #000; text-decoration: underline; }
 
   /* ===== 正文字号：11px 紧凑版，A4 密度合理 ===== */
   .article {
