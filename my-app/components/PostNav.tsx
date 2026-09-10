@@ -93,13 +93,15 @@ export default function PostNav({ items }: { items: TocItem[] }) {
   }, [computeDots]);
 
   // 滚动监听：进度 + 回到顶部可见性 + 回顶清空 sticky 标题
+  // 直接在 rAF 回调里读 scrollY，不依赖事件携带的位置，
+  // 多次事件合并到一帧内最终值，无丢失。
   useEffect(() => {
-    let ticking = false;
+    let rafId = 0;
     const onScroll = () => {
       if (isDraggingRef.current) return;
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
+      if (rafId) return;          // 已有 pending rAF，跳过
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
         const scrollTop = window.scrollY;
         const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
         const p = maxScroll > 0 ? Math.min(1, Math.max(0, scrollTop / maxScroll)) : 0;
@@ -107,8 +109,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
         setProgress(p);
         setShowTop(p > 0.7 || scrollTop > window.innerHeight * 1.8);
 
-        // 回顶清空 active：当滚动位置小于第一个标题的顶部时，
-        // 说明还在文章开头区域，粘性标题应隐藏
+        // 回顶清空 active
         if (items.length) {
           const firstHeading = document.getElementById(items[0].id);
           if (firstHeading) {
@@ -118,13 +119,13 @@ export default function PostNav({ items }: { items: TocItem[] }) {
             }
           }
         }
-        ticking = false;
       });
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
