@@ -1155,15 +1155,9 @@ html.dark .katex-error { color: #fca5a5; }
   .print-btn { padding: 6px 8px; }
 }
 
-/* ===== @page：上下 margin 为页眉页脚预留空间 =====
-   Chrome 将 position:fixed 定位在 page box 内（即 @page margin 之内），
-   所以 top:0 的 fixed 元素与正文内容同处 page box 顶部 → 重叠。
-   解决：用负 top/bottom 把页眉页脚推入 margin 区域，正文在 page box 内正常流动。 */
+/* ===== @page：统一边距，页眉页脚用 position:fixed 定位 ===== */
 @page {
-  margin-top: 2cm;
-  margin-bottom: 2cm;
-  margin-left: 1.5cm;
-  margin-right: 1.5cm;
+  margin: 1.5cm;
 }
 
 @media print {
@@ -1181,13 +1175,12 @@ html.dark .katex-error { color: #fca5a5; }
   /* 打印时显示页眉页脚 */
   .print-header, .print-footer { display: flex; }
 
-  /* 页眉：position:fixed 每页重复；top 负值推入 @page margin 区域（纸张边缘），
-     正文从 page box 顶部（margin 内侧）开始，与页眉物理隔离。 */
+  /* 页眉：position:fixed 在 Chrome 打印时每页重复，top:0 定位在页面顶部 */
   .print-header {
     position: fixed;
-    top: -2cm; left: 0; right: 0;
-    height: 1.5cm;
-    align-items: flex-end;
+    top: 0; left: 0; right: 0;
+    height: 1cm;
+    align-items: center;
     font-size: 10px; color: #444;
     border-bottom: 0.5pt solid #ccc;
     padding: 0 0.3cm;
@@ -1196,12 +1189,12 @@ html.dark .katex-error { color: #fca5a5; }
     z-index: 9999;
   }
 
-  /* 页脚：bottom 负值推入 @page 底部 margin 区域 */
+  /* 页脚：bottom:0 定位在页面底部 */
   .print-footer {
     position: fixed;
-    bottom: -2cm; left: 0; right: 0;
-    height: 1.5cm;
-    align-items: flex-start;
+    bottom: 0; left: 0; right: 0;
+    height: 1cm;
+    align-items: center;
     font-size: 10px; color: #444;
     border-top: 0.5pt solid #ccc;
     padding: 0 0.3cm;
