@@ -974,15 +974,20 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 
 /* ===== 浮动导航响应式 ===== */
 @media (max-width: 768px) {
-  .sticky-heading { padding: 0 16px 0 48px; }
-  .toc-fab { left: 8px; top: 57px; width: 30px; height: 30px; border-radius: 7px; }
+  /* 移动端 header 高 52px：sticky-heading 紧贴 header 底部，toc-fab 在 36px 高的 bar 内垂直居中 */
+  .sticky-heading { top: 52px; padding: 0 16px 0 48px; }
+  .toc-fab { left: 8px; top: 55px; width: 30px; height: 30px; border-radius: 7px; }
   .hb-icon { width: 14px; height: 10px; }
-  .toc-panel { left: 8px; top: 92px; width: 220px; }
+  .toc-panel { left: 8px; top: 90px; width: 220px; }
   .scroll-rail { right: 4px; width: 22px; }
   .scroll-rail-pct { font-size: 0.55rem; }
   .back-to-top { width: 40px; height: 40px; right: 12px; bottom: 12px; }
 }
 @media (max-width: 480px) {
+  /* 小屏 header 高 48px */
+  .sticky-heading { top: 48px; padding: 0 14px 0 44px; }
+  .toc-fab { left: 6px; top: 51px; }
+  .toc-panel { left: 6px; top: 86px; }
   .scroll-rail { width: 18px; }
   .progress-dot-label { display: none; }
 }

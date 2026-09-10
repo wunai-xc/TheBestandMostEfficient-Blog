@@ -38,6 +38,20 @@ export default function PostNav({ items }: { items: TocItem[] }) {
     if (!headings.length) return;
     const observer = new IntersectionObserver(
       (entries) => {
+        // 若仍在第一个标题之上（文章开头区域），强制清空 active，
+        // 避免 observer 覆盖 scroll 监听的“回顶隐藏”逻辑。
+        const firstHeading = items.length
+          ? document.getElementById(items[0].id)
+          : null;
+        if (firstHeading) {
+          const firstTop =
+            firstHeading.getBoundingClientRect().top + window.scrollY;
+          if (window.scrollY < firstTop - 20) {
+            setActive("");
+            return;
+          }
+        }
+
         const visible = entries.filter((e) => e.isIntersecting);
         if (visible.length) {
           visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
@@ -77,11 +91,11 @@ export default function PostNav({ items }: { items: TocItem[] }) {
     return () => { clearTimeout(t1); clearTimeout(t2); window.removeEventListener("resize", computeDots); };
   }, [computeDots]);
 
-  // 滚动监听：进度 + 回到顶部可见性
+  // 滚动监听：进度 + 回到顶部可见性 + 回顶清空 sticky 标题
   useEffect(() => {
     let ticking = false;
     const onScroll = () => {
-      if (isDraggingRef.current) return; // 拖动时不更新进度（由拖动控制）
+      if (isDraggingRef.current) return;
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
@@ -90,6 +104,18 @@ export default function PostNav({ items }: { items: TocItem[] }) {
         const p = maxScroll > 0 ? Math.min(1, Math.max(0, scrollTop / maxScroll)) : 0;
         setProgress(p);
         setShowTop(p > 0.7 || scrollTop > window.innerHeight * 1.8);
+
+        // 回顶清空 active：当滚动位置小于第一个标题的顶部时，
+        // 说明还在文章开头区域，粘性标题应隐藏
+        if (items.length) {
+          const firstHeading = document.getElementById(items[0].id);
+          if (firstHeading) {
+            const firstTop = firstHeading.getBoundingClientRect().top + window.scrollY;
+            if (scrollTop < firstTop - 20) {
+              setActive("");
+            }
+          }
+        }
         ticking = false;
       });
     };
@@ -100,7 +126,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, []);
+  }, [items]);
 
   // 找到距离给定进度最近的节点
   const findNearestDot = useCallback((p: number): DotPos | null => {
