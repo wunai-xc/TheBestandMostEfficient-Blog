@@ -1156,6 +1156,17 @@ html.dark .katex-error { color: #fca5a5; }
   .print-btn { padding: 6px 8px; }
 }
 
+/* ===== @page：必须在顶层声明，嵌套在 @media 内部分浏览器会忽略 =====
+   fixed 页眉页脚从纸张边缘(0,0)画起，@page margin 决定每页内容区边界。
+   页眉/页脚 height 0.7cm，margin 设 2.5cm，留 1.8cm 缓冲。
+   每页都生效——这是物理分页层面的保护。 */
+@page {
+  margin-top: 2.5cm;
+  margin-bottom: 2.5cm;
+  margin-left: 1.5cm;
+  margin-right: 1.5cm;
+}
+
 @media print {
   /* 隐藏不需要打印的元素：站点导航/页脚/侧栏/面包屑/评论/浮动 TOC 与进度条/章节固定标题/打印按钮 */
   .site-header, .site-footer, .sidebar-col, .post-nav, .comments-section, .breadcrumbs,
@@ -1163,23 +1174,11 @@ html.dark .katex-error { color: #fca5a5; }
   .toc-fab, .toc-panel, .sticky-heading,
   .print-controls { display: none !important; }
 
-  /* 取消 sticky/固定布局，恢复顺序流 */
-  .post-layout { display: block; }
+  /* 取消 sticky/固定布局，恢复顺序流；清除屏幕端 padding 防止占位 */
+  .post-layout { display: block; padding: 0 !important; }
   .post-content { display: block; }
   body { background: #fff; color: #000; }
   .article a { color: #000; text-decoration: underline; }
-
-  /* ===== 页面 margin：物理分页安全区 =====
-     fixed 页眉页脚从纸张边缘(0,0)画起，@page margin 决定内容区边界。
-     要让内容绝对不被页眉页脚遮盖，margin 必须远大于页眉/页脚高度。
-     页眉/页脚 height 0.7cm，这里 margin 设 2cm，留 1.3cm 缓冲。
-     这是物理分页层面的保护，每页都生效——比 body padding 可靠。 */
-  @page {
-    margin-top: 2cm;
-    margin-bottom: 2cm;
-    margin-left: 1.5cm;
-    margin-right: 1.5cm;
-  }
 
   /* 打印时显示页眉页脚，fixed 让其在每页重复 */
   .print-header, .print-footer { display: flex; }
@@ -1224,9 +1223,9 @@ html.dark .katex-error { color: #fca5a5; }
     content: counter(page) " | " counter(pages);
   }
 
-  /* 正文区域：@page margin 已设 2cm（页眉0.7cm + 1.3cm缓冲），
-     内容区天然在页眉页脚之间，无需额外 padding */
-  .post-content { padding: 0; }
+  /* 正文区域：@page margin 已设 2.5cm（页眉0.7cm + 1.8cm缓冲），
+     内容区天然在页眉页脚之间。额外 padding 作为第一页/末页保险。 */
+  .post-content { padding: 0.2cm 0 !important; }
 
   /* ===== 正文字号：11px 紧凑版，A4 密度合理 ===== */
   .article {
