@@ -180,18 +180,9 @@ export default function PostNav({ items }: { items: TocItem[] }) {
   const endDrag = useCallback(() => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    const currentProgress = progressRef.current;
-    const nearest = findNearestDot(currentProgress);
-    if (nearest && Math.abs(nearest.pos - currentProgress) <= SNAP_THRESHOLD) {
-      const el = document.getElementById(nearest.id);
-      if (el) {
-        const top = el.getBoundingClientRect().top + window.scrollY - 80;
-        window.scrollTo({ top, behavior: "smooth" });
-      }
-    }
     setIsDragging(false);
     setNearDotId(null);
-  }, [findNearestDot]);
+  }, []);
 
   // 鼠标事件
   const onThumbMouseDown = useCallback((e: ReactMouseEvent) => {
