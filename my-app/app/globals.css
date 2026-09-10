@@ -1156,76 +1156,77 @@ html.dark .katex-error { color: #fca5a5; }
   .print-btn { padding: 6px 8px; }
 }
 
-/* ===== @page：必须在顶层声明，嵌套在 @media 内部分浏览器会忽略 =====
-   fixed 页眉页脚从纸张边缘(0,0)画起，@page margin 决定每页内容区边界。
-   页眉/页脚 height 0.7cm，margin 设 2.5cm，留 1.8cm 缓冲。
-   每页都生效——这是物理分页层面的保护。 */
+/* ===== @page：控制页面四周物理 margin（左右边距 + 上下留白） ===== */
 @page {
-  margin-top: 2.5cm;
-  margin-bottom: 2.5cm;
+  margin-top: 1.5cm;
+  margin-bottom: 1.5cm;
   margin-left: 1.5cm;
   margin-right: 1.5cm;
 }
 
 @media print {
-  /* 隐藏不需要打印的元素：站点导航/页脚/侧栏/面包屑/评论/浮动 TOC 与进度条/章节固定标题/打印按钮 */
+  /* 隐藏不需要打印的元素 */
   .site-header, .site-footer, .sidebar-col, .post-nav, .comments-section, .breadcrumbs,
   .toc-fab-wrap, .scroll-rail, .back-to-top,
   .toc-fab, .toc-panel, .sticky-heading,
   .print-controls { display: none !important; }
 
-  /* 取消 sticky/固定布局，恢复顺序流；清除屏幕端 padding 防止占位 */
-  .post-layout { display: block; padding: 0 !important; }
-  .post-content { display: block; }
-  body { background: #fff; color: #000; }
-  .article a { color: #000; text-decoration: underline; }
+  /* ===== CSS 表格模型：页眉每页顶部重复、页脚每页底部重复、内容在中间流动 =====
+     原理：display:table-header-group 类似 <thead>，打印时每页顶部重复；
+           display:table-footer-group 类似 <tfoot>，每页底部重复；
+           内容在 table-row-group 中流动，与页眉页脚物理隔离，绝不重叠。
+     不再依赖 position:fixed + @page margin（浏览器支持不一致）。 */
+  .post-layout {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+  }
 
-  /* 打印时显示页眉页脚，fixed 让其在每页重复 */
-  .print-header, .print-footer { display: flex; }
-
-  /* 页眉：顶部固定，左侧日期与作者 */
+  /* 页眉组：每页顶部重复 */
   .print-header {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 0.7cm;
-    align-items: center;
+    display: table-header-group;
+  }
+  .print-header-text {
+    display: table-cell;
     font-size: 10px; color: #444;
     border-bottom: 0.5pt solid #ccc;
-    padding: 0 0.3cm;
-    box-sizing: border-box;
+    padding: 2px 0.3cm;
     background: #fff;
-    z-index: 9999;
+    text-align: left;
   }
 
-  /* 页脚：底部固定，左侧标题 + 页码 */
+  /* 页脚组：每页底部重复 */
   .print-footer {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 0.7cm;
-    align-items: center;
-    font-size: 10px; color: #444;
-    border-top: 0.5pt solid #ccc;
-    padding: 0 0.3cm;
-    box-sizing: border-box;
-    background: #fff;
-    z-index: 9999;
-    justify-content: space-between;
+    display: table-footer-group;
   }
   .print-footer-title {
-    flex: 1; min-width: 0;
+    display: table-cell;
+    font-size: 10px; color: #444;
+    border-top: 0.5pt solid #ccc;
+    padding: 2px 0.3cm;
+    text-align: left;
+    width: 100%;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    margin-right: 10px;
+    background: #fff;
   }
   .print-pagenum {
-    flex: 0 0 auto;
+    display: table-cell;
+    font-size: 10px; color: #444;
+    border-top: 0.5pt solid #ccc;
+    padding: 2px 0.3cm;
+    text-align: right;
+    white-space: nowrap;
+    background: #fff;
   }
   .print-pagenum::before {
     content: counter(page) " | " counter(pages);
   }
 
-  /* 正文区域：@page margin 已设 2.5cm（页眉0.7cm + 1.8cm缓冲），
-     内容区天然在页眉页脚之间。额外 padding 作为第一页/末页保险。 */
-  .post-content { padding: 0.2cm 0 !important; }
+  /* 正文：内容在页眉页脚之间流动，浏览器自动生成匿名 table-row/cell 包裹 */
+  .post-content { display: block; padding: 0 !important; }
+
+  body { background: #fff; color: #000; }
+  .article a { color: #000; text-decoration: underline; }
 
   /* ===== 正文字号：11px 紧凑版，A4 密度合理 ===== */
   .article {
