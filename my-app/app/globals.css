@@ -787,7 +787,6 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   width: 3px; transform: translateX(-50%);
   background: linear-gradient(to bottom, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--fg)));
   border-radius: 3px;
-  transition: height 0.1s linear;
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 /* ===== 滑块 thumb（方形） ===== */

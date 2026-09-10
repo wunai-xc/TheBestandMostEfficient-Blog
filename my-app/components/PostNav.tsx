@@ -28,6 +28,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
   const thumbYOffsetRef = useRef(0);
+  const progressRef = useRef(0);
 
   // IntersectionObserver：跟踪当前活跃标题
   useEffect(() => {
@@ -102,6 +103,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
         const scrollTop = window.scrollY;
         const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
         const p = maxScroll > 0 ? Math.min(1, Math.max(0, scrollTop / maxScroll)) : 0;
+        progressRef.current = p;
         setProgress(p);
         setShowTop(p > 0.7 || scrollTop > window.innerHeight * 1.8);
 
@@ -141,16 +143,18 @@ export default function PostNav({ items }: { items: TocItem[] }) {
   }, [dots]);
 
   // ===== 滑块拖拽（鼠标 + 触屏） =====
+  // 使用 progressRef 避免 state 依赖，拖动中回调不会重建，
+  // 全局监听 effect 不会反复重绑定，消除触屏抖动。
   const startDrag = useCallback((clientY: number) => {
     isDraggingRef.current = true;
     setIsDragging(true);
     const bar = barRef.current;
     if (bar) {
       const rect = bar.getBoundingClientRect();
-      const thumbCenter = rect.top + progress * rect.height;
+      const thumbCenter = rect.top + progressRef.current * rect.height;
       thumbYOffsetRef.current = clientY - thumbCenter;
     }
-  }, [progress]);
+  }, []);
 
   const moveDrag = useCallback((clientY: number) => {
     if (!isDraggingRef.current) return;
@@ -162,6 +166,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
 
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     window.scrollTo({ top: ratio * maxScroll, behavior: "auto" });
+    progressRef.current = ratio;
     setProgress(ratio);
 
     const nearest = findNearestDot(ratio);
@@ -175,7 +180,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
   const endDrag = useCallback(() => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    const currentProgress = progress;
+    const currentProgress = progressRef.current;
     const nearest = findNearestDot(currentProgress);
     if (nearest && Math.abs(nearest.pos - currentProgress) <= SNAP_THRESHOLD) {
       const el = document.getElementById(nearest.id);
@@ -186,7 +191,7 @@ export default function PostNav({ items }: { items: TocItem[] }) {
     }
     setIsDragging(false);
     setNearDotId(null);
-  }, [progress, findNearestDot]);
+  }, [findNearestDot]);
 
   // 鼠标事件
   const onThumbMouseDown = useCallback((e: ReactMouseEvent) => {
@@ -195,9 +200,11 @@ export default function PostNav({ items }: { items: TocItem[] }) {
     startDrag(e.clientY);
   }, [startDrag]);
 
-  // 触摸事件
+  // 触摸事件：preventDefault 阻止浏览器启动原生滚动手势
   const onThumbTouchStart = useCallback((e: React.TouchEvent) => {
     if (!e.touches.length) return;
+    e.preventDefault();
+    e.stopPropagation();
     startDrag(e.touches[0].clientY);
   }, [startDrag]);
 
