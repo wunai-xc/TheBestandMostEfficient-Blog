@@ -1123,8 +1123,8 @@ html.dark .katex-error { color: #fca5a5; }
 }
 
 /* ===== 打印 ===== */
-/* 屏幕下隐藏打印专用元素 */
-.print-header, .print-footer, .print-controls { display: none; }
+/* 屏幕下隐藏打印按钮 */
+.print-controls { display: none; }
 
 /* 屏幕下：标题与打印按钮同行 */
 .post-header-row {
@@ -1155,63 +1155,22 @@ html.dark .katex-error { color: #fca5a5; }
   .print-btn { padding: 6px 8px; }
 }
 
-/* ===== @page：统一边距，页眉页脚用 position:fixed 定位 ===== */
+/* ===== @page：仅保留合理边距，不再使用页眉页脚 ===== */
 @page {
   margin: 1.5cm;
 }
 
 @media print {
-  /* 隐藏不需要打印的元素 */
+  /* 隐藏不需要打印的元素（含已废弃的页眉页脚 DOM） */
   .site-header, .site-footer, .sidebar-col, .post-nav, .comments-section, .breadcrumbs,
   .toc-fab-wrap, .scroll-rail, .back-to-top,
   .toc-fab, .toc-panel, .sticky-heading,
-  .print-controls { display: none !important; }
+  .print-controls, .print-header, .print-footer { display: none !important; }
 
   .post-layout { display: block; padding: 0 !important; }
   .post-content { display: block; padding: 0 !important; }
   body { background: #fff; color: #000; }
   .article a { color: #000; text-decoration: underline; }
-
-  /* 打印时显示页眉页脚 */
-  .print-header, .print-footer { display: flex; }
-
-  /* 页眉：position:fixed 在 Chrome 打印时每页重复，top:0 定位在页面顶部 */
-  .print-header {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 1cm;
-    align-items: center;
-    font-size: 10px; color: #444;
-    border-bottom: 0.5pt solid #ccc;
-    padding: 0 0.3cm;
-    box-sizing: border-box;
-    background: #fff;
-    z-index: 9999;
-  }
-
-  /* 页脚：bottom:0 定位在页面底部 */
-  .print-footer {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 1cm;
-    align-items: center;
-    font-size: 10px; color: #444;
-    border-top: 0.5pt solid #ccc;
-    padding: 0 0.3cm;
-    box-sizing: border-box;
-    background: #fff;
-    z-index: 9999;
-    justify-content: space-between;
-  }
-  .print-footer-title {
-    flex: 1; min-width: 0;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    margin-right: 10px;
-  }
-  .print-pagenum { flex: 0 0 auto; }
-  .print-pagenum::before {
-    content: counter(page) " | " counter(pages);
-  }
 
   /* ===== 正文字号：11px 紧凑版，A4 密度合理 ===== */
   .article {

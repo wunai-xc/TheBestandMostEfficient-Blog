@@ -151,19 +151,6 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
       {/* 浮动导航：左侧目录按钮 + 右侧进度条 + 回到顶部 */}
       <PostNav items={toc} />
 
-      {/* 打印专用页眉：左侧日期 + 作者 */}
-      <div className="print-header" aria-hidden="true">
-        <span className="print-header-text">
-          {post.date}{post.author ? `  |  ${post.isAI ? t.aiWarning : post.author}` : ""}
-        </span>
-      </div>
-
-      {/* 打印专用页脚：左侧标题 + 页码（单面居中 / 双面靠右） */}
-      <div className="print-footer" aria-hidden="true">
-        <span className="print-footer-title">{post.title}</span>
-        <span className="print-pagenum" />
-      </div>
-
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
