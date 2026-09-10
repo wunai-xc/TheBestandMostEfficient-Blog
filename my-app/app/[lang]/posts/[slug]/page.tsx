@@ -104,7 +104,7 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
         <header className="post-header">
           <div className="post-header-row">
             <h1>{post.title}</h1>
-            <PrintControls printLabel={t.printSingle} mdDownloadLabel={t.mdDownload} mdContent={mdContent} mdFileName={post.slug} />
+            <PrintControls printLabel={t.printSingle} mdDownloadLabel={t.mdDownload} mdContent={mdContent} mdFileName={post.slug} articleTitle={post.title} articleDate={post.date} articleAuthor={post.author} articleIsAI={post.isAI} aiWarningText={t.aiWarning} />
           </div>
           <div className="post-meta">
             <span><Icon icon={icons["mdi:calendar-month-outline"]} width="1em" height="1em" /> {post.date}</span>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState } from "react";
 import { Icon } from "@iconify/react/offline";
 import { icons } from "@/lib/icons";
+import { generateArticlePdf } from "@/lib/print-pdf";
 
 interface Props {
   /** 打印按钮文字 */
@@ -13,11 +14,17 @@ interface Props {
   mdContent?: string;
   /** 下载文件名（不含 .md） */
   mdFileName?: string;
+  /** 文章元信息（用于 PDF 页眉页脚） */
+  articleTitle?: string;
+  articleDate?: string;
+  articleAuthor?: string;
+  articleIsAI?: boolean;
+  aiWarningText?: string;
 }
 
 /**
  * 打印 + Markdown 下载控制按钮
- * 打印：window.print()
+ * 打印：用 pdfmake 生成 PDF（页眉页脚位置代码控制，不依赖浏览器打印引擎）
  * 下载：用 Blob + a[download] 触发浏览器下载
  */
 export default function PrintControls({
@@ -25,21 +32,31 @@ export default function PrintControls({
   mdDownloadLabel = "下载 MD",
   mdContent,
   mdFileName,
+  articleTitle = "",
+  articleDate = "",
+  articleAuthor,
+  articleIsAI = false,
+  aiWarningText = "AI生成",
 }: Props) {
-  // 打印结束后清理 body 上加的类
-  useEffect(() => {
-    const cleanup = () => {
-      document.body.classList.remove("print-footer-mode-single", "print-footer-mode-duplex");
-    };
-    window.addEventListener("afterprint", cleanup);
-    return () => window.removeEventListener("afterprint", cleanup);
-  }, []);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  function handlePrint() {
-    // 默认双面模式：标题在左，页码靠右
-    document.body.classList.remove("print-footer-mode-single", "print-footer-mode-duplex");
-    document.body.classList.add("print-footer-mode-duplex");
-    setTimeout(() => window.print(), 30);
+  async function handlePrint() {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    try {
+      await generateArticlePdf({
+        title: articleTitle || mdFileName || "article",
+        date: articleDate,
+        author: articleAuthor,
+        isAI: articleIsAI,
+        aiWarning: aiWarningText,
+      });
+    } catch (err) {
+      console.error("PDF 生成失败，回退到浏览器打印", err);
+      window.print();
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   function handleDownload() {
@@ -63,9 +80,10 @@ export default function PrintControls({
         onClick={handlePrint}
         title={printLabel}
         aria-label={printLabel}
+        disabled={isGenerating}
       >
         <Icon icon={icons["mdi:printer-outline"]} width="1em" height="1em" />
-        <span>{printLabel}</span>
+        <span>{isGenerating ? "生成中..." : printLabel}</span>
       </button>
       <button
         type="button"

@@ -5,7 +5,21 @@
     <link>https://newblog.wunai.top</link>
     <description>学习笔记与生活思考</description>
     <language>zh-CN</language>
-    <lastBuildDate>Wed, 09 Sep 2026 11:33:56 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 10 Sep 2026 09:36:21 GMT</lastBuildDate>
+    <item>
+      <title><![CDATA[博客书写规范与项目说明（作者与 AI 共用）]]></title>
+      <link>https://newblog.wunai.top/zh/posts/%E5%8D%9A%E5%AE%A2%E4%B9%A6%E5%86%99%E8%A7%84%E8%8C%83/</link>
+      <guid>https://newblog.wunai.top/zh/posts/%E5%8D%9A%E5%AE%A2%E4%B9%A6%E5%86%99%E8%A7%84%E8%8C%83/</guid>
+      <pubDate>Wed, 09 Sep 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[本站（wunai's blog）的完整书写规范、技术栈说明、目录结构图、每个文件作用、Frontmatter 字段表、Markdown 扩展能力清单、AI 写作约束、部署流程。作者与 AI 共用一份说明书。]]></description>
+    </item>
+    <item>
+      <title><![CDATA[奎宁：从金鸡纳树到现代医学的全科视角]]></title>
+      <link>https://newblog.wunai.top/zh/posts/%E5%A5%8E%E5%AE%81/</link>
+      <guid>https://newblog.wunai.top/zh/posts/%E5%A5%8E%E5%AE%81/</guid>
+      <pubDate>Wed, 09 Sep 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[从南美印第安人的传统用药到现代抗疟与心律失常治疗，全面介绍奎宁的发现历史、化学结构、药理机制、临床应用、不良反应及耐药性挑战。]]></description>
+    </item>
     <item>
       <title><![CDATA[Markdown 功能综合演示]]></title>
       <link>https://newblog.wunai.top/zh/posts/markdown-%E5%8A%9F%E8%83%BD%E7%BB%BC%E5%90%88%E6%BC%94%E7%A4%BA/</link>
