@@ -54,6 +54,8 @@ function remarkCustomShortcodes() {
     walk(tree, "text", (node: any) => {
       if (!node.value) return;
       let text = node.value;
+      // 快速预检：不含任何标记的文本直接跳过，避免 6 次正则全量扫描
+      if (!text.includes("==") && !text.includes("[reference:") && !text.includes("{{<")) return;
       // ==text== -> <mark>text</mark>
       text = text.replace(/==([^=]+)==/g, '<mark>$1</mark>');
       // [reference:N] -> <sup><a href="#ref-N">[N]</a></sup>
@@ -118,6 +120,12 @@ function rehypeXssFilter() {
     walk(tree, "element", (node: any) => {
       const props = node.properties || {};
       for (const key of Object.keys(props)) {
+        // 内联事件处理器（onclick/onerror…）直接移除：
+        // 正文允许原始 HTML，innerHTML 注入时 on* 仍会执行，是真实的 XSS 入口
+        if (/^on/i.test(key)) {
+          delete props[key];
+          continue;
+        }
         const val = String(props[key]);
         if (/^(javascript|vbscript|data):/i.test(val.trim())) {
           props[key] = "#";
@@ -169,12 +177,12 @@ function rehypeCjkOpt() {
     const s = Array.isArray(cls) ? cls.join(" ") : String(cls);
     return s.includes("katex") || s.includes("MathJax");
   };
-  // 带祖先链遍历，跳过 katex 内部文本
-  function walkCjk(node: any, ancestors: any[]) {
+  // 递归时向下传递“是否位于 katex 子树内”，避免为每个节点构造祖先数组
+  function walkCjk(node: any, inKatex: boolean) {
     if (!node || typeof node !== "object") return;
     // 当前节点若是 katex 容器，其子树全部跳过
-    const inKatex = hasKatexClass(node) || ancestors.some(hasKatexClass);
-    if (node.type === "text" && node.value && !inKatex) {
+    const skip = inKatex || hasKatexClass(node);
+    if (node.type === "text" && node.value && !skip) {
       let s = node.value;
       // CJK 与 ASCII 之间加空格
       s = s.replace(/([\u4e00-\u9fff])([A-Za-z0-9])/g, "$1 $2")
@@ -191,11 +199,11 @@ function rehypeCjkOpt() {
     const children = node.children;
     if (Array.isArray(children)) {
       for (const child of children) {
-        if (child) walkCjk(child, [...ancestors, node]);
+        if (child) walkCjk(child, skip);
       }
     }
   }
-  return (tree: any) => walkCjk(tree, []);
+  return (tree: any) => walkCjk(tree, false);
 }
 
 // 提取 TOC（标题列表）：兼容 id 在标签任意位置的情况

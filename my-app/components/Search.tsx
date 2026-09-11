@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useRef } from "react";
 import Fuse from "fuse.js";
+import { SITE } from "@/lib/site";
 
 interface SearchDoc { slug: string; title: string; summary: string; content: string; tags: string[]; }
 
 export default function Search({ lang }: { lang: string }) {
+  const t = SITE.i18n[lang === "en" ? "en" : "zh"];
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchDoc[]>([]);
   const fuseRef = useRef<Fuse<SearchDoc> | null>(null);
@@ -51,7 +53,7 @@ export default function Search({ lang }: { lang: string }) {
       <input
         type="search"
         className="search-box"
-        placeholder="输入关键词搜索..."
+        placeholder={t.searchPlaceholder}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         autoFocus
@@ -64,7 +66,7 @@ export default function Search({ lang }: { lang: string }) {
           <div className="snippet">{highlight(r.summary, query)}</div>
         </div>
       ))}
-      {query && results.length === 0 && <p style={{ color: "var(--muted)" }}>No results found.</p>}
+      {query && results.length === 0 && <p style={{ color: "var(--muted)" }}>{t.noResults}</p>}
     </div>
   );
 }

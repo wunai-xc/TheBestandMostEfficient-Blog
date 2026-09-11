@@ -1,10 +1,11 @@
 import { MetadataRoute } from "next";
 import { getPosts, type Lang } from "../lib/content";
+import { SITE } from "../lib/site";
 
 export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://newblog.wunai.top";
+  const base = SITE.url;
   const entries: MetadataRoute.Sitemap = [
     { url: `${base}/zh/`, changeFrequency: "daily", priority: 1 },
     { url: `${base}/en/`, changeFrequency: "daily", priority: 0.9 },

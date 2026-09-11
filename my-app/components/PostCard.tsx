@@ -5,11 +5,11 @@ import Link from "next/link";
 import { Icon } from "@iconify/react/offline";
 import { icons } from "@/lib/icons";
 import type { Post } from "../lib/site";
-import { SITE } from "../lib/site";
+import { SITE, readingMinutes } from "../lib/site";
 
 export default function PostCard({ post, lang }: { post: Post; lang: "zh" | "en" }) {
   const t = SITE.i18n[lang];
-  const readingTime = Math.max(1, Math.round(post.wordCount / 400));
+  const readingTime = readingMinutes(post.wordCount);
   const cardRef = useRef<HTMLElement>(null);
 
   // 鼠标跟踪 3D 倾斜：基于指针位置计算 rotateX/rotateY

@@ -4,7 +4,7 @@ import matter from "gray-matter";
 
 // 类型与站点配置从 site.ts 导出（客户端安全）
 export type { Lang, Post, PostFrontmatter } from "./site";
-export { SITE } from "./site";
+export { SITE, readingMinutes, WORDS_PER_MINUTE } from "./site";
 import type { Lang, Post, PostFrontmatter } from "./site";
 
 const CONTENT_ROOT = path.join(process.cwd(), "content");

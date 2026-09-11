@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@iconify/react/offline";
 import { icons } from "@/lib/icons";
 import {
-  getPost, getAllSlugs, getPrevNext, getPosts, SITE, type Lang,
+  getPost, getAllSlugs, getPrevNext, getPosts, SITE, readingMinutes, type Lang,
 } from "@/lib/content";
 import { renderMarkdown, extractToc } from "@/lib/markdown";
 import PostBody from "@/components/PostBody";
@@ -50,7 +50,7 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
   const toc = extractToc(html);
   const { prev, next } = getPrevNext(lang, decodedSlug);
   const t = SITE.i18n[lang];
-  const readingTime = Math.max(1, Math.round(post.wordCount / 400));
+  const readingTime = readingMinutes(post.wordCount);
   const allPosts = getPosts(lang);
 
   const jsonLd = {
