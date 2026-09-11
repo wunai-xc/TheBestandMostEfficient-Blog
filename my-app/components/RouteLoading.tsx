@@ -318,11 +318,11 @@ export default function RouteLoading() {
       break;
     case "loading":
       barPct = 95;
-      barTransition = `height ${PROGRESS_DURATION}s linear`;
+      barTransition = `transform ${PROGRESS_DURATION}s linear`;
       break;
     case "complete":
       barPct = 100;
-      barTransition = `height ${COMPLETE_DURATION}s ease-out`;
+      barTransition = `transform ${COMPLETE_DURATION}s ease-out`;
       break;
     case "flash":
     case "fade":
@@ -352,7 +352,7 @@ export default function RouteLoading() {
       <style>{`
         @keyframes ${flashAnimName} {
           0% {
-            left: ${flashStartX}px;
+            transform: translateX(0);
             opacity: 0;
           }
           10% {
@@ -362,7 +362,7 @@ export default function RouteLoading() {
             opacity: 1;
           }
           100% {
-            left: ${flashEndX}px;
+            transform: translateX(${flashEndX - flashStartX}px);
             opacity: 0;
           }
         }
@@ -446,7 +446,9 @@ export default function RouteLoading() {
               bottom: 0,
               left: 0,
               right: 0,
-              height: `${barPct}%`,
+              height: "100%",
+              transform: `scaleY(${barPct / 100})`,
+              transformOrigin: "bottom",
               background:
                 "linear-gradient(to top, #a3e635, #d9f99d)", // 鲜艳黄绿色
               transition: barTransition,

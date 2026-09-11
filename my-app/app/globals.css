@@ -6,6 +6,10 @@
   --ease-silk: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* 刻式节拍：1 刻 = 50ms（对齐参考文章的 1gt = 0.05s），
+     入场动画按 10 刻 = 500ms 推进，每刻跳变一次 */
+  --tick: 50ms;
+  --enter-duration: calc(var(--tick) * 10);
 }
 
 /* 强制 GPU 加速 + 减少重排：所有元素默认过渡使用 transform/opacity */
@@ -15,17 +19,15 @@
   text-rendering: optimizeLegibility;
 }
 
-/* ===== 页面打开：所有文字从右向左匀速直线滑入 + 水波波动收尾 ===== */
+/* ===== 页面打开：文字从右向左滑入，按刻量化推进（阶梯式跳变） ===== */
 @keyframes slide-in-from-right {
   0% {
     transform: translateX(30px) scale(0.95);
     opacity: 0;
-    filter: blur(3px);
   }
   60% {
     transform: translateX(0) scale(1);
     opacity: 1;
-    filter: blur(0);
   }
   70% {
     transform: translateX(-4px) scale(1.005);
@@ -39,11 +41,10 @@
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
-    filter: blur(0);
   }
 }
 
-/* 标题、段落、列表、引用等文字元素入场（匀速直线运动） */
+/* 标题、段落、列表、引用等文字元素入场（按刻阶梯推进） */
 .hero h1, .hero p,
 .post-card .title, .post-card .summary, .post-card .meta,
 .article h1, .article h2, .article h3, .article h4,
@@ -57,7 +58,7 @@
 .search-box,
 .toc a,
 .footer {
-  animation: slide-in-from-right 0.5s linear both;
+  animation: slide-in-from-right var(--enter-duration) steps(10, end) both;
 }
 
 /* 错位入场：不同区块延迟不同，营造层次感 */
@@ -228,7 +229,8 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
               background 0.35s var(--ease-silk),
               opacity 0.35s var(--ease-silk),
               filter 0.35s var(--ease-silk);
-  will-change: transform, filter;
+  /* 不再常驻 will-change：此处选择器覆盖全站大量元素，
+     永久提升为合成层会持续占用显存，移动端尤其明显 */
 }
 
 /* Hover: SVG 液态滤镜 + 微浮起 + 辉光 */
@@ -250,12 +252,14 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
   transition: transform 0.08s ease, filter 0.08s ease;
 }
 
-/* 液态脉冲关键帧：模拟表面波纹 */
+/* 液态脉冲关键帧：模拟表面波纹
+   注：filter 在两端的值相同且中间关键帧未声明，实为常量，
+   由 :hover 规则统一提供；在此重复声明会令脉冲期间每帧重算滤镜链 */
 @keyframes btn-liquid-pulse {
-  0%   { filter: url(#filter-liquid) url(#filter-glow); transform: translateY(0) scale(1); }
+  0%   { transform: translateY(0) scale(1); }
   30%  { transform: translateY(-3px) scale(1.05); }
   50%  { transform: translateY(-2px) scale(1.03); }
-  100% { filter: url(#filter-liquid) url(#filter-glow); transform: translateY(-2px) scale(1.03); }
+  100% { transform: translateY(-2px) scale(1.03); }
 }
 
 /* Focus 键盘可达性：辉光 + 轮廓 */
@@ -344,7 +348,7 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
   transform-style: preserve-3d;
   backface-visibility: hidden;
   overflow: hidden;
-  will-change: transform, box-shadow;
+  will-change: transform;
 }
 
 /* 日间模式 hover：阴影加深 + 微浮起 + 边框高亮 */
@@ -858,11 +862,22 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .progress-dot.active .progress-dot-core {
   background: var(--accent);
   box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+/* 脉冲光晕：改用 transform/opacity 的合成层动画，
+   替代原先逐帧重算 box-shadow 的重绘 */
+.progress-dot.active .progress-dot-core::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+  z-index: -1;
+  will-change: transform, opacity;
   animation: dot-pulse 1.8s ease-in-out infinite;
 }
 @keyframes dot-pulse {
-  0%, 100% { box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 40%, transparent); }
-  50%      { box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent); }
+  0%, 100% { transform: scale(0.55); opacity: 0.35; }
+  50%      { transform: scale(1);    opacity: 0.85; }
 }
 .progress-dot:hover { transform: scale(1.4); }
 .progress-dot.active:hover { transform: scale(1.6); }
