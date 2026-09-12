@@ -11,6 +11,8 @@ export interface PostFrontmatter {
   summary?: string;
   description?: string;
   pinned?: boolean;
+  /* 作为「关于」文章：正文会渲染在首页首屏，并不再出现在下方展示位里 */
+  about?: boolean;
   pinnedDescription?: string;
   hiddenInHomeList?: boolean;
   showToc?: boolean;
@@ -31,6 +33,7 @@ export interface Post {
   summary: string;
   description?: string;
   pinned: boolean;
+  about: boolean;
   pinnedDescription?: string;
   hiddenInHomeList: boolean;
   showToc: boolean;

@@ -108,6 +108,7 @@ function loadPostsForLang(lang: Lang): Post[] {
       summary: fm.summary || content.slice(0, 120).replace(/[#>*`\-\[\]]/g, "").trim(),
       description: fm.description,
       pinned: !!fm.pinned,
+      about: !!fm.about,
       pinnedDescription: fm.pinnedDescription,
       hiddenInHomeList: !!fm.hiddenInHomeList,
       showToc: fm.showToc !== false,
@@ -166,13 +167,19 @@ export function getPinnedPosts(lang: Lang): Post[] {
 }
 
 /* 首页展示位（最多 3 篇）：
-   有置顶则只展示置顶；没有置顶时取最新的非 AI 文章（AI 文不占首页位） */
+   有置顶则只展示置顶；没有置顶时取最新的非 AI 文章（AI 文不占首页位）。
+   已用作「关于」的文章（about）正文已在首屏，不再重复出现在这里。 */
 export function getHomeShowcase(lang: Lang, limit = 3): Post[] {
-  const pinned = getPinnedPosts(lang);
+  const pinned = getPinnedPosts(lang).filter((p) => !p.about);
   if (pinned.length) return pinned.slice(0, limit);
   return getPosts(lang)
-    .filter((p) => !p.isAI && !p.hiddenInHomeList)
+    .filter((p) => !p.isAI && !p.hiddenInHomeList && !p.about)
     .slice(0, limit);
+}
+
+/* 「关于」文章：首页首屏直接渲染它的正文 */
+export function getAboutPost(lang: Lang): Post | undefined {
+  return getPosts(lang).find((p) => p.about);
 }
 
 export function getPrevNext(lang: Lang, slug: string): { prev?: Post; next?: Post } {

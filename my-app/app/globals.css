@@ -367,7 +367,7 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
   50% { transform: scaleX(-1) scale(1.15); }
 }
 
-/* ===== 首页首屏：博客介绍 + 向下滑动图标 ===== */
+/* ===== 首页首屏（无「关于」文章时）：简介 + 向下滑动图标 ===== */
 /* 高度占满减去 sticky header 后的一屏，让「向下滚动」更有行为含义 */
 .home-hero {
   position: relative;
@@ -382,6 +382,19 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
 .home-hero h1 { font-size: clamp(1.6rem, 5.5vw, 2.2rem); margin: 0; word-break: break-word; }
 .home-hero p { color: var(--muted); margin: 0; max-width: 34em; word-break: break-word; }
 
+/* ===== 首页首屏（有「关于」文章）：直接渲染该文正文 ===== */
+/* 正文左对齐、不限高度，圆角亚克力阅读面与文章页保持一致 */
+.home-about {
+  padding: 28px 0 8px;
+}
+.home-about-title {
+  font-size: clamp(1.6rem, 5vw, 2.1rem);
+  margin: 0 0 4px; word-break: break-word;
+  animation: home-intro-in 2s var(--ease-silk) both;
+}
+/* 正文本身也走同一段渐入，但略延迟，避免与标题同时启动显得生硬 */
+.home-about .article { animation: home-intro-in 2s var(--ease-silk) 0.25s both; }
+
 /* 首屏 2s 渐入：标题与正文错开，整块不会齐刷刷地出现 */
 @keyframes home-intro-in {
   from { opacity: 0; transform: translateY(14px); }
@@ -391,15 +404,20 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
 .home-hero p { animation: home-intro-in 2s var(--ease-silk) both; }
 .home-hero p { animation-delay: 0.25s; }
 
-/* 向下滑动图标：用 left/right + flex 居中，不用 translateX，
+/* 向下滑动图标：基础部分用 flex 居中，不用 translateX，
    以免与渐入动画的 transform 相撞 */
 .scroll-hint {
-  position: absolute;
-  left: 0; right: 0; bottom: 32px;
   display: flex; justify-content: center;
   color: var(--muted);
   animation: home-intro-in 2s var(--ease-silk) 0.5s both;
 }
+/* 简介版首屏：图标钉在底部 */
+.home-hero .scroll-hint {
+  position: absolute;
+  left: 0; right: 0; bottom: 32px;
+}
+/* 关于版首屏：图标跟在正文之后正常排版 */
+.home-about .scroll-hint { margin: 28px 0 8px; }
 .scroll-hint:hover { color: var(--accent); text-decoration: none; }
 .scroll-hint svg { animation: scroll-hint-bounce 2.2s ease-in-out 2.6s infinite; }
 @keyframes scroll-hint-bounce {

@@ -45,7 +45,7 @@
 - 深色 / 浅色 / 跟随系统三态主题，`localStorage` 持久化且首屏无闪烁
 - 7 档正文字号调节
 - 动态可互动背景（点网格 + 细连线：网格被光标 / 触点拨动后自行回弹，明暗主题自适应，详见[性能与可访问性](#性能与可访问性)）
-- 首页：单栏博客介绍（首屏 2s 渐入）+ 向下滑动图标 + 滚动到位渐入的 3 篇展示（有置顶取置顶，否则取最新三篇非 AI 文章）
+- 首页：首屏直接渲染「关于」文章正文（2s 错开渐入）+ 向下滑动图标 + 滚动到位渐入的展示位
 - 文章页单栏居中，无侧栏；文章目录 / 阅读进度 / 回到顶部以浮动导航形式提供
 - 正文亚克力阅读面：半透底 + 毛玻璃，让交互背景只在两侧留白与侧栏隐约可见，不影响正文阅读
 - 文章卡片与上下篇导航同样为亚克力材质，与阅读面同一套材质语言
@@ -191,6 +191,7 @@ TOML 写法（`+++` 包裹，字段名相同，用 `=` 赋值）同样支持。
 | `summary` | string | 摘要，缺省时截取正文前 120 字 |
 | `description` | string | 更长的描述，用于元信息 |
 | `pinned` | bool | 置顶。首页展示位优先取置顶（最多 3 篇，且不显示“置顶”字样）；无置顶时取最新的非 AI 文章 |
+| `about` | bool | 标记为「关于」文章：正文直接渲染在首页首屏，并从首页展示位中排除（全站只应有一篇） |
 | `pinnedDescription` | string | 置顶说明文案 |
 | `hiddenInHomeList` | bool | 不在首页列表显示（仍可通过 URL 与归档访问） |
 | `showToc` | bool | 是否显示目录，默认 `true` |
@@ -358,8 +359,10 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 
 **首页与布局**
 
-- 首页只保留三段：首屏介绍（`home-hero`，高度为 `100svh - header`，标题与正文用 `home-intro-in` 错开渐入、各 2s）、向下滑动图标（锚点到 `#home-posts`，复用 `html { scroll-behavior: smooth }` 平滑滚动，图标自身有轻微上下浮动）、展示位（最多 3 篇，滚动到位后由 `ScrollReveal` 渐入）
-- 展示位取数见 `getHomeShowcase()`：有置顶则取置顶（首页不显示“置顶”徽标，由 `PostCard` 的 `hidePinnedBadge` 控制）；没有置顶则取日期最新的 3 篇非 AI 文章，跳过 `hiddenInHomeList`，保证首页不会全是 AI 稿
+- 首页首屏有两种形态：存在 `about: true` 的文章时，直接渲染该文正文（`getAboutPost()` + `renderMarkdown()`，用 `PostBody` 渲染以保留代码高亮与复制按钮）；否则退回 `SITE.homeInfo` 的一句简介并撑满一屏（`100svh - header`）
+- 首屏渐入 `home-intro-in` 各 2s，标题先、正文延后 0.25s，不会齐刷刷地出现
+- 向下滑动图标：锚点到 `#home-posts`，复用 `html { scroll-behavior: smooth }`；在简介版首屏钉在底部，在关于版里跟在正文之后正常排版（`.scroll-hint` 按父级切换定位）
+- 展示位取数见 `getHomeShowcase()`：有置顶则取置顶（首页不显示“置顶”徽标，由 `PostCard` 的 `hidePinnedBadge` 控制）；没有置顶则取日期最新的 3 篇非 AI 文章，跳过 `hiddenInHomeList` 与 `about`，保证首页不会全是 AI 稿、也不会与首屏重复
 - 文章页为单栏居中（`.post-layout` 最大宽 800px，与原先“侧栏 + 正文”时的正文实测宽度一致），已移除左侧“全部文章”列表；目录 / 阅读进度 / 回到顶部仍以浮动形式提供，不占布局宽度
 - `ScrollReveal` 的初始隐藏态写在 CSS 里，组件内附 `<noscript>` 兜底样式，禁用 JS 时内容不会永远不可见；无 `IntersectionObserver` 的浏览器直接显示，不做动画
 
