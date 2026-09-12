@@ -434,7 +434,7 @@ export default function RouteLoading() {
             bottom: "20px",
             width: `${barW}px`,
             background: "rgba(255,255,255,0.08)",
-            borderRadius: "3px",
+            borderRadius: 0,
             overflow: "hidden",
             pointerEvents: "none",
           }}
@@ -453,7 +453,7 @@ export default function RouteLoading() {
                 "linear-gradient(to top, #a3e635, #d9f99d)", // 鲜艳黄绿色
               transition: barTransition,
               boxShadow: "0 0 6px #a3e635, 0 0 12px rgba(163, 230, 53, 0.6)",
-              borderRadius: "3px",
+              borderRadius: 0,
             }}
           />
         </div>
