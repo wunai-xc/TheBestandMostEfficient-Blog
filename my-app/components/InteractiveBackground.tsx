@@ -15,6 +15,11 @@ const PUSH_PER_SPACING = 0.052; // 指针推力系数（× 间距）→ 与网�
 const SPRING = 0.09; // 回弹弹簧刚度：点被推开后自行归位
 const DAMPING = 0.86; // 速度阻尼
 const MAX_SHIFT_RATIO = 0.75; // 最大位移 = 间距 × 该系数，避免相邻点互换
+/* 网格连线：仅连接上下/左右相邻点，点被推开后自然形成被拉扯的网格 */
+const LINE_WIDTH = 0.6; // 线宽（px，已经很细）
+const LINE_ALPHA_REST = 0.05; // 静止区的线透明度
+const LINE_ALPHA_ACTIVE = 0.17; // 被拉动区域的线透明度（并转为强调色）
+const LINE_SHIFT_RATIO = 0.14; // 端点位移超过 间距 × 该系数 即视为被拉动
 /* 静止判定阈值（px/帧）²：低于此值视为肉眼不可见的微动，可停帧省电 */
 const REST_V2 = 0.0025;
 /* 触摸后浏览器会补发一套 pointerType="mouse" 的兼容事件；
@@ -60,6 +65,9 @@ export default function InteractiveBackground() {
     /* 分档边界换算到"位移平方"上，热循环里可省掉开方 */
     let bandLo2: number[] = [];
     let bandHi2: number[] = [];
+    /* 每个点的位移平方，每帧刷新一次，供连线分档与描点共用 */
+    let mag2 = new Float32Array(0);
+    let lineShift2 = (BASE_SPACING * LINE_SHIFT_RATIO) ** 2;
 
     let raf = 0;
     let running = false;
@@ -124,6 +132,7 @@ export default function InteractiveBackground() {
       rows = Math.ceil(h / spacing) + 1;
       count = cols * rows;
       dots = new Float32Array(count * 6);
+      mag2 = new Float32Array(count);
 
       // 基准位置按行优先写入；偏移与速度初始为 0（新 Float32Array 已置零）
       for (let r = 0; r < rows; r++) {
@@ -143,6 +152,7 @@ export default function InteractiveBackground() {
       maxShift2 = maxShift * maxShift;
       bandLo2 = BAND_EDGES.slice(0, BANDS).map((f) => (f * maxShift) ** 2);
       bandHi2 = BAND_EDGES.slice(1).map((f) => (f * maxShift) ** 2);
+      lineShift2 = (spacing * LINE_SHIFT_RATIO) ** 2;
     }
 
     function resize() {
@@ -229,9 +239,64 @@ export default function InteractiveBackground() {
       return maxV2 > REST_V2;
     }
 
+    /* 网格连线：只连相邻点，点被推开后线段被拉长/拉斜，形成"网格被拨动"的效果。
+       按端点位移分两档：静止区用前景色极淡，被拉动区转强调色并稍微提亮。
+       每档一次 stroke，因此无论多少条线，每帧只需 2 次描边。 */
+    function renderLines() {
+      ctx!.lineWidth = LINE_WIDTH;
+      ctx!.lineCap = "round";
+      for (let band = 0; band < 2; band++) {
+        const active = band === 1;
+        ctx!.globalAlpha = (active ? LINE_ALPHA_ACTIVE : LINE_ALPHA_REST) * alphaScale;
+        ctx!.strokeStyle = active ? accentColor : dotColor;
+        ctx!.beginPath();
+        for (let r = 0; r < rows; r++) {
+          const rowBase = r * cols;
+          for (let c = 0; c < cols; c++) {
+            const i = rowBase + c;
+            const o = i * 6;
+            const m = mag2[i];
+            const x = dots[o] + dots[o + 2];
+            const y = dots[o + 1] + dots[o + 3];
+            // 右邻
+            if (c + 1 < cols) {
+              const j = i + 1;
+              if ((m >= lineShift2 || mag2[j] >= lineShift2) === active) {
+                const jo = j * 6;
+                ctx!.moveTo(x, y);
+                ctx!.lineTo(dots[jo] + dots[jo + 2], dots[jo + 1] + dots[jo + 3]);
+              }
+            }
+            // 下邻
+            if (r + 1 < rows) {
+              const j = i + cols;
+              if ((m >= lineShift2 || mag2[j] >= lineShift2) === active) {
+                const jo = j * 6;
+                ctx!.moveTo(x, y);
+                ctx!.lineTo(dots[jo] + dots[jo + 2], dots[jo + 1] + dots[jo + 3]);
+              }
+            }
+          }
+        }
+        ctx!.stroke();
+      }
+      ctx!.lineCap = "butt";
+    }
+
     function render() {
       if (!w || !h || !count) return;
       ctx!.clearRect(0, 0, w, h);
+
+      // 先把每点的位移平方刷进 mag2：连线分档与描点都要用
+      for (let i = 0; i < count; i++) {
+        const o = i * 6;
+        const ox = dots[o + 2];
+        const oy = dots[o + 3];
+        mag2[i] = ox * ox + oy * oy;
+      }
+
+      // 连线画在点的下面，避免细线盖住点
+      renderLines();
 
       // 按位移分档批量绘制：每档一次 fill，档位越高点越大越亮
       for (let band = 0; band < BANDS; band++) {
@@ -242,13 +307,11 @@ export default function InteractiveBackground() {
         ctx!.fillStyle = band < 2 ? dotColor : accentColor;
         ctx!.beginPath();
         for (let i = 0; i < count; i++) {
-          const o = i * 6;
-          const ox = dots[o + 2];
-          const oy = dots[o + 3];
-          const s2 = ox * ox + oy * oy;
+          const s2 = mag2[i];
           if (s2 > lo && s2 <= hi) {
-            const cx = dots[o] + ox;
-            const cy = dots[o + 1] + oy;
+            const o = i * 6;
+            const cx = dots[o] + dots[o + 2];
+            const cy = dots[o + 1] + dots[o + 3];
             // moveTo 先跳到圆周起点，避免相邻点被直线连起来
             ctx!.moveTo(cx + r, cy);
             ctx!.arc(cx, cy, r, 0, Math.PI * 2);
