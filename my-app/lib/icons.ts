@@ -10,6 +10,7 @@ import mdiFormatFontSizeIncrease from "@iconify/icons-mdi/format-font-size-incre
 import mdiTranslate from "@iconify/icons-mdi/translate";
 import mdiTableOfContents from "@iconify/icons-mdi/table-of-contents";
 import mdiArrowUp from "@iconify/icons-mdi/arrow-up";
+import mdiChevronDown from "@iconify/icons-mdi/chevron-down";
 import mdiWeatherSunny from "@iconify/icons-mdi/weather-sunny";
 import mdiWeatherNight from "@iconify/icons-mdi/weather-night";
 import mdiThemeLightDark from "@iconify/icons-mdi/theme-light-dark";
@@ -31,6 +32,7 @@ export const icons = {
   "mdi:translate": mdiTranslate,
   "mdi:table-of-contents": mdiTableOfContents,
   "mdi:arrow-up": mdiArrowUp,
+  "mdi:chevron-down": mdiChevronDown,
   "mdi:weather-sunny": mdiWeatherSunny,
   "mdi:weather-night": mdiWeatherNight,
   "mdi:theme-light-dark": mdiThemeLightDark,
