@@ -165,8 +165,14 @@ export function getPinnedPosts(lang: Lang): Post[] {
   return getPosts(lang).filter((p) => p.pinned);
 }
 
-export function getHomePosts(lang: Lang): Post[] {
-  return getPosts(lang).filter((p) => !p.hiddenInHomeList && !p.pinned);
+/* 首页展示位（最多 3 篇）：
+   有置顶则只展示置顶；没有置顶时取最新的非 AI 文章（AI 文不占首页位） */
+export function getHomeShowcase(lang: Lang, limit = 3): Post[] {
+  const pinned = getPinnedPosts(lang);
+  if (pinned.length) return pinned.slice(0, limit);
+  return getPosts(lang)
+    .filter((p) => !p.isAI && !p.hiddenInHomeList)
+    .slice(0, limit);
 }
 
 export function getPrevNext(lang: Lang, slug: string): { prev?: Post; next?: Post } {

@@ -7,7 +7,16 @@ import { icons } from "@/lib/icons";
 import type { Post } from "../lib/site";
 import { SITE, readingMinutes } from "../lib/site";
 
-export default function PostCard({ post, lang }: { post: Post; lang: "zh" | "en" }) {
+export default function PostCard({
+  post,
+  lang,
+  hidePinnedBadge = false,
+}: {
+  post: Post;
+  lang: "zh" | "en";
+  /* 首页展示位不再强调“置顶”字样，由调用方传入 */
+  hidePinnedBadge?: boolean;
+}) {
   const t = SITE.i18n[lang];
   const readingTime = readingMinutes(post.wordCount);
   const cardRef = useRef<HTMLElement>(null);
@@ -47,7 +56,7 @@ export default function PostCard({ post, lang }: { post: Post; lang: "zh" | "en"
     >
       <h2>
         <Link href={`/${lang}/posts/${encodeURIComponent(post.slug)}/`}>{post.title}</Link>
-        {post.pinned && <span className="pinned-badge">{t.pinned}</span>}
+        {post.pinned && !hidePinnedBadge && <span className="pinned-badge">{t.pinned}</span>}
       </h2>
       <div className="meta">
         <span>{post.date}</span>

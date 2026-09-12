@@ -45,7 +45,8 @@
 - 深色 / 浅色 / 跟随系统三态主题，`localStorage` 持久化且首屏无闪烁
 - 7 档正文字号调节
 - 动态可互动背景（点网格 + 细连线：网格被光标 / 触点拨动后自行回弹，明暗主题自适应，详见[性能与可访问性](#性能与可访问性)）
-- 文章目录、阅读进度、滚动定位、回到顶部
+- 首页：单栏博客介绍（首屏 2s 渐入）+ 向下滑动图标 + 滚动到位渐入的 3 篇展示（有置顶取置顶，否则取最新三篇非 AI 文章）
+- 文章页单栏居中，无侧栏；文章目录 / 阅读进度 / 回到顶部以浮动导航形式提供
 - 正文亚克力阅读面：半透底 + 毛玻璃，让交互背景只在两侧留白与侧栏隐约可见，不影响正文阅读
 - 文章卡片与上下篇导航同样为亚克力材质，与阅读面同一套材质语言
 - 打印 / 另存为 PDF（专用 `@media print` 样式），一键下载 Markdown 原文
@@ -88,15 +89,16 @@
 │   │   ├── robots.ts / sitemap.ts  # 静态生成的 robots 与 sitemap
 │   │   └── [lang]/                 # zh | en 双语路由
 │   │       ├── layout.tsx          # Header + main + Footer
-│   │       ├── page.tsx            # 首页（置顶文章 + 文章列表）
+│   │       ├── page.tsx            # 首页（博客介绍 + 展示位）
 │   │       ├── posts/page.tsx      # 文章列表
-│   │       ├── posts/[slug]/page.tsx  # 文章详情（正文、TOC、上下篇、评论、JSON-LD）
+│   │       ├── posts/[slug]/page.tsx  # 文章详情（单栏正文、TOC、上下篇、评论、JSON-LD）
 │   │       ├── tags/、categories/  # 标签 / 分类索引与详情
 │   │       ├── archives/           # 按年份归档
 │   │       └── search/             # 站内搜索
 │   ├── components/
 │   │   ├── InteractiveBackground.tsx  # 点网格交互背景（Canvas）
 │   │   ├── PostBody.tsx            # 正文渲染 + 复制按钮 + 图表按需加载
+│   │   ├── ScrollReveal.tsx        # 滚动到位后渐入（IntersectionObserver）
 │   │   ├── Header.tsx / Footer.tsx / PostCard.tsx / PostNav.tsx
 │   │   ├── ThemeToggle.tsx / FontSizeControl.tsx / LangSwitcher.tsx
 │   │   ├── Comments.tsx / PrintControls.tsx / Search.tsx / RouteLoading.tsx
@@ -188,7 +190,7 @@ TOML 写法（`+++` 包裹，字段名相同，用 `=` 赋值）同样支持。
 | `categories` | string[] | 分类 |
 | `summary` | string | 摘要，缺省时截取正文前 120 字 |
 | `description` | string | 更长的描述，用于元信息 |
-| `pinned` | bool | 置顶（首页置顶区展示，且不再出现在普通列表） |
+| `pinned` | bool | 置顶。首页展示位优先取置顶（最多 3 篇，且不显示“置顶”字样）；无置顶时取最新的非 AI 文章 |
 | `pinnedDescription` | string | 置顶说明文案 |
 | `hiddenInHomeList` | bool | 不在首页列表显示（仍可通过 URL 与归档访问） |
 | `showToc` | bool | 是否显示目录，默认 `true` |
@@ -354,6 +356,13 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 
 想要关闭或调参：在 `my-app/app/layout.tsx` 移除 `<InteractiveBackground />` 即可关闭；间距、点数上限、影响半径、推力、弹簧刚度、阻尼、分档透明度、暗色亮度系数、线宽与连线透明度（`LINE_WIDTH` / `LINE_ALPHA_REST` / `LINE_ALPHA_ACTIVE`）等都在该组件顶部的常量区集中定义。
 
+**首页与布局**
+
+- 首页只保留三段：首屏介绍（`home-hero`，高度为 `100svh - header`，标题与正文用 `home-intro-in` 错开渐入、各 2s）、向下滑动图标（锚点到 `#home-posts`，复用 `html { scroll-behavior: smooth }` 平滑滚动，图标自身有轻微上下浮动）、展示位（最多 3 篇，滚动到位后由 `ScrollReveal` 渐入）
+- 展示位取数见 `getHomeShowcase()`：有置顶则取置顶（首页不显示“置顶”徽标，由 `PostCard` 的 `hidePinnedBadge` 控制）；没有置顶则取日期最新的 3 篇非 AI 文章，跳过 `hiddenInHomeList`，保证首页不会全是 AI 稿
+- 文章页为单栏居中（`.post-layout` 最大宽 800px，与原先“侧栏 + 正文”时的正文实测宽度一致），已移除左侧“全部文章”列表；目录 / 阅读进度 / 回到顶部仍以浮动形式提供，不占布局宽度
+- `ScrollReveal` 的初始隐藏态写在 CSS 里，组件内附 `<noscript>` 兜底样式，禁用 JS 时内容不会永远不可见；无 `IntersectionObserver` 的浏览器直接显示，不做动画
+
 **其他性能与无障碍细节**
 
 - 亚克力材质由半透底 + `backdrop-filter: blur()` + 内高光描边 + 顶部光泽层叠成，取值统一在 `--reading-*`（阅读面）与 `--card-acrylic-*`（卡片）两组自定义属性里，亮/暗各一套，随主题类一起切换（比用 `@media` 复写干净，跟随系统主题时不会出现不一致）
@@ -365,7 +374,7 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 - 主题在 `<head>` 中用一个内联脚本完成引导，避免深色模式闪烁（FOUC）
 - 评论区、Mermaid / ECharts / Graphviz / abc.js / SmilesDrawer 全部懒加载，仅在进入视口或正文实际用到时才请求
 - 动画统一基于 `transform` / `opacity`，并对系统「减弱动态效果」偏好做全局降级
-- 语义化结构：`header` / `main` / `article` / `nav` / `aside`、面包屑、文章 JSON-LD 结构化数据
+- 语义化结构：`header` / `main` / `article` / `nav`、面包屑、文章 JSON-LD 结构化数据
 
 ---
 

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@iconify/react/offline";
 import { icons } from "@/lib/icons";
 import {
-  getPost, getAllSlugs, getPrevNext, getPosts, SITE, readingMinutes, type Lang,
+  getPost, getAllSlugs, getPrevNext, SITE, readingMinutes, type Lang,
 } from "@/lib/content";
 import { renderMarkdown, extractToc } from "@/lib/markdown";
 import PostBody from "@/components/PostBody";
@@ -51,7 +51,6 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
   const { prev, next } = getPrevNext(lang, decodedSlug);
   const t = SITE.i18n[lang];
   const readingTime = readingMinutes(post.wordCount);
-  const allPosts = getPosts(lang);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -72,26 +71,7 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
 
   return (
     <div className="post-layout">
-      {/* 左栏：全部文章导航 */}
-      <aside className="sidebar-col">
-        <div className="toc">
-          <h4>{t.allPosts}</h4>
-          <ul>
-            {allPosts.map((p) => (
-              <li key={p.slug}>
-                <a
-                  href={`/${lang}/posts/${encodeURIComponent(p.slug)}/`}
-                  className={p.slug === post.slug ? "active" : ""}
-                >
-                  {p.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
-
-      {/* 中栏：文章内容 */}
+      {/* 单栏：正文居中，不再有「全部文章」侧栏 */}
       <article className="post-content">
         <nav className="breadcrumbs">
           <a href={`/${lang}/`}>{t.home}</a>
