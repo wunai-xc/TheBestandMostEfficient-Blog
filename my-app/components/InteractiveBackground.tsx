@@ -5,24 +5,27 @@ import { useEffect, useRef } from "react";
 /* ===== 可调参数（集中放置，便于后续调优） ===== */
 const MAX_DPR = 2; // 设备像素比上限：高分屏不做 3x 渲染，避免填充率爆炸
 const FRAME_MS = 1000 / 60; // 运动归一化基准（不同刷新率下手感一致）
-const MAX_SPEED = 0.42; // 粒子最大速度（px/帧）
-const MIN_SPEED = 0.06; // 粒子最小速度：保证永远缓慢漂移，不会停死
-const AREA_PER_PARTICLE = 30000; // 每个粒子占用的视口面积（px²）
-const MIN_PARTICLES = 14;
-const MAX_PARTICLES = 64; // 连线是 O(n²)，这里设硬上限保证稳定 60fps
-const POINTER_RADIUS = 150; // 指针斥力半径（px）
-const POINTER_FORCE = 0.5; // 斥力强度
-const RIPPLE_MS = 900; // 点击涟漪扩散时长
-const MAX_RIPPLES = 4;
+const BASE_SPACING = 26; // 网格间距（px）
+const NARROW_SPACING = 22; // 窄屏（< 640px）间距，点更密一些
+const NARROW_WIDTH = 640;
+const MAX_DOTS = 3000; // 网格点上限：超出则自动放大间距
+const POINTER_RADIUS_FACTOR = 5; // 影响半径 = 间距 × 该系数
+const POINTER_RADIUS_MIN = 120;
+const PUSH_PER_SPACING = 0.052; // 指针推力系数（× 间距）→ 与网格密度无关的手感
+const SPRING = 0.09; // 回弹弹簧刚度：点被推开后自行归位
+const DAMPING = 0.86; // 速度阻尼
+const MAX_SHIFT_RATIO = 0.75; // 最大位移 = 间距 × 该系数，避免相邻点互换
+/* 静止判定阈值（px/帧）²：低于此值视为肉眼不可见的微动，可停帧省电 */
+const REST_V2 = 0.0025;
+/* 触摸后浏览器会补发一套 pointerType="mouse" 的兼容事件；
+   在此时窗内忽略它，否则抬指后点会被误当成"鼠标停在那里"而回不了位 */
+const TOUCH_GUARD_MS = 1000;
 
-/* 连线按距离分 4 档透明度批量描边：每帧只需 4 次 stroke，而不是 n² 次。
-   BAND_EDGES 为距离占比边界（升序），BAND_ALPHA[band] 对应第 band 档，
-   即索引 0 = 最近的连线（最亮），索引 3 = 最远（最淡） */
-const BAND_EDGES = [0, 0.4, 0.65, 0.85, 1];
-const BAND_ALPHA = [0.28, 0.17, 0.1, 0.05];
-
-type RGB = { r: number; g: number; b: number };
-type Ripple = { x: number; y: number; t: number };
+/* 位移分 4 档：档位越高（被推得越远）越大、越亮，并转为强调色 */
+const BAND_EDGES = [0, 0.3, 0.55, 0.8, 1];
+const BAND_ALPHA = [0.3, 0.45, 0.6, 0.85];
+const BAND_RADIUS = [1, 1.3, 1.6, 1.9];
+const BANDS = BAND_EDGES.length - 1;
 
 export default function InteractiveBackground() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -38,35 +41,43 @@ export default function InteractiveBackground() {
         ? window.matchMedia("(prefers-reduced-motion: reduce)")
         : null;
 
-    /* 粒子位置/速度用扁平定长数组（stride=4: x, y, vx, vy），避免每帧产生对象垃圾 */
-    let pos = new Float32Array(0);
-    let radii = new Float32Array(0);
+    /* 每个点 6 个分量：baseX, baseY, offsetX, offsetY, velX, velY。
+       用扁平定长数组，避免每帧产生对象垃圾 */
+    let dots = new Float32Array(0);
     let count = 0;
+    let cols = 0;
+    let rows = 0;
 
     let w = 0;
     let h = 0;
-    let linkDist = 120;
-    /* 分档边界的平方值，随 linkDist 变化预计算：热循环内避免开方与每帧分配 */
-    let bandEdges2: number[] = [];
-    let ripples: Ripple[] = [];
+    let spacing = BASE_SPACING;
+    let radius = 1.8;
+    let pointerRadius = POINTER_RADIUS_MIN;
+    let pointerRadius2 = POINTER_RADIUS_MIN * POINTER_RADIUS_MIN;
+    let pushForce = BASE_SPACING * PUSH_PER_SPACING;
+    let maxShift = BASE_SPACING * MAX_SHIFT_RATIO;
+    let maxShift2 = maxShift * maxShift;
+    /* 分档边界换算到"位移平方"上，热循环里可省掉开方 */
+    let bandLo2: number[] = [];
+    let bandHi2: number[] = [];
+
     let raf = 0;
     let running = false;
+    /* 静帧状态：网格已静止（含指针悬停不动），循环已停；指针一动即被唤醒 */
+    let idle = false;
     let lastTs = 0;
     let resizeRaf = 0;
-    /* 上次播种时的视口尺寸，用于判断是否需要重新播种 */
-    let lastSeedW = -1;
-    let lastSeedH = -1;
 
     const pointer = { x: 0, y: 0, active: false };
+    /* 最近一次触摸事件的时间戳，用于屏蔽触摸后的兼容鼠标事件 */
+    let lastTouchAt = 0;
 
-    let dotColor = "rgba(120,120,120,0.5)";
-    let lineColor = "rgb(37,99,235)";
-    let glowColor = "rgba(37,99,235,0.3)";
-    let glowSprite: HTMLCanvasElement | null = null;
+    let dotColor = "rgb(120,120,120)";
+    let accentColor = "rgb(37,99,235)";
 
     /* ---------- 工具 ---------- */
 
-    function parseColor(input: string | null | undefined): RGB | null {
+    function parseColor(input: string | null | undefined): { r: number; g: number; b: number } | null {
       const s = (input || "").trim();
       if (!s) return null;
       let m = s.match(/^#([0-9a-f]{3})$/i);
@@ -87,210 +98,159 @@ export default function InteractiveBackground() {
       return null;
     }
 
-    /* 指针光晕：预渲染一次到离屏画布，之后每帧只做一次 drawImage */
-    function buildGlow(color: string): HTMLCanvasElement {
-      const size = POINTER_RADIUS * 2;
-      const c = document.createElement("canvas");
-      c.width = size;
-      c.height = size;
-      const g = c.getContext("2d");
-      if (g) {
-        const grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-        grad.addColorStop(0, color);
-        grad.addColorStop(1, "rgba(0,0,0,0)");
-        g.fillStyle = grad;
-        g.fillRect(0, 0, size, size);
-      }
-      return c;
-    }
-
-    /* 跟随主题（亮/暗）读取颜色：正文前景色作粒子，强调色作连线与光晕 */
+    /* 跟随主题（亮/暗）读取颜色：静止点用前景色，被推开的点转为强调色 */
     function readTheme() {
-      const dot = parseColor(getComputedStyle(document.body).color) || { r: 128, g: 128, b: 128 };
+      const fg = parseColor(getComputedStyle(document.body).color) || { r: 128, g: 128, b: 128 };
       const accent =
-        parseColor(getComputedStyle(document.documentElement).getPropertyValue("--accent")) || dot;
-      dotColor = `rgba(${dot.r},${dot.g},${dot.b},0.3)`;
-      lineColor = `rgb(${accent.r},${accent.g},${accent.b})`;
-      glowColor = `rgba(${accent.r},${accent.g},${accent.b},0.22)`;
-      glowSprite = buildGlow(glowColor);
+        parseColor(getComputedStyle(document.documentElement).getPropertyValue("--accent")) || fg;
+      dotColor = `rgb(${fg.r},${fg.g},${fg.b})`;
+      accentColor = `rgb(${accent.r},${accent.g},${accent.b})`;
     }
 
-    /* ---------- 初始化 / 尺寸 ---------- */
+    /* ---------- 网格构建 ---------- */
 
-    function seed() {
-      const target = Math.round((w * h) / AREA_PER_PARTICLE);
-      count = Math.max(MIN_PARTICLES, Math.min(MAX_PARTICLES, target || MIN_PARTICLES));
-      pos = new Float32Array(count * 4);
-      radii = new Float32Array(count);
-      for (let i = 0; i < count; i++) {
-        const o = i * 4;
-        pos[o] = Math.random() * w;
-        pos[o + 1] = Math.random() * h;
-        const angle = Math.random() * Math.PI * 2;
-        const speed = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED);
-        pos[o + 2] = Math.cos(angle) * speed;
-        pos[o + 3] = Math.sin(angle) * speed;
-        radii[i] = 1.1 + Math.random() * 1.4;
+    function buildGrid() {
+      spacing = w < NARROW_WIDTH ? NARROW_SPACING : BASE_SPACING;
+      // 超大屏上自动放大间距，把点数压在 MAX_DOTS 以内
+      const minSpacing = Math.sqrt((w * h) / MAX_DOTS);
+      if (minSpacing > spacing) spacing = minSpacing;
+
+      cols = Math.ceil(w / spacing) + 1;
+      rows = Math.ceil(h / spacing) + 1;
+      count = cols * rows;
+      dots = new Float32Array(count * 6);
+
+      // 基准位置按行优先写入；偏移与速度初始为 0（新 Float32Array 已置零）
+      for (let r = 0; r < rows; r++) {
+        const y = r * spacing;
+        for (let c = 0; c < cols; c++) {
+          const o = (r * cols + c) * 6;
+          dots[o] = c * spacing;
+          dots[o + 1] = y;
+        }
       }
-    }
 
-    function updateLinkDist() {
-      // 小屏幕上缩短连线距离，避免糊成一片
-      linkDist = Math.max(90, Math.min(140, Math.min(w, h) * 0.22));
-      bandEdges2 = BAND_EDGES.map((f) => f * f * linkDist * linkDist);
+      radius = Math.min(2.4, Math.max(1.2, spacing * 0.07));
+      pointerRadius = Math.max(POINTER_RADIUS_MIN, spacing * POINTER_RADIUS_FACTOR);
+      pointerRadius2 = pointerRadius * pointerRadius;
+      pushForce = spacing * PUSH_PER_SPACING;
+      maxShift = spacing * MAX_SHIFT_RATIO;
+      maxShift2 = maxShift * maxShift;
+      bandLo2 = BAND_EDGES.slice(0, BANDS).map((f) => (f * maxShift) ** 2);
+      bandHi2 = BAND_EDGES.slice(1).map((f) => (f * maxShift) ** 2);
     }
 
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-      const nw = window.innerWidth;
-      const nh = window.innerHeight;
-      // 移动端地址栏伸缩会频繁触发 resize：宽度不变、高度微变时不重新播种，
-      // 否则粒子会不断"瞬移"重排，反而抵消性能优化
-      const widthChanged = Math.abs(nw - lastSeedW) > 1;
-      const heightJumped = lastSeedH > 0 && Math.abs(nh - lastSeedH) / lastSeedH > 0.25;
-
-      w = nw;
-      h = nh;
+      w = window.innerWidth;
+      h = window.innerHeight;
       canvas!.width = Math.max(1, Math.round(w * dpr));
       canvas!.height = Math.max(1, Math.round(h * dpr));
       // canvas.width 赋值会重置上下文状态，需重新设置变换
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-      updateLinkDist();
-
-      if (count === 0 || widthChanged || heightJumped) {
-        seed();
-        lastSeedW = nw;
-        lastSeedH = nh;
-      }
-      ripples = [];
+      buildGrid();
     }
 
     /* ---------- 运动与绘制 ---------- */
 
-    function step(k: number, dt: number) {
-      const pr2 = POINTER_RADIUS * POINTER_RADIUS;
-      const min2 = MIN_SPEED * MIN_SPEED;
-      const max2 = MAX_SPEED * MAX_SPEED;
+    function step(k: number): boolean {
+      const damp = Math.pow(DAMPING, k);
+      const active = pointer.active;
+      const px = pointer.x;
+      const py = pointer.y;
+      const pr2 = pointerRadius2;
+      const invR = 1 / pointerRadius;
+      const force = pushForce * k;
+      const spring = SPRING * k;
+      let maxV2 = 0;
 
       for (let i = 0; i < count; i++) {
-        const o = i * 4;
-        let x = pos[o];
-        let y = pos[o + 1];
-        let vx = pos[o + 2];
-        let vy = pos[o + 3];
+        const o = i * 6;
+        const bx = dots[o];
+        const by = dots[o + 1];
+        let ox = dots[o + 2];
+        let oy = dots[o + 3];
+        let vx = dots[o + 4];
+        let vy = dots[o + 5];
 
-        // 指针斥力：附近的粒子被柔和推开，形成"被拨动"的手感
-        if (pointer.active) {
-          const dx = x - pointer.x;
-          const dy = y - pointer.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < pr2 && d2 > 1) {
-            const d = Math.sqrt(d2);
-            const f = (1 - d / POINTER_RADIUS) * POINTER_FORCE * k;
-            vx += (dx / d) * f;
-            vy += (dy / d) * f;
+        // 指针斥力：落在影响半径内的点被推离光标/触点，越近推力越大
+        if (active) {
+          let nx = bx + ox - px;
+          let ny = by + oy - py;
+          let d2 = nx * nx + ny * ny;
+          if (d2 < pr2) {
+            let d = Math.sqrt(d2);
+            // 点与指针几乎重合时给一个确定方向，避免除以 0 后原地不动
+            if (d < 0.001) {
+              nx = 1;
+              ny = 0;
+              d = 1;
+            }
+            const falloff = 1 - d * invR;
+            const f = falloff * falloff * force;
+            vx += (nx / d) * f;
+            vy += (ny / d) * f;
           }
         }
 
-        // 阻尼 + 限速（保留方向，避免抖动）
-        vx *= 0.985;
-        vy *= 0.985;
-        const sp2 = vx * vx + vy * vy;
-        if (sp2 > max2) {
-          const s = MAX_SPEED / Math.sqrt(sp2);
-          vx *= s;
-          vy *= s;
-        } else if (sp2 < min2 && sp2 > 0) {
-          const s = MIN_SPEED / Math.sqrt(sp2);
+        // 弹簧回位 + 阻尼
+        vx -= spring * ox;
+        vy -= spring * oy;
+        vx *= damp;
+        vy *= damp;
+        ox += vx * k;
+        oy += vy * k;
+
+        // 限制最大位移，防止相邻点穿过彼此
+        const s2 = ox * ox + oy * oy;
+        if (s2 > maxShift2) {
+          const s = maxShift / Math.sqrt(s2);
+          ox *= s;
+          oy *= s;
           vx *= s;
           vy *= s;
         }
 
-        x += vx * k;
-        y += vy * k;
+        dots[o + 2] = ox;
+        dots[o + 3] = oy;
+        dots[o + 4] = vx;
+        dots[o + 5] = vy;
 
-        // 边缘环绕（留 20px 余量，粒子在视口外完成回绕）
-        if (x < -20) x = w + 20;
-        else if (x > w + 20) x = -20;
-        if (y < -20) y = h + 20;
-        else if (y > h + 20) y = -20;
-
-        pos[o] = x;
-        pos[o + 1] = y;
-        pos[o + 2] = vx;
-        pos[o + 3] = vy;
+        // 记录本帧最大速度：全部接近 0 时说明网格已静止
+        const v2 = vx * vx + vy * vy;
+        if (v2 > maxV2) maxV2 = v2;
       }
 
-      // 涟漪推进
-      if (ripples.length) {
-        for (let i = ripples.length - 1; i >= 0; i--) {
-          ripples[i].t += dt / RIPPLE_MS;
-          if (ripples[i].t >= 1) ripples.splice(i, 1);
-        }
-      }
+      return maxV2 > REST_V2;
     }
 
     function render() {
-      if (!w || !h) return;
+      if (!w || !h || !count) return;
       ctx!.clearRect(0, 0, w, h);
 
-      // 1) 粒子连线：按距离分档，每档一次批量 stroke
-      ctx!.lineWidth = 1;
-      ctx!.strokeStyle = lineColor;
-      for (let band = 0; band < BAND_ALPHA.length; band++) {
-        const lo = band === 0 ? -1 : bandEdges2[band];
-        const hi = bandEdges2[band + 1];
+      // 按位移分档批量绘制：每档一次 fill，档位越高点越大越亮
+      for (let band = 0; band < BANDS; band++) {
+        const lo = band === 0 ? -1 : bandLo2[band];
+        const hi = bandHi2[band];
+        const r = radius * BAND_RADIUS[band];
         ctx!.globalAlpha = BAND_ALPHA[band];
+        ctx!.fillStyle = band < 2 ? dotColor : accentColor;
         ctx!.beginPath();
         for (let i = 0; i < count; i++) {
-          const io = i * 4;
-          const x1 = pos[io];
-          const y1 = pos[io + 1];
-          for (let j = i + 1; j < count; j++) {
-            const jo = j * 4;
-            const dx = x1 - pos[jo];
-            const dy = y1 - pos[jo + 1];
-            const d2 = dx * dx + dy * dy;
-            if (d2 > lo && d2 <= hi) {
-              ctx!.moveTo(x1, y1);
-              ctx!.lineTo(pos[jo], pos[jo + 1]);
-            }
+          const o = i * 6;
+          const ox = dots[o + 2];
+          const oy = dots[o + 3];
+          const s2 = ox * ox + oy * oy;
+          if (s2 > lo && s2 <= hi) {
+            const cx = dots[o] + ox;
+            const cy = dots[o + 1] + oy;
+            // moveTo 先跳到圆周起点，避免相邻点被直线连起来
+            ctx!.moveTo(cx + r, cy);
+            ctx!.arc(cx, cy, r, 0, Math.PI * 2);
           }
         }
-        ctx!.stroke();
+        ctx!.fill();
       }
-
-      // 2) 指针光晕（离屏精灵，避免每帧重建渐变）
-      if (pointer.active && glowSprite) {
-        const s = POINTER_RADIUS * 2;
-        ctx!.globalAlpha = 0.55;
-        ctx!.drawImage(glowSprite, pointer.x - s / 2, pointer.y - s / 2, s, s);
-      }
-
-      // 3) 点击涟漪
-      if (ripples.length) {
-        ctx!.strokeStyle = lineColor;
-        ctx!.lineWidth = 1.5;
-        for (let i = 0; i < ripples.length; i++) {
-          const rp = ripples[i];
-          ctx!.globalAlpha = (1 - rp.t) * 0.35;
-          ctx!.beginPath();
-          ctx!.arc(rp.x, rp.y, rp.t * 180, 0, Math.PI * 2);
-          ctx!.stroke();
-        }
-      }
-
-      // 4) 粒子点：所有点合并进一条路径，只 fill 一次
-      ctx!.globalAlpha = 0.8;
-      ctx!.fillStyle = dotColor;
-      ctx!.beginPath();
-      for (let i = 0; i < count; i++) {
-        const o = i * 4;
-        const r = radii[i];
-        ctx!.moveTo(pos[o] + r, pos[o + 1]);
-        ctx!.arc(pos[o], pos[o + 1], r, 0, Math.PI * 2);
-      }
-      ctx!.fill();
 
       ctx!.globalAlpha = 1;
     }
@@ -298,8 +258,17 @@ export default function InteractiveBackground() {
     function frame(ts: number) {
       const dt = lastTs ? Math.min(48, ts - lastTs) : FRAME_MS;
       lastTs = ts;
-      step(dt / FRAME_MS, dt);
+      const moving = step(dt / FRAME_MS);
       render();
+      if (!moving) {
+        // 网格静止：停帧，等下一个指针/触屏事件唤醒。
+        // 注意此时各点的位移会被冻结在当前值，画面与继续跑完全一致，
+        // 但静止悬停/无交互时不再空转（手机上尤其省电）
+        idle = true;
+        running = false;
+        raf = 0;
+        return;
+      }
       raf = requestAnimationFrame(frame);
     }
 
@@ -308,8 +277,14 @@ export default function InteractiveBackground() {
     function start() {
       if (running || (motionQuery && motionQuery.matches)) return;
       running = true;
+      idle = false;
       lastTs = 0;
       raf = requestAnimationFrame(frame);
+    }
+
+    /* 指针/触屏事件唤醒：只在静帧状态下才重新起帧 */
+    function wake() {
+      if (idle) start();
     }
 
     function stop() {
@@ -344,26 +319,49 @@ export default function InteractiveBackground() {
     }
 
     function onPointerMove(e: PointerEvent) {
+      if (e.pointerType === "mouse" && performance.now() - lastTouchAt < TOUCH_GUARD_MS) return;
       pointer.x = e.clientX;
       pointer.y = e.clientY;
       pointer.active = true;
+      wake();
     }
 
     function onPointerDown(e: PointerEvent) {
+      if (e.pointerType === "mouse" && performance.now() - lastTouchAt < TOUCH_GUARD_MS) return;
       pointer.x = e.clientX;
       pointer.y = e.clientY;
       pointer.active = true;
-      if (ripples.length >= MAX_RIPPLES) ripples.shift();
-      ripples.push({ x: e.clientX, y: e.clientY, t: 0 });
-      if (!running) render(); // 减弱动画模式下也要能看到一次涟漪
+      wake();
     }
 
     function onPointerUp(e: PointerEvent) {
-      if (e.pointerType === "touch") pointer.active = false;
+      // 触屏抬起后不再有指针位置，点自然回弹归位
+      if (e.pointerType === "touch") {
+        pointer.active = false;
+        wake(); // 停帧状态下被冻结的位移必须唤醒才会回弹归位
+      }
     }
 
     function onPointerLeave() {
       pointer.active = false;
+      wake();
+    }
+
+    // 触屏兜底：部分浏览器在 touch 拖动时 pointermove 不稳定
+    function onTouch(e: TouchEvent) {
+      const t = e.touches[0];
+      if (!t) return;
+      lastTouchAt = performance.now();
+      pointer.x = t.clientX;
+      pointer.y = t.clientY;
+      pointer.active = true;
+      wake();
+    }
+
+    function onTouchEnd() {
+      lastTouchAt = performance.now();
+      pointer.active = false;
+      wake();
     }
 
     function onThemeChange() {
@@ -382,6 +380,11 @@ export default function InteractiveBackground() {
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
     window.addEventListener("pointerup", onPointerUp, { passive: true });
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("touchstart", onTouch, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
     window.addEventListener("blur", onPointerLeave);
     document.documentElement.addEventListener("pointerleave", onPointerLeave);
 
@@ -422,9 +425,15 @@ export default function InteractiveBackground() {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("touchstart", onTouch);
+      window.removeEventListener("touchmove", onTouch);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
       window.removeEventListener("blur", onPointerLeave);
       document.documentElement.removeEventListener("pointerleave", onPointerLeave);
-      ripples = [];
+      dots = new Float32Array(0);
+      count = 0;
     };
   }, []);
 
