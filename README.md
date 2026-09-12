@@ -294,11 +294,12 @@ contact: {
   name: "朋友的站",                       // 卡片上显示的名称
   url: "https://example.com/",           // 点击跳转地址（新窗口打开）
   avatar: "/avatars/friend.png",         // 可选：图片地址，绝对 URL 或 public/ 下的路径
-  description: { zh: "一句话介绍", en: "One-line intro" },
+  description: { zh: "一句话介绍", en: "One-line intro" },  // 可选：省略时卡片副标题显示域名
 }
 ```
 
 - `avatar` 留空时用名称首字生成占位方块，不会出现碎图
+- `description` 省略时卡片副标题回退显示域名（`friendHost()`），不会留一行空白
 - 卡片图片用原生 `<img>` 而非 `next/image`：友链图片可能来自任意域名，`next/image` 需要预先声明 `remotePatterns` 且这里也不需要优化
 - 友链页面顶部的介绍文案是 `SITE.i18n.<lang>.linksIntro`
 

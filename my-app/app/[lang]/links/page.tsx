@@ -1,5 +1,5 @@
 import { SITE, type Lang } from "@/lib/content";
-import { getFriendLinks, friendText } from "@/lib/links";
+import { getFriendLinks, friendText, friendHost } from "@/lib/links";
 
 export default async function LinksPage({ params }: { params: Promise<{ lang: string }> }) {
   const p = await params; const lang = p.lang as Lang;
@@ -33,7 +33,8 @@ export default async function LinksPage({ params }: { params: Promise<{ lang: st
             )}
             <span className="friend-info">
               <span className="friend-name">{link.name}</span>
-              <span className="friend-desc">{friendText(link.description, lang)}</span>
+              {/* 没写介绍时回退显示域名，而不是留一行空白 */}
+              <span className="friend-desc">{friendText(link.description, lang) || friendHost(link.url)}</span>
             </span>
           </a>
         ))}

@@ -628,6 +628,9 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   font-size: 0.82rem;
   color: var(--muted);
   line-height: 1.45;
+  /* 回退显示域名时是一串无空格的长字符，必须允许任意位置断行，
+     否则会撑破卡片 */
+  overflow-wrap: anywhere;
   /* 介绍最多两行，超出省略，保证卡片高度整齐 */
   display: -webkit-box;
   -webkit-line-clamp: 2;
