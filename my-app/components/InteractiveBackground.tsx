@@ -71,7 +71,9 @@ export default function InteractiveBackground() {
 
     let raf = 0;
     let running = false;
-    /* 静帧状态：网格已静止（含指针悬停不动），循环已停；指针一动即被唤醒 */
+    /* 静帧状态："循环未在跑，等一个唤醒"。指针事件、回到前台都会重新起帧。
+       frame() 自行停帧与 stop() 被外部停帧都要置为 true，
+       否则 wake() 会因 idle=false 而拒绝重启动循环 */
     let idle = false;
     let lastTs = 0;
     let resizeRaf = 0;
@@ -357,6 +359,7 @@ export default function InteractiveBackground() {
 
     function stop() {
       running = false;
+      idle = true;
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
     }
@@ -375,6 +378,14 @@ export default function InteractiveBackground() {
     function onVisibility() {
       if (document.hidden) stop();
       else start();
+    }
+
+    function onPageHide() {
+      stop();
+    }
+
+    function onPageShow() {
+      if (!document.hidden) start();
     }
 
     function onMotionChange() {
@@ -445,6 +456,8 @@ export default function InteractiveBackground() {
 
     window.addEventListener("resize", onResize, { passive: true });
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
     window.addEventListener("pointerup", onPointerUp, { passive: true });
@@ -490,6 +503,8 @@ export default function InteractiveBackground() {
       }
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);

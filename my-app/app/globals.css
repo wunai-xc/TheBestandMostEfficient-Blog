@@ -93,6 +93,17 @@
   }
 }
 
+/* 页面进入后台（切 App / 切标签页）：暂停全站 CSS 动画。
+   后台标签页仍然可能存在合成器侧的持续开销，而本站有若干无限循环动画
+   （滑动图标上下浮动、进度圆点脉冲、加载图标旋转等）；
+   挂到后台时统一暂停，回到前台自动恢复（暂停不动画，视觉无差异）。
+   data-page-hidden 由 app/layout.tsx 里的极短内联脚本维护。 */
+html[data-page-hidden] *,
+html[data-page-hidden] *::before,
+html[data-page-hidden] *::after {
+  animation-play-state: paused !important;
+}
+
 /* ===== 主题变量（PaperMod 风格） ===== */
 :root {
   --bg: #ffffff;
@@ -481,8 +492,13 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
   transform-style: preserve-3d;
   backface-visibility: hidden;
   overflow: hidden;
-  will-change: transform;
+  /* 常态不写 will-change：列表页一屏可能十几张卡片，
+     每张都带 backdrop-filter 图层，若再常驻提升合成层，
+     显存占用会成倍上涨（手机上直接表现为掉帧）。
+     鼠标移上去、真正开始 3D 倾斜时再提升即可。 */
 }
+
+.post-card:hover { will-change: transform; }
 
 /* 卡片的亚克力层：半透底 + 毛玻璃 + 内高光 + 顶部光泽。
    用伪元素而非直接加在 .post-card 上：卡片带有 JS 驱动的行内 transform（鼠标跟随时 3D 倾斜）
@@ -1090,8 +1106,10 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   background: var(--accent);
   box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent);
 }
-/* 脉冲光晕：改用 transform/opacity 的合成层动画，
-   替代原先逐帧重算 box-shadow 的重绘 */
+/* 脉冲光晕：用 transform/opacity 做合成层动画，
+   替代原先逐帧重算 box-shadow 的重绘。
+   不用 will-change：动画本身是合成层属性，浏览器已会提升；
+   常驻 will-change 只会让这层在动画之外也一直占着显存 */
 .progress-dot.active .progress-dot-core::after {
   content: "";
   position: absolute;
@@ -1099,7 +1117,6 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
   border-radius: 0;
   background: color-mix(in srgb, var(--accent) 45%, transparent);
   z-index: -1;
-  will-change: transform, opacity;
   animation: dot-pulse 1.8s ease-in-out infinite;
 }
 @keyframes dot-pulse {

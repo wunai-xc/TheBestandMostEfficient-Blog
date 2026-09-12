@@ -425,6 +425,14 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 - 动画统一基于 `transform` / `opacity`，并对系统「减弱动态效果」偏好做全局降级
 - 语义化结构：`header` / `main` / `article` / `nav`、面包屑、文章 JSON-LD 结构化数据
 
+**移动端后台省电**
+
+把页面挂到后台（切 App / 切标签页）时，为避免持续占用合成器与显存，做了三件事：
+
+1. **暂停全站 CSS 动画**：`app/layout.tsx` 里一段极短内联脚本在 `visibilitychange` / `pagehide` 时给 `<html>` 打上 `data-page-hidden`，CSS 据此 `animation-play-state: paused`。本站有多个无限循环动画（滑动图标浮动、进度圆点脉冲、加载图标旋转），挂后台时它们停摆；回前台自动恢复（暂停不重置进度，视觉无差异）。
+2. **去掉常驻 `will-change`**：原先 `.post-card` 与进度圆点脉冲层都写着 `will-change`，等于**永久**提升为合成层。列表页一屏十几张卡片、每张还带一个 `backdrop-filter` 图层，显存占用会成倍上涨。现在卡片只在 `:hover`（真正开始 3D 倾斜）时才提示提升，脉冲层依赖动画自身的合成层属性。
+3. **画布彻底停帧**：`InteractiveBackground` 除 `visibilitychange` 外还监听 `pagehide` / `pageshow`（移动端切 App 时 `visibilitychange` 不一定可靠）。另修正一处隐患：`stop()` 现在会把 `idle` 置为 true，否则 `wake()` 会因 `idle=false` 拒绝重启动循环，导致从后台返回后网格卡死。
+
 ---
 
 ## 常见问题

@@ -47,6 +47,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 `,
           }}
         />
+        {/* 页面可见性标记：进入后台时给 <html> 打上 data-page-hidden，
+            CSS 据此暂停全站动画（见 globals.css）。很短，且不依赖 React。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function(){
+  var el = document.documentElement;
+  function sync(){
+    if (document.hidden) el.setAttribute('data-page-hidden', '');
+    else el.removeAttribute('data-page-hidden');
+  }
+  sync();
+  document.addEventListener('visibilitychange', sync);
+  // 移动端切 App / 进 bfcache 时，visibilitychange 不一定可靠，双保险
+  window.addEventListener('pagehide', function(){ el.setAttribute('data-page-hidden', ''); });
+  window.addEventListener('pageshow', sync);
+})();
+`,
+          }}
+        />
         {/* KaTeX 样式（版本与 rehype-katex 使用的 katex 实例保持一致） */}
         <link
           rel="stylesheet"
