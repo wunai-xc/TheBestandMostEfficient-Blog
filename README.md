@@ -47,6 +47,7 @@
 - 动态可互动背景（点网格 + 细连线：网格被光标 / 触点拨动后自行回弹，明暗主题自适应，详见[性能与可访问性](#性能与可访问性)）
 - 文章目录、阅读进度、滚动定位、回到顶部
 - 正文亚克力阅读面：半透底 + 毛玻璃，让交互背景只在两侧留白与侧栏隐约可见，不影响正文阅读
+- 文章卡片与上下篇导航同样为亚克力材质，与阅读面同一套材质语言
 - 打印 / 另存为 PDF（专用 `@media print` 样式），一键下载 Markdown 原文
 - 评论区（giscus，滚动到可见区域才加载）
 - 路由切换过渡动画、元素入场动画，完整支持 `prefers-reduced-motion`
@@ -355,11 +356,12 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 
 **其他性能与无障碍细节**
 
-- 正文亚克力阅读面（`.post-content`）：`rgba` 半透底 + `backdrop-filter: blur()` + 内高光描边 + 顶部光泽层；亮/暗两套值定义在 `:root` 与 `html.dark` 下的 `--reading-*` 自定义属性里，随主题类一起切换（比用 `@media` 复写更干净，不会在跟随系统的主题上出现不一致）
-  - 不透明度取 0.965（暗色同样）：浅色下文字是深色，若让背底亮点穿透字形会明显干扰阅读；0.965 + 毛玻璃已能保留“隔着材质”的质感，同时把噪点衰减到几乎不可见。想要更明显的亚克力感就调低这个值（代价是正文背底会显脏）
-  - 亚克力层自身不带变换：正文入场动画（`unfold-from-title`）作用在内层 `.article` 上，因此 `backdrop-filter` 所在的元素始终零变换，只有其子元素在跑 `transform/opacity` 动画，避免在长文上逐帧重采样背景模糊
-  - 打印时全部重置（`background: none`、取消 `backdrop-filter`、`position/z-index` 归零），避免 PDF 背景发灰或分页错乱
-
+- 亚克力材质由半透底 + `backdrop-filter: blur()` + 内高光描边 + 顶部光泽层叠成，取值统一在 `--reading-*`（阅读面）与 `--card-acrylic-*`（卡片）两组自定义属性里，亮/暗各一套，随主题类一起切换（比用 `@media` 复写干净，跟随系统主题时不会出现不一致）
+- 两级浓度是刻意的：阅读面面积大、文字多，取 0.965 不透明度；卡片面积小，取 0.82 可以更透，让背后网格若隐若现。浅色下文字是深色，背底亮点穿透字形会明显干扰阅读，所以阅读面的不透明度没有往下调（想要更明显的材质感就改 `--reading-bg`，代价是正文底噪）
+- 阅读面自身不带变换：正文入场动画（`unfold-from-title`）作用在内层 `.article` 上，因此 `backdrop-filter` 所在的元素始终零变换，只有其子元素在跑 `transform/opacity` 动画，避免在长文上逐帧重采样背景模糊
+- 卡片（`.post-card`）的亚克力放在 `::after` 伪元素上，而不是直接加到卡片：卡片有 JS 驱动的行内 `transform`（鼠标 3D 倾斜）与 `transform-style: preserve-3d`，而 `backdrop-filter` 属于分组属性，与变换同元素会强制扁平化，子元素的 `translateZ(10px)` 深度会失效；放进伪元素两者才能共存。卡片自身保持 `background: transparent`，否则 `backdrop-filter` 会把卡片自己的底当作背景来模糊，不透出背后网格
+- 上下篇导航（`.post-nav a`）没有 3D 子元素，亚克力直接加在 `<a>` 上；hover 的 SVG 液态滤镜作用在合成结果之上，与毛玻璃不冲突。浮动的移动端目录面板（`.toc-panel`）刻意保持不透明：它覆盖在正文之上，透出正文会难以辨读
+- 打印时卡片与阅读面的亚克力全部重置（`background: none`、取消 `backdrop-filter`、`position/z-index` 归零），避免 PDF 背景发灰或分页错乱
 - 主题在 `<head>` 中用一个内联脚本完成引导，避免深色模式闪烁（FOUC）
 - 评论区、Mermaid / ECharts / Graphviz / abc.js / SmilesDrawer 全部懒加载，仅在进入视口或正文实际用到时才请求
 - 动画统一基于 `transform` / `opacity`，并对系统「减弱动态效果」偏好做全局降级

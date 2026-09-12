@@ -122,6 +122,12 @@
   --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 28%);
   --reading-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.09), 0 32px 64px rgba(0,0,0,0.05);
   --reading-blur: 14px;
+  /* 卡片亚克力：与阅读面同材质、但面积小得多，可以做得更透，
+     让背后的网格若隐若现；模糊半径也相应调小以控制开销 */
+  --card-acrylic-bg: rgba(255, 255, 255, 0.82);
+  --card-acrylic-glow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --card-acrylic-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 30%);
+  --card-acrylic-blur: 10px;
   /* 按钮 hover 液态参数 */
   --btn-liquid-scale: 0;
 }
@@ -159,6 +165,10 @@ html.dark {
   --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 30%);
   --reading-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 14px 36px rgba(0,0,0,0.55), 0 36px 72px rgba(0,0,0,0.45);
   --reading-blur: 16px;
+  --card-acrylic-bg: rgba(25, 25, 28, 0.82);
+  --card-acrylic-glow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --card-acrylic-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 30%);
+  --card-acrylic-blur: 12px;
 }
 
 @theme inline {
@@ -370,8 +380,10 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
   position: relative;
   padding: 20px 24px;
   margin: 12px 0;
-  border-radius: 0;
-  background: var(--card);
+  border-radius: 14px;
+  /* 底色交由 ::after 的亚克力层，本元素必须保持透明，
+     否则 backdrop-filter 会把卡片自己的底当作背景来模糊，不透出背后网格 */
+  background: transparent;
   border: 1px solid var(--border);
   box-shadow: var(--card-shadow-1), var(--card-shadow-2);
   transition: transform 0.45s var(--ease-silk),
@@ -381,6 +393,24 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
   backface-visibility: hidden;
   overflow: hidden;
   will-change: transform;
+}
+
+/* 卡片的亚克力层：半透底 + 毛玻璃 + 内高光 + 顶部光泽。
+   用伪元素而非直接加在 .post-card 上：卡片带有 JS 驱动的行内 transform（鼠标跟随时 3D 倾斜）
+   与 transform-style: preserve-3d，而 backdrop-filter 属于分组属性，
+   与变换同元素会让它扁平化，子元素的 translateZ(10px) 深度会失效；
+   放进伪元素则两者共存。 */
+.post-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: var(--card-acrylic-sheen), var(--card-acrylic-bg);
+  box-shadow: var(--card-acrylic-glow);
+  backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  pointer-events: none;
 }
 
 /* 日间模式 hover：阴影加深 + 微浮起 + 边框高亮 */
@@ -480,8 +510,9 @@ html.dark .collection-card:hover::before {
 .post-card .meta > span { flex-shrink: 0; }
 .post-card .summary { color: var(--muted); margin: 8px 0 0; font-size: 0.92rem; position: relative; z-index: 1; }
 
-/* 3D 倾斜时内容层级保持清晰 */
-.post-card > * { transform: translateZ(10px); }
+/* 卡片内容压在亚克力层之上：平铺（非 preserve-3d）时靠 z-index 决定，
+   preserve-3d 生效时由 translateZ 的深度排序接管，两种情况下都不会被遮住 */
+.post-card > * { position: relative; z-index: 1; transform: translateZ(10px); }
 .pinned-badge {
   display: inline-block; background: #fef3c7; color: #92400e;
   font-size: 0.7rem; padding: 2px 8px; border-radius: 0; margin-left: 8px;
@@ -1126,10 +1157,16 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .post-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); min-width: 0; }
 .post-nav a {
   flex: 1 1 0; min-width: 0; padding: 12px;
-  border: 1px solid var(--border); border-radius: 0; color: var(--fg);
+  border: 1px solid var(--border); border-radius: 12px; color: var(--fg);
   display: flex; flex-direction: column;
+  /* 上下篇也用亚克力：这里直接加在 <a> 上即可（它没有 preserve-3d 子元素），
+     hover 的 SVG 液态滤镜作用在合成结果之上，与毛玻璃不冲突 */
+  background: var(--card-acrylic-sheen), var(--card-acrylic-bg);
+  box-shadow: var(--card-acrylic-glow);
+  backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
 }
-.post-nav a:hover { background: var(--card); text-decoration: none; }
+.post-nav a:hover { text-decoration: none; border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
 .post-nav .label { font-size: 0.75rem; color: var(--muted); }
 .post-nav .title { font-weight: 600; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
 
@@ -1305,6 +1342,9 @@ html.dark .katex-error { color: #fca5a5; }
   }
   .post-content > * { position: static !important; }
   .post-content::before { display: none !important; }
+  /* 列表页若被打印：去掉卡片的毛玻璃与半透底，避免发灰 */
+  .post-card::after { display: none !important; }
+  .post-card { background: none !important; box-shadow: none !important; }
   /* 打印不参与入场动画：否则加载后立刻点「制作PDF」可能截到动画中间态 */
   .post-header h1, .post-content .article { animation: none !important; }
   body { background: #fff; color: #000; }
