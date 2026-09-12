@@ -105,11 +105,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <feMergeNode in="s3" />
               </feMerge>
             </filter>
-            {/* 夜间发光雾团：卡片背后的白色径向渐变光晕 */}
-            <filter id="filter-fog" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="40" result="blur" />
-              <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.15 0" result="fog" />
-            </filter>
             {/* 涟漪扩散：点击按钮时的波纹 */}
             <filter id="filter-ripple" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />

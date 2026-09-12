@@ -34,17 +34,12 @@ export default function PostCard({
     const rotateY = ((x - cx) / cx) * 6;
     const rotateX = -((y - cy) / cy) * 6;
     el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px) scale(1.005)`;
-    // 动态光源位置：雾团跟随鼠标
-    el.style.setProperty("--mx", `${(x / rect.width) * 100}%`);
-    el.style.setProperty("--my", `${(y / rect.height) * 100}%`);
   }
 
   function handleMouseLeave() {
     const el = cardRef.current;
     if (!el) return;
     el.style.transform = "";
-    el.style.removeProperty("--mx");
-    el.style.removeProperty("--my");
   }
 
   return (

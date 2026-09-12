@@ -142,32 +142,31 @@ html.dark {
   --ai-color: #60a5fa;
   --card: #161618;
   --mark-bg: #854d0e;
-  /* 夜间模式：更深沉的阴影 + 白色发光雾团替代 */
+  /* 夜间模式：更深沉的阴影 */
   --card-shadow-1: 0 1px 2px rgba(0,0,0,0.3);
   --card-shadow-2: 0 4px 12px rgba(0,0,0,0.4);
   --card-shadow-3: 0 12px 32px rgba(0,0,0,0.5);
   --card-shadow-hover-1: 0 2px 6px rgba(0,0,0,0.4);
   --card-shadow-hover-2: 0 8px 24px rgba(0,0,0,0.5);
   --card-shadow-hover-3: 0 20px 48px rgba(0,0,0,0.6);
-  /* 夜间发光雾团参数 */
-  --fog-color: rgba(255,255,255,0.06);
-  --fog-blur: 60px;
-  --fog-spread: 0px;
-  --fog-hover-color: rgba(255,255,255,0.12);
-  --fog-hover-blur: 80px;
-  --fog-hover-spread: 20px;
-  /* 暗色下文字是浅色，背景亮点会穿透字腔造成的干扰比浅色更重，
-     因此把不透明度再提高一档，仅保留极弱的透射 */
-  --reading-bg: rgba(22, 22, 25, 0.965);
-  --reading-border: rgba(255, 255, 255, 0.08);
-  --reading-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 30%);
-  --reading-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 14px 36px rgba(0,0,0,0.55), 0 36px 72px rgba(0,0,0,0.45);
-  --reading-blur: 16px;
-  --card-acrylic-bg: rgba(25, 25, 28, 0.82);
-  --card-acrylic-glow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  --card-acrylic-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 30%);
-  --card-acrylic-blur: 12px;
+  /* ===== 暗色：只保留毛玻璃，不要任何白色渐变 =====
+     两个原因：
+     1. 白高光/白渐变在深底上显得脏，像蒙了一层灰；
+     2. 原来面板色（#161619）与页面底色（#0e0e10）几乎相同，面板根本看不出是块“面”。
+     改法：抬亮玻璃色（深色主题下抬升面就该更亮）+ 降低不透明度 + 加大模糊。
+     注意：sheen / glow 用“全透明”而非 none —— 它们在 CSS 里是逗号列表的一项
+     （background: sheen, bg / box-shadow: shadow, glow），写成 none 会让整条声明失效。
+     另：原先卡片背后的白色发光雾团（--fog-*）已一并删除，原因同上。 */
+  --reading-bg: rgba(44, 44, 51, 0.68);
+  --reading-border: rgba(255, 255, 255, 0.09);
+  --reading-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0);
+  --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0));
+  --reading-shadow: 0 1px 2px rgba(0,0,0,0.45), 0 14px 36px rgba(0,0,0,0.5), 0 36px 72px rgba(0,0,0,0.4);
+  --reading-blur: 22px;
+  --card-acrylic-bg: rgba(54, 54, 62, 0.62);
+  --card-acrylic-glow: inset 0 1px 0 rgba(255, 255, 255, 0);
+  --card-acrylic-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0));
+  --card-acrylic-blur: 16px;
 }
 
 @theme inline {
@@ -465,8 +464,7 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
 .home-posts { padding-bottom: 48px; scroll-margin-top: 72px; }
 
 /* ===== 文章卡片：3D 立体效果 ===== */
-/* 日间模式：多层物理阴影模拟环境光照
-   夜间模式：背后白色发光渐变雾团替代阴影 */
+/* 日间模式：多层物理阴影模拟环境光照；夜间模式：抬升的毛玻璃面 + 深阴影 */
 .post-card {
   position: relative;
   padding: 20px 24px;
@@ -511,82 +509,23 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
   transform: translateY(-4px) scale(1.005);
 }
 
-/* 夜间模式：卡片背后白色发光雾团（跟随鼠标位置） */
-html.dark .post-card::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  z-index: -1;
-  border-radius: 0;
-  background: radial-gradient(
-    circle 200px at var(--mx, 30%) var(--my, 0%),
-    var(--fog-color) 0%,
-    transparent 50%
-  ), radial-gradient(
-    ellipse at 70% 100%,
-    rgba(96, 165, 250, 0.04) 0%,
-    transparent 50%
-  );
-  filter: blur(var(--fog-blur));
-  opacity: 1;
-  transition: filter 0.4s ease, opacity 0.4s ease, background 0.3s ease;
-  pointer-events: none;
-}
-
-/* 夜间模式 hover：雾团增强 + 扩散 + 跟随鼠标 */
-html.dark .post-card:hover::before {
-  background: radial-gradient(
-    circle 240px at var(--mx, 30%) var(--my, 0%),
-    var(--fog-hover-color) 0%,
-    transparent 60%
-  ), radial-gradient(
-    ellipse at 70% 100%,
-    rgba(96, 165, 250, 0.08) 0%,
-    transparent 60%
-  );
-  filter: blur(var(--fog-hover-blur));
-  opacity: 1;
-}
-
-/* 夜间模式：卡片本身微弱内发光模拟边缘光 */
+/* 夜间模式：卡片内发光（边缘光）
+   注意：原先这里的“背后白色发光雾团”已移除——它本质上就是一层白色径向渐变，
+   与“只保留毛玻璃”的要求相冲；而卡片变透后雾团会从玻璃后透出来，反而显脏。
+   现在靠抬亮的玻璃色 + 外阴影 + 描边交代层次。 */
 html.dark .post-card {
   box-shadow:
     var(--card-shadow-2),
-    inset 0 1px 0 rgba(255,255,255,0.03),
     inset 0 -1px 0 rgba(0,0,0,0.2);
 }
 html.dark .post-card:hover {
   box-shadow:
     var(--card-shadow-hover-2), var(--card-shadow-hover-3),
-    inset 0 1px 0 rgba(255,255,255,0.05),
     inset 0 -1px 0 rgba(0,0,0,0.3),
     0 0 0 1px rgba(96, 165, 250, 0.08);
 }
 
-/* 合集卡片也获得 3D 效果 + 雾团 */
-html.dark .collection-card::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  z-index: -3;
-  border-radius: 0;
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    var(--fog-color) 0%,
-    transparent 70%
-  );
-  filter: blur(var(--fog-blur));
-  pointer-events: none;
-  transition: filter 0.4s ease, background 0.4s ease;
-}
-html.dark .collection-card:hover::before {
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    var(--fog-hover-color) 0%,
-    transparent 70%
-  );
-  filter: blur(var(--fog-hover-blur));
-}
+/* 合集卡片：同样去掉白色雾团（该类当前无任何页面渲染，仅保留结构样式） */
 
 .post-card h2 { font-size: clamp(1.05rem, 3.2vw, 1.25rem); margin: 0 0 8px; position: relative; z-index: 1; word-break: break-word; }
 .post-card h2 a { color: var(--fg); }
@@ -722,7 +661,7 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   -webkit-backdrop-filter: blur(var(--reading-blur)) saturate(1.15);
 }
 
-/* 顶部一层极淡的斜向高光：模拟亚克力的光反射 */
+/* 顶部一层极淡的斜向高光：模拟亚克力的光反射（仅浅色；暗色不要白渐变） */
 .post-content::before {
   content: "";
   position: absolute;
@@ -731,6 +670,8 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   background: var(--reading-sheen);
   pointer-events: none;
 }
+/* 暗色下这层完全是全透明的，直接不渲染，省掉一个合成层 */
+html.dark .post-content::before { display: none; }
 
 /* 阅读面之内的内容要压在光泽层之上（否则光泽会淡化文字） */
 .post-content > * {
