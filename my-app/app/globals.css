@@ -175,6 +175,21 @@ body {
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* ===== 动态可互动背景（Canvas 层） ===== */
+/* 固定铺满视口；负 z-index 使其绘制在 body 背景之上、所有内容之下；
+   pointer-events:none 保证完全不干扰点击/选中等交互 */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: -1;
+  pointer-events: none;
+  /* 布局/绘制隔离：背景的绘制不影响正文排版与滚动 */
+  contain: layout paint style;
+}
+
 /* 全局：按钮、导航、标签等单行元素不换行，保持从左到右 */
 button, label, .nav a, .icon-btn, .tag, .term-item,
 .pagination a, .copy-btn, .pinned-badge, .author-badge,
@@ -1213,6 +1228,7 @@ html.dark .katex-error { color: #fca5a5; }
   .site-header, .site-footer, .sidebar-col, .post-nav, .comments-section, .breadcrumbs,
   .toc-fab-wrap, .scroll-rail, .back-to-top,
   .toc-fab, .toc-panel, .sticky-heading,
+  .bg-canvas,
   .print-controls, .print-header, .print-footer { display: none !important; }
 
   .post-layout { display: block; padding: 0 !important; }
