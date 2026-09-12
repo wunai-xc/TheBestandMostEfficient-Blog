@@ -44,7 +44,8 @@
 
 - 深色 / 浅色 / 跟随系统三态主题，`localStorage` 持久化且首屏无闪烁
 - 7 档正文字号调节
-- 动态可互动背景（Canvas 网格点：点被光标 / 触点推开后自行回弹，详见[性能与可访问性](#性能与可访问性)）
+- 暗色模式星空背景：恒星 / 星云 / 银河带 / 星系（静态 SVG，详见[性能与可访问性](#性能与可访问性)）
+- 动态可互动背景（浅色模式）：Canvas 网格点被光标 / 触点推开后自行回弹
 - 文章目录、阅读进度、滚动定位、回到顶部
 - 打印 / 另存为 PDF（专用 `@media print` 样式），一键下载 Markdown 原文
 - 评论区（giscus，滚动到可见区域才加载）
@@ -93,7 +94,8 @@
 │   │       ├── archives/           # 按年份归档
 │   │       └── search/             # 站内搜索
 │   ├── components/
-│   │   ├── InteractiveBackground.tsx  # 动态可互动背景（Canvas）
+│   │   ├── InteractiveBackground.tsx  # 浅色模式网格点交互背景（Canvas）
+│   │   ├── StarfieldBackground.tsx    # 暗色模式星空背景（静态 SVG + 滤镜）
 │   │   ├── PostBody.tsx            # 正文渲染 + 复制按钮 + 图表按需加载
 │   │   ├── Header.tsx / Footer.tsx / PostCard.tsx / PostNav.tsx
 │   │   ├── ThemeToggle.tsx / FontSizeControl.tsx / LangSwitcher.tsx
@@ -337,7 +339,7 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 
 ## 性能与可访问性
 
-**动态可互动背景**（`my-app/components/InteractiveBackground.tsx`）
+**动态可互动背景（浅色模式）**（`my-app/components/InteractiveBackground.tsx`）
 
 - 全屏网格点背景：按间距铺满视口，静止时是规整的暗点阵
 - 交互：光标移动 / 触屏拖动时，影响半径内的点被推离指针位置，越近推得越远；指针离开或抬指后由弹簧自然回弹归位
@@ -345,11 +347,25 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 - 颜色取自 CSS 变量（`--fg` 作静止点、`--accent` 作被推开的点），随明暗主题自动切换
 - 手感与网格密度无关：推力、最大位移均按间距等比缩放，窄屏自动缩小间距
 - 性能约束：设备像素比上限 2、总点数上限 3000（超出自动放大间距）、位移分档批量 `fill`（每帧仅 4 次填充）、每个点的位移与速度存在同一个 `Float32Array` 里避免每帧产生垃圾；分档边界预先换算成位移平方，热循环里不做开方
-- 省电策略：网格静止（含指针悬停不动、位移已达平衡）时彻底停帧，下一个指针 / 触屏事件才唤起重绘；页面切到后台（`visibilitychange`）同样停帧
+- 省电策略：网格静止（含指针悬停不动、位移已达平衡）时彻底停帧，下一个指针 / 触屏事件才唤起重绘；页面切到后台（`visibilitychange`）或切到暗色模式时同样停帧
 - 无障碍：`aria-hidden` 装饰性图层、`pointer-events: none` 不拦截任何点击/选中、打印时自动隐藏
 - 尊重 `prefers-reduced-motion: reduce`：只绘制一帧静态点阵，不启动动画循环、不绑定指针交互
 
 想要关闭或调参：在 `my-app/app/layout.tsx` 移除 `<InteractiveBackground />` 即可关闭；间距、点数上限、影响半径、推力、弹簧刚度、阻尼、分档透明度等都在该组件顶部的常量区集中定义。
+
+**星空背景（暗色模式）**（`my-app/components/StarfieldBackground.tsx`）
+
+- 服务端组件 + 纯静态 SVG：不向浏览器发送任何 JS，也是零持续开销（无动画循环）
+- 恒星真实感来自物理约束：颜色只按光谱型色温选取（O/B 蓝白 → A 白 → F 黄白 → G 黄 → K 橙 → M 橙红 → 红巨星深红）并加权分布，因此不会出现绿色等非黑体颜色；亮度按幂律分布，绝大多数是暗弱小星，亮星极少
+- 亮星系带：沿 -20° 的高密度暗星带 + 弥漫辉光 + 遮挡恒星的暗尘埃带（`mix-blend-mode: multiply`）；另有疏散星团、双星与带十字星芒的亮星
+- 星云用 SVG 滤镜生成：`feTurbulence` 分形噪声塑形 → `feComponentTransfer` 压出云团 alpha → `feGaussianBlur` 柔化 → `feFlood` + `feComposite` 着色；洋红（H-alpha）/ 青（O-III）/ 紫 / 琥珀四支色彩由同一噪声场平移派生，形状互不相同
+- 三种星系形态：正面旋涡（旋臂 + 核心）、椭圆（偏暖老年恒星）、侧向（薄盘 + 中央尘埃分割线）
+- 性能取舍：`feTurbulence` 与 `feGaussianBlur` 是全屏滤镜，只在暗色模式且 `display: block` 时做一次栅格化，之后仅合成；浅色模式下 `display: none`，浏览器完全不做滤镜计算。若需在低端设备上再降开销，可把 `numOctaves` 降到 2、`stdDeviation` 降到 4，或去掉该滤镜改用纯渐变
+- 恒星用「极短线段 + `stroke-linecap: round`」按颜色/视直径/亮度分桶合成几十条 `<path>`，1100 多颗星只有几十个 DOM 节点
+- 由固定种子的 PRNG（mulberry32）生成，服务端与客户端输出一致，不存在 hydration 差异
+- 无障碍：`aria-hidden` 装饰性图层、`pointer-events: none`、打印时自动隐藏
+
+想要调参：恒星数量、银河带倾角、星云强度（`NEBULA_OPACITY`）、光谱色权重（`STAR_COLORS`）都在该组件顶部常量区。
 
 **其他性能与无障碍细节**
 

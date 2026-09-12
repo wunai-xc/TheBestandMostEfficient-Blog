@@ -190,6 +190,20 @@ a:hover { text-decoration: underline; }
   contain: layout paint style;
 }
 
+/* ===== 暗色模式星空背景（静态 SVG） ===== */
+/* 浅色模式 display:none：既不可见，也避免浏览器为其做滤镜栅格化 */
+.starfield {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: -1;
+  pointer-events: none;
+  contain: layout paint style;
+}
+html.dark .starfield { display: block; }
+/* 暗色模式改用星空背景，隐藏网格点交互背景 */
+html.dark .bg-canvas { display: none; }
+
 /* 全局：按钮、导航、标签等单行元素不换行，保持从左到右 */
 button, label, .nav a, .icon-btn, .tag, .term-item,
 .pagination a, .copy-btn, .pinned-badge, .author-badge,
@@ -1228,7 +1242,7 @@ html.dark .katex-error { color: #fca5a5; }
   .site-header, .site-footer, .sidebar-col, .post-nav, .comments-section, .breadcrumbs,
   .toc-fab-wrap, .scroll-rail, .back-to-top,
   .toc-fab, .toc-panel, .sticky-heading,
-  .bg-canvas,
+  .bg-canvas, .starfield,
   .print-controls, .print-header, .print-footer { display: none !important; }
 
   .post-layout { display: block; padding: 0 !important; }

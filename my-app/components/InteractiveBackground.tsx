@@ -69,6 +69,8 @@ export default function InteractiveBackground() {
     let resizeRaf = 0;
 
     const pointer = { x: 0, y: 0, active: false };
+    /* 当前主题是否需要网格点背景：暗色模式下由星空背景接管，本层由 CSS 隐藏 */
+    let themeActive = true;
     /* 最近一次触摸事件的时间戳，用于屏蔽触摸后的兼容鼠标事件 */
     let lastTouchAt = 0;
 
@@ -100,6 +102,7 @@ export default function InteractiveBackground() {
 
     /* 跟随主题（亮/暗）读取颜色：静止点用前景色，被推开的点转为强调色 */
     function readTheme() {
+      themeActive = !document.documentElement.classList.contains("dark");
       const fg = parseColor(getComputedStyle(document.body).color) || { r: 128, g: 128, b: 128 };
       const accent =
         parseColor(getComputedStyle(document.documentElement).getPropertyValue("--accent")) || fg;
@@ -275,7 +278,8 @@ export default function InteractiveBackground() {
     /* ---------- 循环控制（后台/减弱动画时彻底停帧，省电） ---------- */
 
     function start() {
-      if (running || (motionQuery && motionQuery.matches)) return;
+      // 暗色模式下本层已被 CSS 隐藏，不必再空转渲染
+      if (!themeActive || running || (motionQuery && motionQuery.matches)) return;
       running = true;
       idle = false;
       lastTs = 0;
@@ -366,7 +370,14 @@ export default function InteractiveBackground() {
 
     function onThemeChange() {
       readTheme();
-      if (!running) render();
+      if (!themeActive) {
+        // 切到暗色：停帧并置为静帧状态，切回浅色时再由事件唤醒
+        stop();
+        idle = true;
+        return;
+      }
+      if (!running) start();
+      else render();
     }
 
     /* ---------- 启动 ---------- */
