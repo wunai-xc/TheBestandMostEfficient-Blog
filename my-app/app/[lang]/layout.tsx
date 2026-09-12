@@ -14,7 +14,7 @@ export default async function LangLayout({ children, params }: { children: React
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <Header lang={lang as Lang} />
       <main style={{ flex: 1 }}>{children}</main>
-      <Footer />
+      <Footer lang={lang as Lang} />
     </div>
   );
 }
