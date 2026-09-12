@@ -113,6 +113,15 @@
   --card-shadow-hover-1: 0 2px 6px rgba(0,0,0,0.08);
   --card-shadow-hover-2: 0 8px 24px rgba(0,0,0,0.12);
   --card-shadow-hover-3: 0 20px 48px rgba(0,0,0,0.16);
+  /* 亚克力阅读面：半透底 + 毛玻璃，背后的网格保持"隔着材质"的若隐若现
+     浅色下必须足够不透明（文字是深色），否则背底亮点会穿透字形；
+     同时通过约 0.03 的出射透射保留材质感，噪点已被衰减到几乎不可见 */
+  --reading-bg: rgba(255, 255, 255, 0.965);
+  --reading-border: rgba(0, 0, 0, 0.07);
+  --reading-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 28%);
+  --reading-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.09), 0 32px 64px rgba(0,0,0,0.05);
+  --reading-blur: 14px;
   /* 按钮 hover 液态参数 */
   --btn-liquid-scale: 0;
 }
@@ -142,6 +151,14 @@ html.dark {
   --fog-hover-color: rgba(255,255,255,0.12);
   --fog-hover-blur: 80px;
   --fog-hover-spread: 20px;
+  /* 暗色下文字是浅色，背景亮点会穿透字腔造成的干扰比浅色更重，
+     因此把不透明度再提高一档，仅保留极弱的透射 */
+  --reading-bg: rgba(22, 22, 25, 0.965);
+  --reading-border: rgba(255, 255, 255, 0.08);
+  --reading-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 30%);
+  --reading-shadow: 0 1px 2px rgba(0,0,0,0.5), 0 14px 36px rgba(0,0,0,0.55), 0 36px 72px rgba(0,0,0,0.45);
+  --reading-blur: 16px;
 }
 
 @theme inline {
@@ -504,6 +521,46 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   .sidebar-col { display: none; }
 }
 .post-content { min-width: 0; padding: 1rem; }
+
+/* ===== 正文亚克力阅读面 ===== */
+/* 半透底 + 毛玻璃：让网格背景只在两侧留白与侧栏隐约可见，正文区域保持干净。
+   背景 canvas 是 z-index:-1，这层用正 z-index 即可稳定叠在它之上。
+   这层自身不加 transform：毛玻璃元素若同时被变换，浏览器需每帧重新采样背景模糊，
+   长文上开销很大；入场动画放在内层 .article 上，两者不共存。 */
+.post-content {
+  position: relative;
+  z-index: 0;
+  border-radius: 16px;
+  background: var(--reading-bg);
+  border: 1px solid var(--reading-border);
+  box-shadow: var(--reading-shadow), var(--reading-inner-glow);
+  backdrop-filter: blur(var(--reading-blur)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--reading-blur)) saturate(1.15);
+}
+
+/* 顶部一层极淡的斜向高光：模拟亚克力的光反射 */
+.post-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--reading-sheen);
+  pointer-events: none;
+}
+
+/* 阅读面之内的内容要压在光泽层之上（否则光泽会淡化文字） */
+.post-content > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 窄屏：圆角略收，比例上不会显得笨重 */
+@media (max-width: 1023px) {
+  .post-content { border-radius: 14px; }
+}
+@media (max-width: 640px) {
+  .post-content { border-radius: 12px; }
+}
 
 /* ===== 文章入场：正文自标题下方「伸展」而出 ===== */
 /* 标题先就位，作为内容的源头 */
@@ -1232,7 +1289,22 @@ html.dark .katex-error { color: #fca5a5; }
   .print-controls, .print-header, .print-footer { display: none !important; }
 
   .post-layout { display: block; padding: 0 !important; }
-  .post-content { display: block; padding: 0 !important; }
+  .post-content {
+    display: block;
+    padding: 0 !important;
+    /* 打印必须去掉亚克力效果：半透底与毛玻璃会让 PDF 背景发灰或丢失内容，
+       同时清掉为叠放光泽层而建立的正 z-index，避免干扰打印分页 */
+    position: static !important;
+    z-index: auto !important;
+    background: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .post-content > * { position: static !important; }
+  .post-content::before { display: none !important; }
   /* 打印不参与入场动画：否则加载后立刻点「制作PDF」可能截到动画中间态 */
   .post-header h1, .post-content .article { animation: none !important; }
   body { background: #fff; color: #000; }

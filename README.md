@@ -46,6 +46,7 @@
 - 7 档正文字号调节
 - 动态可互动背景（点网格 + 细连线：网格被光标 / 触点拨动后自行回弹，明暗主题自适应，详见[性能与可访问性](#性能与可访问性)）
 - 文章目录、阅读进度、滚动定位、回到顶部
+- 正文亚克力阅读面：半透底 + 毛玻璃，让交互背景只在两侧留白与侧栏隐约可见，不影响正文阅读
 - 打印 / 另存为 PDF（专用 `@media print` 样式），一键下载 Markdown 原文
 - 评论区（giscus，滚动到可见区域才加载）
 - 路由切换过渡动画、元素入场动画，完整支持 `prefers-reduced-motion`
@@ -353,6 +354,11 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 想要关闭或调参：在 `my-app/app/layout.tsx` 移除 `<InteractiveBackground />` 即可关闭；间距、点数上限、影响半径、推力、弹簧刚度、阻尼、分档透明度、暗色亮度系数、线宽与连线透明度（`LINE_WIDTH` / `LINE_ALPHA_REST` / `LINE_ALPHA_ACTIVE`）等都在该组件顶部的常量区集中定义。
 
 **其他性能与无障碍细节**
+
+- 正文亚克力阅读面（`.post-content`）：`rgba` 半透底 + `backdrop-filter: blur()` + 内高光描边 + 顶部光泽层；亮/暗两套值定义在 `:root` 与 `html.dark` 下的 `--reading-*` 自定义属性里，随主题类一起切换（比用 `@media` 复写更干净，不会在跟随系统的主题上出现不一致）
+  - 不透明度取 0.965（暗色同样）：浅色下文字是深色，若让背底亮点穿透字形会明显干扰阅读；0.965 + 毛玻璃已能保留“隔着材质”的质感，同时把噪点衰减到几乎不可见。想要更明显的亚克力感就调低这个值（代价是正文背底会显脏）
+  - 亚克力层自身不带变换：正文入场动画（`unfold-from-title`）作用在内层 `.article` 上，因此 `backdrop-filter` 所在的元素始终零变换，只有其子元素在跑 `transform/opacity` 动画，避免在长文上逐帧重采样背景模糊
+  - 打印时全部重置（`background: none`、取消 `backdrop-filter`、`position/z-index` 归零），避免 PDF 背景发灰或分页错乱
 
 - 主题在 `<head>` 中用一个内联脚本完成引导，避免深色模式闪烁（FOUC）
 - 评论区、Mermaid / ECharts / Graphviz / abc.js / SmilesDrawer 全部懒加载，仅在进入视口或正文实际用到时才请求
