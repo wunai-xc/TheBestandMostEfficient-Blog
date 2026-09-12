@@ -395,6 +395,36 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
 /* 正文本身也走同一段渐入，但略延迟，避免与标题同时启动显得生硬 */
 .home-about .article { animation: home-intro-in 2s var(--ease-silk) 0.25s both; }
 
+/* 首屏只露一屏内容：超出部分裁掉，底部用渐变遮罩渐隐，避免硬切断行 */
+.home-about-body {
+  position: relative;
+  max-height: clamp(320px, calc(100svh - 300px), 620px);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 60%, transparent 100%);
+}
+
+/* 「继续阅读」：导向文章页，风格与卡片按钮一致（直角） */
+.home-about-more {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 4px 0 0;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--card-acrylic-sheen), var(--card-acrylic-bg);
+  box-shadow: var(--card-acrylic-glow);
+  backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  transition: border-color 0.3s var(--ease-silk), color 0.3s var(--ease-silk);
+}
+.home-about-more:hover {
+  text-decoration: none;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
 /* 首屏 2s 渐入：标题与正文错开，整块不会齐刷刷地出现 */
 @keyframes home-intro-in {
   from { opacity: 0; transform: translateY(14px); }
@@ -1377,6 +1407,15 @@ html.dark .katex-error { color: #fca5a5; }
   .bg-canvas,
   .scroll-hint,
   .print-controls, .print-header, .print-footer { display: none !important; }
+
+  /* 打印时不要裁切，「继续阅读」也没意义 */
+  .home-about-body {
+    max-height: none !important;
+    overflow: visible !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+  .home-about-more { display: none !important; }
 
   /* 打印首页时不能停留在渐入的隐藏态 */
   .reveal { opacity: 1 !important; transform: none !important; }

@@ -25,12 +25,21 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   return (
     <div className="container" style={{ paddingTop: 0 }}>
       {about && aboutHtml ? (
-        /* 首屏：关于文章的完整正文，2s 渐入（左对齐，正文样式复用 .article） */
+        /* 首屏：只露一屏正文（底部渐隐），完整内容点「继续阅读」进文章页 */
         <section className="home-about">
           <h1 className="home-about-title">
             {about.title} <Icon icon={icons["mdi:hand-wave-outline"]} width="1em" height="1em" />
           </h1>
-          <PostBody html={aboutHtml} slug={about.slug} />
+          <div className="home-about-body">
+            <PostBody html={aboutHtml} slug={about.slug} />
+          </div>
+          <a
+            className="home-about-more"
+            href={`/${lang}/posts/${encodeURIComponent(about.slug)}/`}
+          >
+            {t.continueReading}
+            <Icon icon={icons["mdi:book-open-outline"]} width="1.1em" height="1.1em" />
+          </a>
           {scrollHint}
         </section>
       ) : (

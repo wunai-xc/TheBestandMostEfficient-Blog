@@ -359,8 +359,9 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 
 **首页与布局**
 
-- 首页首屏有两种形态：存在 `about: true` 的文章时，直接渲染该文正文（`getAboutPost()` + `renderMarkdown()`，用 `PostBody` 渲染以保留代码高亮与复制按钮）；否则退回 `SITE.homeInfo` 的一句简介并撑满一屏（`100svh - header`）
+- 首页首屏有两种形态：存在 `about: true` 的文章时，只露一屏该文正文（底部渐变渐隐），下方给「继续阅读」入口指向文章页；否则退回 `SITE.homeInfo` 的一句简介并撑满一屏（`100svh - header`）
 - 首屏渐入 `home-intro-in` 各 2s，标题先、正文延后 0.25s，不会齐刷刷地出现
+- 关于版首屏的正文裁剪是纯 CSS（`.home-about-body` 的 `max-height: clamp(320px, 100svh - 300px, 620px)` + `overflow: hidden` + 底部 `mask-image` 渐隐），不切割 HTML，因此不会把标签切坏；代价是首页仍会带上整篇 HTML（这篇约 3.5k 字，无额外资源请求）。打印时自动取消裁切并隐藏「继续阅读」
 - 向下滑动图标：锚点到 `#home-posts`，复用 `html { scroll-behavior: smooth }`；在简介版首屏钉在底部，在关于版里跟在正文之后正常排版（`.scroll-hint` 按父级切换定位）
 - 展示位取数见 `getHomeShowcase()`：有置顶则取置顶（首页不显示“置顶”徽标，由 `PostCard` 的 `hidePinnedBadge` 控制）；没有置顶则取日期最新的 3 篇非 AI 文章，跳过 `hiddenInHomeList` 与 `about`，保证首页不会全是 AI 稿、也不会与首屏重复
 - 文章页为单栏居中（`.post-layout` 最大宽 800px，与原先“侧栏 + 正文”时的正文实测宽度一致），已移除左侧“全部文章”列表；目录 / 阅读进度 / 回到顶部仍以浮动形式提供，不占布局宽度
