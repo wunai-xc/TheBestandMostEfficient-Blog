@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SITE } from "@/lib/content";
 import RouteLoading from "@/components/RouteLoading";
+import InteractiveBackground from "@/components/InteractiveBackground";
 
 export const metadata: Metadata = {
   title: { default: SITE.title, template: `%s | ${SITE.title}` },
@@ -60,6 +61,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="alternate" type="application/rss+xml" title="wunai's blog RSS" href="/rss.xml" />
       </head>
       <body>
+        {/* 动态可互动背景：固定铺满视口、位于所有内容之下 */}
+        <InteractiveBackground />
+
         {/* ===== SVG 滤镜定义（全局复用） ===== */}
         <svg
           aria-hidden="true"

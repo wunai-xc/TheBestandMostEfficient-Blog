@@ -1,36 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# my-app
 
-## Getting Started
+博客的 Next.js 应用主体（App Router，静态导出）。完整的项目说明、写作指南与部署文档见仓库根目录的 [`../README.md`](../README.md)。
 
-First, run the development server:
+## 常用命令
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm ci                # 安装依赖（建议使用 package-lock.json）
+npm run dev           # 开发服务器 http://localhost:3000
+npm run prebuild      # 重新生成搜索索引 public/search-index.*.json 与 RSS public/rss.xml
+npm run build         # 静态导出到 out/（会自动先执行 prebuild）
+npm run lint          # ESLint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 约定
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 内容全部在 `content/<lang>/posts/*.md`，文件名即 URL slug
+- 站点标题、域名、菜单与界面文案集中在 `lib/site.ts`
+- Markdown 渲染管线与短代码在 `lib/markdown.ts`，文章读取与排序在 `lib/content.ts`
+- 样式集中在 `app/globals.css`（主题变量、动画、打印样式）
