@@ -6,6 +6,8 @@
   --ease-silk: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* 正文从标题生长：easeOutQuint，起步快、收尾极缓，营造"生长"感 */
+  --ease-grow: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* 强制 GPU 加速 + 减少重排：所有元素默认过渡使用 transform/opacity */
@@ -43,11 +45,28 @@
   }
 }
 
+/* ===== 文章正文：从标题下方"生长"而出 ===== */
+/* 与 slide-in-from-right 保持同一组属性（transform/opacity/filter），仅调整曲线与时长，
+   故不影响原有布局与终态 */
+@keyframes grow-from-title {
+  0% {
+    transform: translateY(-12px) scaleY(0.94) scale(0.99);
+    opacity: 0;
+    filter: blur(3px);
+  }
+  50% {
+    filter: blur(0);
+  }
+  100% {
+    transform: translateY(0) scaleY(1) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
 /* 标题、段落、列表、引用等文字元素入场（匀速直线运动） */
 .hero h1, .hero p,
 .post-card .title, .post-card .summary, .post-card .meta,
-.article h1, .article h2, .article h3, .article h4,
-.article p, .article li, .article blockquote,
 .archive-list li,
 .collection-card,
 .term-item, .tag,
@@ -60,13 +79,21 @@
   animation: slide-in-from-right 0.5s linear both;
 }
 
-/* 错位入场：不同区块延迟不同，营造层次感 */
+/* 正文元素：以顶边为原点向下展开，缓慢且带缓动曲线 */
+.article h1, .article h2, .article h3, .article h4,
+.article p, .article li, .article blockquote {
+  transform-origin: top center;
+  animation: grow-from-title 1.05s var(--ease-grow) both;
+}
+
+/* 错位入场：延迟沿标题→正文依次递增，形成自上而下的生长波纹 */
 .article h1 { animation-delay: 0s; }
-.article h2 { animation-delay: 0.04s; }
-.article h3 { animation-delay: 0.06s; }
-.article p { animation-delay: 0.02s; }
-.article li { animation-delay: 0.05s; }
-.article blockquote { animation-delay: 0.07s; }
+.article h2 { animation-delay: 0.1s; }
+.article h3 { animation-delay: 0.16s; }
+.article h4 { animation-delay: 0.2s; }
+.article p { animation-delay: 0.06s; }
+.article li { animation-delay: 0.13s; }
+.article blockquote { animation-delay: 0.18s; }
 
 .post-card:nth-child(1) { animation-delay: 0.02s; }
 .post-card:nth-child(2) { animation-delay: 0.07s; }
@@ -87,6 +114,7 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
