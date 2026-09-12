@@ -69,8 +69,9 @@ export default function InteractiveBackground() {
     let resizeRaf = 0;
 
     const pointer = { x: 0, y: 0, active: false };
-    /* 当前主题是否需要网格点背景：暗色模式下由星空背景接管，本层由 CSS 隐藏 */
-    let themeActive = true;
+    /* 当前主题下整体透明度系数：暗色背景上高亮度的点会显得更抢眼，
+       按系数压低以保持与浅色模式相近的"若有若无"观感 */
+    let alphaScale = 1;
     /* 最近一次触摸事件的时间戳，用于屏蔽触摸后的兼容鼠标事件 */
     let lastTouchAt = 0;
 
@@ -102,7 +103,8 @@ export default function InteractiveBackground() {
 
     /* 跟随主题（亮/暗）读取颜色：静止点用前景色，被推开的点转为强调色 */
     function readTheme() {
-      themeActive = !document.documentElement.classList.contains("dark");
+      const isDark = document.documentElement.classList.contains("dark");
+      alphaScale = isDark ? 0.62 : 1;
       const fg = parseColor(getComputedStyle(document.body).color) || { r: 128, g: 128, b: 128 };
       const accent =
         parseColor(getComputedStyle(document.documentElement).getPropertyValue("--accent")) || fg;
@@ -236,7 +238,7 @@ export default function InteractiveBackground() {
         const lo = band === 0 ? -1 : bandLo2[band];
         const hi = bandHi2[band];
         const r = radius * BAND_RADIUS[band];
-        ctx!.globalAlpha = BAND_ALPHA[band];
+        ctx!.globalAlpha = BAND_ALPHA[band] * alphaScale;
         ctx!.fillStyle = band < 2 ? dotColor : accentColor;
         ctx!.beginPath();
         for (let i = 0; i < count; i++) {
@@ -278,8 +280,7 @@ export default function InteractiveBackground() {
     /* ---------- 循环控制（后台/减弱动画时彻底停帧，省电） ---------- */
 
     function start() {
-      // 暗色模式下本层已被 CSS 隐藏，不必再空转渲染
-      if (!themeActive || running || (motionQuery && motionQuery.matches)) return;
+      if (running || (motionQuery && motionQuery.matches)) return;
       running = true;
       idle = false;
       lastTs = 0;
@@ -370,14 +371,7 @@ export default function InteractiveBackground() {
 
     function onThemeChange() {
       readTheme();
-      if (!themeActive) {
-        // 切到暗色：停帧并置为静帧状态，切回浅色时再由事件唤醒
-        stop();
-        idle = true;
-        return;
-      }
-      if (!running) start();
-      else render();
+      if (!running) render();
     }
 
     /* ---------- 启动 ---------- */
