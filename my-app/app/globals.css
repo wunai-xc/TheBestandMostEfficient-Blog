@@ -631,6 +631,71 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 }
 .pagination a:hover { background: var(--card); text-decoration: none; }
 
+/* ===== 友链 ===== */
+.links-intro {
+  color: var(--muted);
+  margin: 0 0 20px;
+  max-width: 46em;
+  line-height: 1.7;
+}
+
+.friend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+/* 友链卡片：与文章卡片同一套亚克力与直角风格 */
+.friend-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--card-acrylic-sheen), var(--card-acrylic-bg);
+  box-shadow: var(--card-acrylic-glow);
+  backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  transition: border-color 0.35s var(--ease-silk), transform 0.35s var(--ease-silk);
+}
+.friend-card:hover {
+  text-decoration: none;
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  transform: translateY(-3px);
+}
+
+.friend-avatar {
+  width: 48px; height: 48px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+/* 无图占位：名称首字 */
+.friend-avatar-fallback {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; font-weight: 600;
+  color: var(--accent);
+  user-select: none;
+}
+
+.friend-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.friend-name { font-weight: 600; word-break: break-word; }
+.friend-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.45;
+  /* 介绍最多两行，超出省略，保证卡片高度整齐 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* ===== 文章详情：单栏居中 ===== */
 /* 原先的「左栏全部文章 + 正文」两列（加上右侧浮动导航即三栏）已移除，
    现为单栏；最大宽度沿用侧栏存在的正文实测宽度，阅读尺度不变 */

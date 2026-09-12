@@ -45,7 +45,8 @@
 - 深色 / 浅色 / 跟随系统三态主题，`localStorage` 持久化且首屏无闪烁
 - 7 档正文字号调节
 - 动态可互动背景（点网格 + 细连线：网格被光标 / 触点拨动后自行回弹，明暗主题自适应，详见[性能与可访问性](#性能与可访问性)）
-- 首页：首屏直接渲染「关于」文章正文（2s 错开渐入）+ 向下滑动图标 + 滚动到位渐入的展示位
+- 友链页：卡片列表（图片 / 名称 / 一句话介绍），数据在 `lib/links.ts`
+- 首页：首屏只露一屏「关于」文章（底部渐隐 + 继续阅读），下方是滚动到位渐入的展示位
 - 文章页单栏居中，无侧栏；文章目录 / 阅读进度 / 回到顶部以浮动导航形式提供
 - 正文亚克力阅读面：半透底 + 毛玻璃，让交互背景只在两侧留白与侧栏隐约可见，不影响正文阅读
 - 文章卡片与上下篇导航同样为亚克力材质，与阅读面同一套材质语言
@@ -94,6 +95,7 @@
 │   │       ├── posts/[slug]/page.tsx  # 文章详情（单栏正文、TOC、上下篇、评论、JSON-LD）
 │   │       ├── tags/、categories/  # 标签 / 分类索引与详情
 │   │       ├── archives/           # 按年份归档
+│   │       ├── links/              # 友链（卡片列表，数据在 lib/links.ts）
 │   │       └── search/             # 站内搜索
 │   ├── components/
 │   │   ├── InteractiveBackground.tsx  # 点网格交互背景（Canvas）
@@ -107,6 +109,7 @@
 │   │   └── en/posts/*.md
 │   ├── lib/
 │   │   ├── content.ts              # 文章读取、frontmatter 解析、排序、聚合
+│   │   ├── links.ts                # 友链数据（名称 / 地址 / 图片 / 介绍）
 │   │   ├── markdown.ts             # unified 渲染管线、短代码、TOC 提取
 │   │   ├── site.ts                 # 站点配置与 i18n 文案（客户端安全）
 │   │   └── icons.ts                # Iconify 图标集合
@@ -262,6 +265,25 @@ C D E F G A B c
 ---
 
 ## 站点配置
+
+### 友链
+
+友链数据在 **`my-app/lib/links.ts`** 的 `FRIEND_LINKS` 数组里，页面位于 `/{lang}/links/`，菜单入口在 `SITE.menu`：
+
+```ts
+{
+  name: "朋友的站",                       // 卡片上显示的名称
+  url: "https://example.com/",           // 点击跳转地址（新窗口打开）
+  avatar: "/avatars/friend.png",         // 可选：图片地址，绝对 URL 或 public/ 下的路径
+  description: { zh: "一句话介绍", en: "One-line intro" },
+}
+```
+
+- `avatar` 留空时用名称首字生成占位方块，不会出现碎图
+- 卡片图片用原生 `<img>` 而非 `next/image`：友链图片可能来自任意域名，`next/image` 需要预先声明 `remotePatterns` 且这里也不需要优化
+- 友链页面顶部的介绍文案是 `SITE.i18n.<lang>.linksIntro`
+
+### 站点信息
 
 站点标题、作者、域名、菜单、首页文案与全部界面文案集中在 **`my-app/lib/site.ts`** 的 `SITE` 对象中：
 
