@@ -41,9 +41,9 @@ export const FRIEND_LINKS: FriendLink[] = [
     url: "https://www.arcadia.moe/",
     avatar: "https://avatars.githubusercontent.com/u/97033226?v=4&s=96",
     description: {
-      // 读过其博客后改写的介绍：比 GitHub bio（"student @cwru"）信息量更大
-      zh: "数学系学生，也做全栈与平面设计；配色大胆、不用图标、纯排版驱动的站点",
-      en: "Math student, full-stack & graphic designer; bold, icon-free, typography-driven",
+      // 本人要求只写“开发者”这类中性说法，不要具体身份描述
+      zh: "开发者",
+      en: "Developer",
     },
   },
   {
