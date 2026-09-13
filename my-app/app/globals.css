@@ -140,8 +140,10 @@ html[data-page-hidden] *::after {
      真正的「直线」（向两端无限延伸）与「射线」（一端无限）都无法表达。
      让线段读起来像直线的方法：端点淡出到透明 —— 淡出暗示线还在继续。 */
   --cn-color: #7f1d1d;  /* 暗红：白底上清晰且不刺眼 */
-  --cn-inset: 13px;     /* 框线距元素边缘的距离 */
-  --cn-arm: 4.5px;      /* 十字到交点的臂长（线段全长 = 2×） */
+  --cn-inset: 5px;      /* 框线距元素边框的距离 */
+  --cn-arm: 3.5px;      /* 十字到交点的臂长（线段全长 = 2×）
+                           随 --cn-inset 调小：框离边框只有 5px 了，
+                           臂再长 4.5px 就会顶到元素自己的边框上 */
   --cn-w: 1px;          /* 线宽（发丝级） */
   /* 十字的臂：以交点为最浓，向两端淡出 */
   --cn-h: linear-gradient(90deg, transparent, var(--cn-color), transparent);
@@ -825,12 +827,12 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 }
 
 /* 小尺寸元素：按钮、标签、徽标。内缩与臂长都要收，
-   否则 13px 的内缩在 20px 高的标签上会把框挤到中间去 */
+   否则 5px 的内缩在 20px 高的标签上会把框挤到中间去 */
 .pagination a, .pagination span,
 .term-item, .footer-link, .print-btn,
 .tag, .author-badge, .back-to-top, .toc-fab {
-  --cn-inset: 6px;
-  --cn-arm: 2.5px;
+  --cn-inset: 4px;
+  --cn-arm: 2px;
 }
 
 /* ===== 文章详情：单栏居中 ===== */
