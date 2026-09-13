@@ -132,21 +132,21 @@ html[data-page-hidden] *::after {
   --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 28%);
   --reading-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.09), 0 32px 64px rgba(0,0,0,0.05);
   --reading-blur: 14px;
-  /* ===== 十字角标 =====
-     带边框的面板/按钮在四角内侧各有一枚小金十字：两条短臂交叉，
-     交叉点最浓，沿臂向两端逐渐变淡、变细（渐变两端都是 transparent）。
-     十字中心距相邻两边各 --cn-inset，用 calc 与百分比定位，
-     因此元素尺寸与内边距怎么变都跟着走。 */
-  --cn-cross: #b08d3f;  /* 深金：白底上更清楚 */
-  --cn-inset: 13px;     /* 十字中心到两边的距离 */
-  --cn-arm: 4.5px;      /* 单臂长度（总线长 = 2×） */
-  --cn-w: 1px;          /* 线宽（保持发丝级） */
-  /* 两条臂：中段最浓、两端淡出（两端都是 transparent） */
-  --cn-h: linear-gradient(90deg, transparent, var(--cn-cross), transparent);
-  --cn-v: linear-gradient(180deg, transparent, var(--cn-cross), transparent);
-  /* 定位辅助：--cn-a 为臂起点距边距，--cn-b 为垂直方向居中偏移 */
-  --cn-a: calc(var(--cn-inset) - var(--cn-arm));
-  --cn-b: calc(var(--cn-inset) - var(--cn-w) / 2);
+  /* ===== 角标：内缩矩形框 + 对角两枚十字 =====
+     四条边连成一个内缩的矩形细线框；只在左上、右下两角额外画十字
+     （两条垂直的短线交叉，交点最浓、沿臂向两端变淡）。
+     颜色为暗红。 */
+  --cn-color: #7f1d1d;  /* 暗红：白底上清晰且不刺眼 */
+  --cn-inset: 13px;     /* 框线距元素边缘的距离 */
+  --cn-arm: 4.5px;      /* 十字单臂长度（总长 = 2×） */
+  --cn-w: 1px;          /* 线宽（发丝级） */
+  /* 框线是实色，用同色系渐变充当纯色块 */
+  --cn-solid: linear-gradient(var(--cn-color), var(--cn-color));
+  /* 十字的两条臂：中段最浓、两端淡出 */
+  --cn-h: linear-gradient(90deg, transparent, var(--cn-color), transparent);
+  --cn-v: linear-gradient(180deg, transparent, var(--cn-color), transparent);
+  /* 框内可用长度（两边各内缩后剩下的部分），供背景层计算 */
+  --cn-span: calc(100% - var(--cn-inset) * 2);
   /* 卡片亚克力：与阅读面同材质、但面积小得多，可以做得更透，
      让背后的网格若隐若现；模糊半径也相应调小以控制开销 */
   --card-acrylic-bg: rgba(255, 255, 255, 0.82);
@@ -175,8 +175,8 @@ html.dark {
   --card-shadow-hover-1: 0 2px 6px rgba(0,0,0,0.4);
   --card-shadow-hover-2: 0 8px 24px rgba(0,0,0,0.5);
   --card-shadow-hover-3: 0 20px 48px rgba(0,0,0,0.6);
-  /* 十字角标：暗色下换成浅金，深金在深底上几乎看不见 */
-  --cn-cross: #e0c383;
+  /* 角标：暗色下用略亮一档的红，真正的暗红在深底上几乎看不见 */
+  --cn-color: #a63a34;
   /* ===== 暗色：只保留毛玻璃，不要任何白色渐变 =====
      两个原因：
      1. 白高光/白渐变在深底上显得脏，像蒙了一层灰；
@@ -745,17 +745,19 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   overflow: hidden;
 }
 
-/* ===== 十字角标 =====
-   四角内侧各一枚小金十字：交叉点最浓，沿臂向两端逐渐变淡、变细。
+/* ===== 角标：内缩矩形框 + 对角两枚十字 =====
+   四条边连成一个内缩的矩形细线框；只在左上、右下两角额外画十字，
+   右上与左下只是框线的拐角。十字交点最浓，沿臂向两端变淡。
 
    实现要点：
-   - 一个伪元素叠 **8 层 background**（4 角 × 2 臂）画完，不增加任何 DOM。
-     比上一版（4 角 × 2 边 × 2 粗细 = 16 层）少一半，光栅化开销随之降低。
-   - 每条臂是“透明 → 金 → 透明”的对称渐变：中段最浓、两端淡出，
-     两条臂在中心交叠，自然形成最浓的交叉点。
-   - 定位用 calc + 百分比：--cn-a 是臂起点距边距，--cn-b 是垂直方向居中偏移；
-     右侧/下侧用 calc(100% - …) 镜像，所以元素尺寸怎么变都贴角。
-   - 十字内缩（--cn-inset），不再压在边框上，留出呼吸。
+   - 一个伪元素叠 **8 层 background** 画完（4 条框线 + 4 条十字臂），
+     不增加任何 DOM。
+   - 框线用**实色渐变块**（`--cn-solid`）而非 `border`：伪元素保持 `inset: 0`，
+     这样十字伸出框外的部分不会被 `background-clip: border-box` 裁掉。
+   - 框线长度用 `--cn-span`（`100% - inset × 2`）；百分比定位同时用了
+     `calc(100% - …)` 镜像，所以元素尺寸怎么变都适配。
+   - 十字的两条臂是“透明 → 红 → 透明”的对称渐变，中心交叠自然最浓。
+   - 暗色下 --cn-color 换成略亮一档的红（真正的暗红在深底上看不见）。
 
    伪元素分配：.post-card 的 ::after 已被亚克力层占用，所以它用 ::before；
    其余均用 ::after。 */
@@ -774,35 +776,42 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   position: absolute;
   inset: 0;
   /* 高于同层的亚克力/光泽伪元素（它们为 z-index: 0 且晚于 ::before 绘制），
-     否则十字会被半透底盖淡；内容也是 z-index: 1 但晚于伪元素，文字仍在十字之上。 */
+     否则会被半透底盖淡；内容也是 z-index: 1 但晚于伪元素，文字仍在角标之上。 */
   z-index: 1;
   pointer-events: none;
-  opacity: 0.8;
+  opacity: 0.6;
   background-repeat: no-repeat;
   background-image:
-    var(--cn-h), var(--cn-v),   /* 左上 */
-    var(--cn-h), var(--cn-v),   /* 右上 */
-    var(--cn-h), var(--cn-v),   /* 左下 */
-    var(--cn-h), var(--cn-v);   /* 右下 */
+    /* 框：上 / 下 / 左 / 右 */
+    var(--cn-solid), var(--cn-solid), var(--cn-solid), var(--cn-solid),
+    /* 左上十字：横臂 / 竖臂 */
+    var(--cn-h), var(--cn-v),
+    /* 右下十字：横臂 / 竖臂 */
+    var(--cn-h), var(--cn-v);
   background-size:
-    calc(var(--cn-arm) * 2) var(--cn-w), var(--cn-w) calc(var(--cn-arm) * 2),
-    calc(var(--cn-arm) * 2) var(--cn-w), var(--cn-w) calc(var(--cn-arm) * 2),
+    /* 上、下边：水平线；左、右边：竖直线 */
+    var(--cn-span) var(--cn-w), var(--cn-span) var(--cn-w),
+    var(--cn-w) var(--cn-span), var(--cn-w) var(--cn-span),
     calc(var(--cn-arm) * 2) var(--cn-w), var(--cn-w) calc(var(--cn-arm) * 2),
     calc(var(--cn-arm) * 2) var(--cn-w), var(--cn-w) calc(var(--cn-arm) * 2);
   background-position:
-    /* 左上：横臂右移，竖臂下移 */
-    var(--cn-a) var(--cn-b), var(--cn-b) var(--cn-a),
-    /* 右上：镜像 */
-    calc(100% - var(--cn-a)) var(--cn-b), calc(100% - var(--cn-b)) var(--cn-a),
-    /* 左下 */
-    var(--cn-a) calc(100% - var(--cn-b)), var(--cn-b) calc(100% - var(--cn-a)),
-    /* 右下 */
-    calc(100% - var(--cn-a)) calc(100% - var(--cn-b)),
-    calc(100% - var(--cn-b)) calc(100% - var(--cn-a));
+    /* 上边 / 下边 / 左边 / 右边（下、右减掉线宽，保证框完整落在 [inset, 100%-inset] 内）*/
+    var(--cn-inset) var(--cn-inset),
+    var(--cn-inset) calc(100% - var(--cn-inset) - var(--cn-w)),
+    var(--cn-inset) var(--cn-inset),
+    calc(100% - var(--cn-inset) - var(--cn-w)) var(--cn-inset),
+    /* 左上十字：以框角为中心，臂向两侧各伸 --cn-arm */
+    calc(var(--cn-inset) - var(--cn-arm)) calc(var(--cn-inset) - var(--cn-w) / 2),
+    calc(var(--cn-inset) - var(--cn-w) / 2) calc(var(--cn-inset) - var(--cn-arm)),
+    /* 右下十字：同样以框角为中心 */
+    calc(100% - var(--cn-inset) - var(--cn-arm))
+      calc(100% - var(--cn-inset) - var(--cn-w) / 2),
+    calc(100% - var(--cn-inset) - var(--cn-w) / 2)
+      calc(100% - var(--cn-inset) - var(--cn-arm));
 }
 
 /* 小尺寸元素：按钮、标签、徽标。内缩与臂长都要收，
-   否则 13px 的内缩在 20px 高的标签上会把十字挤到中间去 */
+   否则 13px 的内缩在 20px 高的标签上会把框挤到中间去 */
 .pagination a, .pagination span,
 .term-item, .footer-link, .print-btn,
 .tag, .author-badge, .back-to-top, .toc-fab {
