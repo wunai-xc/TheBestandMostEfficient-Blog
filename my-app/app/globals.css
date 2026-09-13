@@ -133,18 +133,27 @@ html[data-page-hidden] *::after {
   --reading-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.09), 0 32px 64px rgba(0,0,0,0.05);
   --reading-blur: 14px;
   /* ===== 角标：内缩矩形框 + 对角两枚十字 =====
-     四条边连成一个内缩的矩形细线框；只在左上、右下两角额外画十字
-     （两条垂直的短线交叉，交点最浓、沿臂向两端变淡）。
-     颜色为暗红。 */
+     暗红色线条。
+
+     术语：CSS 只能画有界的色块，画出来的必然是「线段」（有两个端点）；
+     真正的「直线」（向两端无限延伸）与「射线」（一端无限）都无法表达。
+     让线段读起来像直线的方法：两端淡出到透明，淡出本身暗示线还在继续。
+     所以下面所有线都带渐变，没有实色端点。 */
   --cn-color: #7f1d1d;  /* 暗红：白底上清晰且不刺眼 */
   --cn-inset: 13px;     /* 框线距元素边缘的距离 */
-  --cn-arm: 4.5px;      /* 十字单臂长度（总长 = 2×） */
+  --cn-arm: 4.5px;      /* 十字到交点的臂长（线段全长 = 2×） */
   --cn-w: 1px;          /* 线宽（发丝级） */
-  /* 框线是实色，用同色系渐变充当纯色块 */
-  --cn-solid: linear-gradient(var(--cn-color), var(--cn-color));
-  /* 十字的两条臂：中段最浓、两端淡出 */
+  /* 十字的臂：中段实、两端完全淡出，近似直线穿过交点的观感 */
   --cn-h: linear-gradient(90deg, transparent, var(--cn-color), transparent);
   --cn-v: linear-gradient(180deg, transparent, var(--cn-color), transparent);
+  /* 框的四条边：中段保持实色、只在靠近拐角处淡出，
+     否则四边都在角落淡没，框就断了不成形 */
+  --cn-eh: linear-gradient(90deg,
+    transparent, var(--cn-color) 12%, var(--cn-color) 88%, transparent);
+  --cn-ev: linear-gradient(180deg,
+    transparent, var(--cn-color) 12%, var(--cn-color) 88%, transparent);
+  /* 若某处想要不带渐变的实线（线段），用它 */
+  --cn-solid: linear-gradient(var(--cn-color), var(--cn-color));
   /* 框内可用长度（两边各内缩后剩下的部分），供背景层计算 */
   --cn-span: calc(100% - var(--cn-inset) * 2);
   /* 卡片亚克力：与阅读面同材质、但面积小得多，可以做得更透，
@@ -746,17 +755,19 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 }
 
 /* ===== 角标：内缩矩形框 + 对角两枚十字 =====
-   四条边连成一个内缩的矩形细线框；只在左上、右下两角额外画十字，
-   右上与左下只是框线的拐角。十字交点最浓，沿臂向两端变淡。
+   四条边连成一个内缩的矩形框；只在左上、右下两角额外画十字。
+   所有线都带渐变（两端淡出），因为 CSS 只能画有界的线段，
+   靠淡出才读得成“向两端延伸的直线”。
 
    实现要点：
-   - 一个伪元素叠 **8 层 background** 画完（4 条框线 + 4 条十字臂），
+   - 一个伪元素叠 **8 层 background** 画完（4 条框边 + 4 条十字臂），
      不增加任何 DOM。
-   - 框线用**实色渐变块**（`--cn-solid`）而非 `border`：伪元素保持 `inset: 0`，
-     这样十字伸出框外的部分不会被 `background-clip: border-box` 裁掉。
-   - 框线长度用 `--cn-span`（`100% - inset × 2`）；百分比定位同时用了
-     `calc(100% - …)` 镜像，所以元素尺寸怎么变都适配。
-   - 十字的两条臂是“透明 → 红 → 透明”的对称渐变，中心交叠自然最浓。
+   - 背景层不能用 `border` 代替：伪元素必须保持 `inset: 0`，
+     否则 `background-clip: border-box` 会裁掉十字伸出框外的部分。
+   - 框边用 `--cn-eh / --cn-ev`（中段实、靠近拐角处淡出）；
+     十字臂用 `--cn-h / --cn-v`（中段实、两端完全淡出）。
+   - 框边长度用 `--cn-span`（`100% - inset × 2`）；下、右两条定位再减一个
+     线宽；右侧/下侧用 `calc(100% - …)` 镜像，元素尺寸怎么变都适配。
    - 暗色下 --cn-color 换成略亮一档的红（真正的暗红在深底上看不见）。
 
    伪元素分配：.post-card 的 ::after 已被亚克力层占用，所以它用 ::before；
@@ -782,9 +793,9 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   opacity: 0.6;
   background-repeat: no-repeat;
   background-image:
-    /* 框：上 / 下 / 左 / 右 */
-    var(--cn-solid), var(--cn-solid), var(--cn-solid), var(--cn-solid),
-    /* 左上十字：横臂 / 竖臂 */
+    /* 框：上 / 下 / 左 / 右（中段实、靠近拐角淡出） */
+    var(--cn-eh), var(--cn-eh), var(--cn-ev), var(--cn-ev),
+    /* 左上十字：横臂 / 竖臂（两端完全淡出） */
     var(--cn-h), var(--cn-v),
     /* 右下十字：横臂 / 竖臂 */
     var(--cn-h), var(--cn-v);
