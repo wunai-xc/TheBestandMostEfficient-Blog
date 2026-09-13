@@ -21,10 +21,18 @@ export default async function LinksPage({ params }: { params: Promise<{ lang: st
             rel="noopener noreferrer"
           >
             {link.avatar ? (
-              // 友链图片可能是任意域名，用原生 img：next/image 需要预先声明
-              // remotePatterns，无法覆盖任意来源；这里也不需要优化
+              // 友链图片可能来自任意域名（如 GitHub 头像直链），用原生 img：
+              // next/image 需要预先声明 remotePatterns，这里也不需要优化。
+              // referrerPolicy 不向对方泄露本站地址；alt 留空（名称就在旁边）
               // eslint-disable-next-line @next/next/no-img-element
-              <img className="friend-avatar" src={link.avatar} alt="" loading="lazy" decoding="async" />
+              <img
+                className="friend-avatar"
+                src={link.avatar}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
+              />
             ) : (
               // 没填图片时用名称首字占位，避免出现碎图
               <span className="friend-avatar friend-avatar-fallback" aria-hidden="true">
