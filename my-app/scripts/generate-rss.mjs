@@ -4,7 +4,7 @@ import path from "path";
 
 const CONTENT_ROOT = path.join(process.cwd(), "content");
 const PUBLIC_ROOT = path.join(process.cwd(), "public");
-const BASE = "https://newblog.wunai.top";
+const BASE = "https://blog.wunai.top";
 
 function readMd(fp) {
   const raw = fs.readFileSync(fp, "utf8");

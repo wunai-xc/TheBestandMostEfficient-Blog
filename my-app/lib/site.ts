@@ -49,7 +49,7 @@ export interface Post {
 export const SITE = {
   title: "wunai's blog",
   author: "wunai",
-  url: "https://newblog.wunai.top",
+  url: "https://blog.wunai.top",
   defaultLang: "zh" as Lang,
   description: "学习笔记与生活思考：数学、物理、化学、医学、技术文章集合",
   /* ===== 联系方式：邮箱 / GitHub / 本仓库 ===== */

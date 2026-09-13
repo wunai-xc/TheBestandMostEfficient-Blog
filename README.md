@@ -2,7 +2,7 @@
 
 一个双语（中文 / English）、纯静态、Markdown 驱动的轻量级技术博客。基于 **Next.js 16 App Router** 构建，通过 `output: "export"` 导出为纯静态文件，部署在 **Cloudflare Pages**。
 
-> 在线地址：<https://newblog.wunai.top>
+> 在线地址：<https://blog.wunai.top>
 
 ---
 
@@ -341,7 +341,7 @@ contact: {
 export const SITE = {
   title: "wunai's blog",
   author: "wunai",
-  url: "https://newblog.wunai.top",   // 影响 metadataBase、canonical、JSON-LD
+  url: "https://blog.wunai.top",   // 影响 metadataBase、canonical、JSON-LD
   defaultLang: "zh",
   description: "……",
   homeInfo: { zh: { title, content }, en: { title, content } },
