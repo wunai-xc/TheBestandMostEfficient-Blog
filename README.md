@@ -467,7 +467,10 @@ npx wrangler pages deploy out --project-name=wunai-blog
   - 路径规则与 `rehypeImages` 一致：绝对 URL / 站内绝对路径直接用，相对路径补成 `/<lang>/posts/<slug>/<src>`
   - **提取前必须先剥掉围栏代码块与行内代码**：否则像《Markdown 基本语法》里那张语法表（`` `![alt](url "title")` ``）会把示例文本当成真图，卡片上就会出现一个坏图
   - 缩略图可能是外链（正文本就允许贴外站图），对方可能禁外链；`<img onError>` 时隐藏整个缩略图，不留碎图占位
-  - 卡片用 `display: flex`，正文包在 `.post-card-body` 里（否则 h2/meta/summary 会各自成为 flex 子项被摆成一行）；`.post-card-body` 必须 `min-width: 0`，否则长标题会把缩略图挤出容器；无缩略图时用 `.post-card:not(.has-thumb)` 退回纵向排版
+  - 卡片用 `display: flex` + `align-items: stretch`：文字占左侧 2/3，缩略图占右侧 1/3 并撑满内容高度。文字包在 `.post-card-body` 里（否则 h2/meta/summary 会各自成为 flex 子项被摆成一行），且必须 `min-width: 0`，否则长标题会把缩略图挤出容器；无缩略图时用 `.post-card:not(.has-thumb)` 退回纵向排版
+  - **缩略图不能写 `aspect-ratio`**：高度要由文字那一侧决定、图跟着撑满；用宽高比定高的话，文字比图高时右侧会空一块
+  - **缩略图内的 `img` 用 `position: absolute; inset: 0`** 而不是 `height: 100%`：百分比高度依赖父级确定高度，flex 拉伸下不够可靠
+  - 图片落在卡片内边距（20/24px）以内，而角标线框是内缩 5px 的，所以图始终在**线框里面**，不会压到框线
 - 卡片（`.post-card`）的亚克力放在 `::after` 伪元素上，而不是直接加到卡片：卡片有 JS 驱动的行内 `transform`（鼠标 3D 倾斜）与 `transform-style: preserve-3d`，而 `backdrop-filter` 属于分组属性，与变换同元素会强制扁平化，子元素的 `translateZ(10px)` 深度会失效；放进伪元素两者才能共存。卡片自身保持 `background: transparent`，否则 `backdrop-filter` 会把卡片自己的底当作背景来模糊，不透出背后网格
 - 上下篇导航（`.post-nav a`）没有 3D 子元素，亚克力直接加在 `<a>` 上；hover 的 SVG 液态滤镜作用在合成结果之上，与毛玻璃不冲突。浮动的移动端目录面板（`.toc-panel`）刻意保持不透明：它覆盖在正文之上，透出正文会难以辨读
 - 打印时卡片与阅读面的亚克力全部重置（`background: none`、取消 `backdrop-filter`、`position/z-index` 归零），避免 PDF 背景发灰或分页错乱
