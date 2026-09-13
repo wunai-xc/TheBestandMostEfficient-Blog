@@ -866,13 +866,15 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
    - 终点色取“接近底色”，所以两个主题下都读得成“向两端延伸的直线”。
    - 小元件（分页/标签/徽标/按钮）不加角标。
 
-   伪元素分配：.post-card 的 ::after 已被亚克力层占用，所以它用 ::before；
-   其余均用 ::after。 */
+   为什么 .post-content（正文阅读面）不在名单里：
+   框的长度是 `100% - inset × 2`，在高达上万像素的文章上会变成四条贯穿全文的线，
+   “四角相连”在文档级高的面板上本来就不成立；更实际的问题是这个满尺寸的
+   ::after 会独立成一层，与 backdrop-filter 一起把显存吃掉几十 MB（手机打不开页）。
+   所以正文阅读面不画角标。 */
 .post-card::before,
 .post-nav a::after,
 .friend-card::after,
 .changelog-list::after,
-.post-content::after,
 .collection-card::after,
 .toc-panel::after,
 .settings-panel::after {
@@ -1079,11 +1081,17 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 }
 .post-content { min-width: 0; padding: 1rem; }
 
-/* ===== 正文亚克力阅读面 ===== */
-/* 半透底 + 毛玻璃：让网格背景只在两侧留白与侧栏隐约可见，正文区域保持干净。
-   背景 canvas 是 z-index:-1，这层用正 z-index 即可稳定叠在它之上。
-   这层自身不加 transform：毛玻璃元素若同时被变换，浏览器需每帧重新采样背景模糊，
-   长文上开销很大；入场动画放在内层 .article 上，两者不共存。 */
+/* ===== 正文阅读面 =====
+   这一块**不能**像卡片那样用毛玻璃与满尺寸装饰层，原因是它可以长达上万像素：
+
+   - `backdrop-filter` 会为元素整个高度分配一张模糊层，约 800×10000px
+     ≈ 31MB 显存；手机上很容易把合成器压垮，表现为文章页长时间打不开 /
+     滑动掉帧。而阅读面本身不透明度很高（浅色 0.965），模糊的视觉贡献本来就极小。
+     所以毛玻璃只在 ≥1024px 的宽屏上启用，移动端走无模糊的快路径。
+     —— 与它同高的 `::after`（角标框）同理，已从角标名单里移除，
+     详见上面「站点级标题」上方那段角标注释。
+
+   - 入场动画放在内层 `.article` 上，保持本层零 transform。 */
 .post-content {
   position: relative;
   z-index: 0;
@@ -1091,16 +1099,31 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   background: var(--reading-bg);
   border: 1px solid var(--reading-border);
   box-shadow: var(--reading-shadow), var(--reading-inner-glow);
-  backdrop-filter: blur(var(--reading-blur)) saturate(1.15);
-  -webkit-backdrop-filter: blur(var(--reading-blur)) saturate(1.15);
 }
 
-/* 顶部一层极淡的斜向高光：模拟亚克力的光反射（仅浅色；暗色不要白渐变） */
+@media (min-width: 1024px) {
+  .post-content {
+    backdrop-filter: blur(var(--reading-blur)) saturate(1.15);
+    -webkit-backdrop-filter: blur(var(--reading-blur)) saturate(1.15);
+  }
+}
+
+/* 窄屏没有毛玻璃兜底，得把不透明度提上去，否则背底的点会从字形后面透出来。
+   浅色本来就是 0.965，无需调整；暗色原来只有 0.68（依赖模糊把它调开）。 */
+@media (max-width: 1023px) {
+  html.dark { --reading-bg: rgba(44, 44, 51, 0.88); }
+}
+
+/* 顶部一层极淡的高光：模拟亚克力的光反射（仅浅色；暗色不要白渐变）。
+   高度必须写死：原来用 inset: 0 + 渐变里的 28%，在长文上会把高光拖到
+   两三千像素，既不好看又多出一整张满尺寸图层。 */
 .post-content::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 220px;
   background: var(--reading-sheen);
   pointer-events: none;
 }
@@ -1977,7 +2000,7 @@ html.dark .katex-error { color: #fca5a5; }
   /* 装饰性角标不进 PDF，省墨 */
   .post-card::before,
   .post-nav a::after, .friend-card::after, .changelog-list::after,
-  .post-content::after, .collection-card::after, .toc-panel::after,
+  .collection-card::after, .toc-panel::after,
   .settings-panel::after
     { display: none !important; }
   /* 列表页若被打印：去掉卡片的毛玻璃与半透底，避免发灰 */
