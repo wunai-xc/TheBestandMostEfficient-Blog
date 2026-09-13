@@ -1,0 +1,32 @@
+[
+  {
+    "sha": "0f4b6001",
+    "date": null,
+    "message": "feat(links): 友链改用各自 GitHub 头像与简介",
+    "url": "https://github.com/wunai-xc/TheBestandMostEfficient-Blog/commit/0f4b6001"
+  },
+  {
+    "sha": "ff992031",
+    "date": null,
+    "message": "perf(mobile): 降低后台挂起时的持续开销",
+    "url": "https://github.com/wunai-xc/TheBestandMostEfficient-Blog/commit/ff992031"
+  },
+  {
+    "sha": "22e7708c",
+    "date": null,
+    "message": "feat(links): 填入 4 条真实友链",
+    "url": "https://github.com/wunai-xc/TheBestandMostEfficient-Blog/commit/22e7708c"
+  },
+  {
+    "sha": "dedcb8a8",
+    "date": null,
+    "message": "style(dark): 暗色亚克力改为纯毛玻璃，去掉全部白色渐变",
+    "url": "https://github.com/wunai-xc/TheBestandMostEfficient-Blog/commit/dedcb8a8"
+  },
+  {
+    "sha": "af32ccbd",
+    "date": null,
+    "message": "docs(规范): 完善《博客书写规范与项目说明》，修正与代码不符之处",
+    "url": "https://github.com/wunai-xc/TheBestandMostEfficient-Blog/commit/af32ccbd"
+  }
+]

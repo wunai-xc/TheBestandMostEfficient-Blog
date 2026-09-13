@@ -47,7 +47,7 @@
 - 动态可互动背景（点网格 + 细连线：网格被光标 / 触点拨动后自行回弹，明暗主题自适应，详见[性能与可访问性](#性能与可访问性)）
 - 友链页：卡片列表（图片 / 名称 / 一句话介绍），数据在 `lib/links.ts`
 - 页脚：欢迎语 + 邮箱 / GitHub / 本站仓库三个联系方式卡片（数据在 `SITE.contact`）
-- 首页：首屏只露一屏「关于」文章（底部渐隐 + 继续阅读），下方是滚动到位渐入的展示位
+- 首页：首屏只露一屏「关于」文章（底部渐隐 + 继续阅读）+ 最近 5 次更新 + 滚动到位渐入的展示位
 - 文章页单栏居中，无侧栏；文章目录 / 阅读进度 / 回到顶部以浮动导航形式提供
 - 正文亚克力阅读面：半透底 + 毛玻璃，让交互背景只在两侧留白与侧栏隐约可见，不影响正文阅读
 - 卡片与上下篇同样为亚克力材质，与阅读面同一套材质语言；暗色下只保留毛玻璃，无白色渐变
@@ -114,10 +114,11 @@
 │   │   ├── markdown.ts             # unified 渲染管线、短代码、TOC 提取
 │   │   ├── site.ts                 # 站点配置与 i18n 文案（客户端安全）
 │   │   └── icons.ts                # Iconify 图标集合
-│   ├── public/                     # 静态资源（含构建期生成的搜索索引与 RSS）
+│   ├── public/                     # 静态资源（含构建期生成的搜索索引、RSS、最近更新）
 │   ├── scripts/
 │   │   ├── generate-search-index.mjs  # 生成 search-index.{zh,en}.json
-│   │   └── generate-rss.mjs           # 生成 rss.xml
+│   │   ├── generate-rss.mjs           # 生成 rss.xml
+│   │   └── generate-changelog.mjs     # 生成 changelog.json（GitHub API 优先，git log 兜底）
 │   ├── next.config.ts              # 静态导出、trailingSlash
 │   ├── wrangler.toml               # Cloudflare Pages 项目配置
 │   └── package.json
@@ -338,6 +339,12 @@ export const SITE = {
 | --- | --- | --- |
 | `scripts/generate-search-index.mjs` | 遍历 `content/*/posts`，提取标题、摘要、标签与前 2000 字正文 | `public/search-index.zh.json`、`public/search-index.en.json` |
 | `scripts/generate-rss.mjs` | 取全站最近 20 篇非草稿文章 | `public/rss.xml` |
+| `scripts/generate-changelog.mjs` | 取最近 5 次提交，供首页「最近更新」区块使用 | `public/changelog.json` |
+
+`generate-changelog.mjs` 的两个设计点：
+
+- **优先走 GitHub API，`git log` 只作兜底**。GitHub Actions（`actions/checkout` 默认 `fetch-depth: 1`）与 Cloudflare Pages 都是浅克隆，`git log` 往往只能拿到触发构建的那一条，取不到 5 条。
+- **永不令构建失败**：两个来源都失败时保留上一次的文件不动；连旧文件都没有才写空数组，首页会自动隐藏该区块。
 
 随后 Next.js 以 `output: "export"` 静态导出，所有页面在构建期完成渲染（`dynamicParams = false` + `generateStaticParams`），产物位于 `my-app/out/`，完整目录树含 `zh/`、`en/` 两套页面、`sitemap.xml`、`robots.txt`、`rss.xml` 与搜索索引 JSON。
 
@@ -402,10 +409,18 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 
 **首页与布局**
 
-- 首页首屏有两种形态：存在 `about: true` 的文章时，只露一屏该文正文（底部渐变渐隐），下方给「继续阅读」入口指向文章页；否则退回 `SITE.homeInfo` 的一句简介并撑满一屏（`100svh - header`）
+- 首页共三段，首屏两种形态：
+
+| 顺序 | 内容 |
+| --- | --- |
+| 1. 首屏 | 有 `about` 文章→渲染该文正文（裁剪一屏 + 继续阅读）；无→`SITE.homeInfo` 一句话简介 |
+| 2. 最近更新 | 最近 5 次提交（日期 + 提交信息 + 短 sha，可点进 GitHub） |
+| 3. 展示位 | 最多 3 篇卡片 |
+
+后两段都用 `ScrollReveal` 包裹，进入视口时渐入。
 - 首屏渐入 `home-intro-in` 各 2s，标题先、正文延后 0.25s，不会齐刷刷地出现
 - 关于版首屏的正文裁剪是纯 CSS（`.home-about-body` 的 `max-height: clamp(320px, 100svh - 300px, 620px)` + `overflow: hidden` + 底部 `mask-image` 渐隐），不切割 HTML，因此不会把标签切坏；代价是首页仍会带上整篇 HTML（这篇约 3.5k 字，无额外资源请求）。打印时自动取消裁切并隐藏「继续阅读」
-- 向下滑动图标：锚点到 `#home-posts`，复用 `html { scroll-behavior: smooth }`；在简介版首屏钉在底部，在关于版里跟在正文之后正常排版（`.scroll-hint` 按父级切换定位）
+- 向下滑动图标：锚点默认 `#home-updates`（最近更新区块），没有更新数据时回退 `#home-posts`；复用 `html { scroll-behavior: smooth }`。在简介版首屏钉在底部，在关于版里跟在正文之后正常排版（`.scroll-hint` 按父级切换定位）
 - 展示位取数见 `getHomeShowcase()`：有置顶则取置顶（首页不显示“置顶”徽标，由 `PostCard` 的 `hidePinnedBadge` 控制）；没有置顶则取日期最新的 3 篇非 AI 文章，跳过 `hiddenInHomeList` 与 `about`，保证首页不会全是 AI 稿、也不会与首屏重复
 - 文章页为单栏居中（`.post-layout` 最大宽 800px，与原先“侧栏 + 正文”时的正文实测宽度一致），已移除左侧“全部文章”列表；目录 / 阅读进度 / 回到顶部仍以浮动形式提供，不占布局宽度
 - `ScrollReveal` 的初始隐藏态写在 CSS 里，组件内附 `<noscript>` 兜底样式，禁用 JS 时内容不会永远不可见；无 `IntersectionObserver` 的浏览器直接显示，不做动画

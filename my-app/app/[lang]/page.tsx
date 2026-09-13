@@ -1,4 +1,4 @@
-import { SITE, getAboutPost, getHomeShowcase, type Lang } from "@/lib/content";
+import { SITE, getAboutPost, getHomeShowcase, getChangelog, type Lang } from "@/lib/content";
 import { renderMarkdown } from "@/lib/markdown";
 import PostCard from "@/components/PostCard";
 import PostBody from "@/components/PostBody";
@@ -15,9 +15,17 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   const aboutHtml = about ? await renderMarkdown(about) : null;
   // 展示位：已用作「关于」的文章不再重复出现
   const showcase = getHomeShowcase(lang);
+  // 最近更新（构建前由 scripts/generate-changelog.mjs 生成）
+  const updates = getChangelog();
 
   const scrollHint = (
-    <a className="scroll-hint" href="#home-posts" title={t.scrollDown} aria-label={t.scrollDown}>
+    <a
+      className="scroll-hint"
+      // 没有更新数据时该区块不渲染，锚点回退到文章展示位，避免箭头发空
+      href={updates.length > 0 ? "#home-updates" : "#home-posts"}
+      title={t.scrollDown}
+      aria-label={t.scrollDown}
+    >
       <Icon icon={icons["mdi:chevron-down"]} width="1.6em" height="1.6em" />
     </a>
   );
@@ -49,6 +57,29 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
           <p>{info.content}</p>
           {scrollHint}
         </section>
+      )}
+
+      {/* 首屏之后、文章卡片之前：最近 5 次更新 */}
+      {updates.length > 0 && (
+        <ScrollReveal id="home-updates" className="changelog">
+          <h2 className="changelog-head">{t.updates}</h2>
+          <ul className="changelog-list">
+            {updates.map((c) => (
+              <li key={c.sha} className="changelog-item">
+                {c.date && <time className="changelog-date">{c.date}</time>}
+                <a
+                  className="changelog-msg"
+                  href={c.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {c.message}
+                </a>
+                <code className="changelog-sha">{c.sha}</code>
+              </li>
+            ))}
+          </ul>
+        </ScrollReveal>
       )}
 
       {/* 向下滚动后：最多 3 篇，进入视口时渐入 */}

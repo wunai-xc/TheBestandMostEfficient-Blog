@@ -182,6 +182,30 @@ export function getAboutPost(lang: Lang): Post | undefined {
   return getPosts(lang).find((p) => p.about);
 }
 
+export interface ChangelogEntry {
+  /** 短 sha */
+  sha: string;
+  /** YYYY-MM-DD；来源拿不到时为 null */
+  date: string | null;
+  /** 提交信息首行 */
+  message: string;
+  /** 提交在 GitHub 上的地址 */
+  url: string;
+}
+
+/* 首页「最近更新」：数据由 scripts/generate-changelog.mjs 在构建前写入。
+   文件缺失或损坏时返回空数组，首页会自动隐藏该区块（本地 dev 未跑 prebuild 时就属于这种情况）。 */
+export function getChangelog(): ChangelogEntry[] {
+  try {
+    const file = path.join(process.cwd(), "public", "changelog.json");
+    const list = JSON.parse(fs.readFileSync(file, "utf8"));
+    if (!Array.isArray(list)) return [];
+    return list.filter((e) => e && typeof e.message === "string" && e.message);
+  } catch {
+    return [];
+  }
+}
+
 export function getPrevNext(lang: Lang, slug: string): { prev?: Post; next?: Post } {
   const posts = getPosts(lang);
   const idx = posts.findIndex((p) => p.slug === slug);

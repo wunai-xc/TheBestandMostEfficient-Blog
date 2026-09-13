@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "prebuild": "node scripts/generate-search-index.mjs && node scripts/generate-rss.mjs",
+    "prebuild": "node scripts/generate-search-index.mjs && node scripts/generate-rss.mjs && node scripts/generate-changelog.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
