@@ -132,6 +132,25 @@ html[data-page-hidden] *::after {
   --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 28%);
   --reading-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.09), 0 32px 64px rgba(0,0,0,0.05);
   --reading-blur: 14px;
+  /* ===== 卡片角标 =====
+     在卡片的四个角描边：顶点颜色最深，沿边向外逐渐变淡、变细。
+     每个角由两条边线组成，各从顶点渐变到透明；顶点处两条线重叠，
+     自然成为最浓的一点。每条边再叠一条更细更长的延伸线
+     （短粗 + 长细），形成“越往外越细”的收尾。 */
+  --cn: var(--accent);
+  --cn-len-thick: 26px; /* 粗线长度 */
+  --cn-len-thin: 72px;  /* 细线（延伸）长度 */
+  --cn-w-thick: 2px;
+  --cn-w-thin: 1px;
+  /* 四个方向的渐变形态：向右 / 向左 / 向下 / 向上 */
+  --cn-r1: linear-gradient(90deg, var(--cn), transparent);
+  --cn-l1: linear-gradient(270deg, var(--cn), transparent);
+  --cn-d1: linear-gradient(180deg, var(--cn), transparent);
+  --cn-u1: linear-gradient(0deg, var(--cn), transparent);
+  --cn-r2: linear-gradient(90deg, color-mix(in srgb, var(--cn) 75%, transparent), transparent);
+  --cn-l2: linear-gradient(270deg, color-mix(in srgb, var(--cn) 75%, transparent), transparent);
+  --cn-d2: linear-gradient(180deg, color-mix(in srgb, var(--cn) 75%, transparent), transparent);
+  --cn-u2: linear-gradient(0deg, color-mix(in srgb, var(--cn) 75%, transparent), transparent);
   /* 卡片亚克力：与阅读面同材质、但面积小得多，可以做得更透，
      让背后的网格若隐若现；模糊半径也相应调小以控制开销 */
   --card-acrylic-bg: rgba(255, 255, 255, 0.82);
@@ -491,6 +510,7 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
 
 /* 整体一块亚克力面板，条目之间用发丝线分隔 */
 .changelog-list {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -724,6 +744,57 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ===== 卡片角标 =====
+   四角描边：顶点最深，沿边向外逐渐变淡、变细（token 定义见 :root 的 --cn-*）。
+
+   实现要点：
+   - 一个伪元素叠 16 层 background 就能画完四个角，不需要额外 DOM。
+   - 每个角每条边叠两层：短而粗（先列 = 在上）+ 长而细（后列 = 在下），
+     超出粗线范围后只剩细线，这就是“向外变细”。
+   - 顶点处横竖两条线重叠，自然形成最浓的一点，不需额外提亮。
+   - 位置用百分比对齐（0 / 100%），所以卡片尺寸怎么变都贴角。
+
+   伪元素分配：.post-card 的 ::after 已被亚克力层占用，所以它用 ::before。 */
+.post-card::before,
+.post-nav a::after,
+.friend-card::after,
+.changelog-list::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* 必须高于同层的亚克力/光泽伪元素（它们均为 z-index: 0 且晚于 ::before 绘制），
+     否则会被半透底盖住变得很淡；卡片内容自己是 z-index: 1，且都晚于伪元素，
+     所以文字仍在角标之上。四周有内边距，角标不会与内容重叠。 */
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.55;
+  background-repeat: no-repeat;
+  background-image:
+    /* 左上：向右 + 向下 */
+    var(--cn-r1), var(--cn-d1), var(--cn-r2), var(--cn-d2),
+    /* 右上：向左 + 向下 */
+    var(--cn-l1), var(--cn-d1), var(--cn-l2), var(--cn-d2),
+    /* 左下：向右 + 向上 */
+    var(--cn-r1), var(--cn-u1), var(--cn-r2), var(--cn-u2),
+    /* 右下：向左 + 向上 */
+    var(--cn-l1), var(--cn-u1), var(--cn-l2), var(--cn-u2);
+  background-size:
+    var(--cn-len-thick) var(--cn-w-thick), var(--cn-w-thick) var(--cn-len-thick),
+    var(--cn-len-thin) var(--cn-w-thin), var(--cn-w-thin) var(--cn-len-thin),
+    var(--cn-len-thick) var(--cn-w-thick), var(--cn-w-thick) var(--cn-len-thick),
+    var(--cn-len-thin) var(--cn-w-thin), var(--cn-w-thin) var(--cn-len-thin),
+    var(--cn-len-thick) var(--cn-w-thick), var(--cn-w-thick) var(--cn-len-thick),
+    var(--cn-len-thin) var(--cn-w-thin), var(--cn-w-thin) var(--cn-len-thin),
+    var(--cn-len-thick) var(--cn-w-thick), var(--cn-w-thick) var(--cn-len-thick),
+    var(--cn-len-thin) var(--cn-w-thin), var(--cn-w-thin) var(--cn-len-thin);
+  background-position:
+    0 0, 0 0, 0 0, 0 0,
+    100% 0, 100% 0, 100% 0, 100% 0,
+    0 100%, 0 100%, 0 100%, 0 100%,
+    100% 100%, 100% 100%, 100% 100%, 100% 100%;
 }
 
 /* ===== 文章详情：单栏居中 ===== */
@@ -1336,6 +1407,7 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 /* 上下篇导航 */
 .post-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); min-width: 0; }
 .post-nav a {
+  position: relative;
   flex: 1 1 0; min-width: 0; padding: 12px;
   border: 1px solid var(--border); border-radius: 0; color: var(--fg);
   display: flex; flex-direction: column;
@@ -1614,6 +1686,9 @@ html.dark .katex-error { color: #fca5a5; }
   }
   .post-content > * { position: static !important; }
   .post-content::before { display: none !important; }
+  /* 装饰性角标不进 PDF，省墨 */
+  .post-card::before, .post-nav a::after,
+  .friend-card::after, .changelog-list::after { display: none !important; }
   /* 列表页若被打印：去掉卡片的毛玻璃与半透底，避免发灰 */
   .post-card::after { display: none !important; }
   .post-card { background: none !important; box-shadow: none !important; }

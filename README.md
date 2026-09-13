@@ -51,6 +51,7 @@
 - 文章页单栏居中，无侧栏；文章目录 / 阅读进度 / 回到顶部以浮动导航形式提供
 - 正文亚克力阅读面：半透底 + 毛玻璃，让交互背景只在两侧留白与侧栏隐约可见，不影响正文阅读
 - 卡片与上下篇同样为亚克力材质，与阅读面同一套材质语言；暗色下只保留毛玻璃，无白色渐变
+- 卡片四角描边：顶点最深，沿边向外逐渐变淡、变细（文章卡片、上下篇、友链卡片、最近更新面板）
 - 打印 / 另存为 PDF（专用 `@media print` 样式），一键下载 Markdown 原文
 - 评论区（giscus，滚动到可见区域才加载）
 - 路由切换过渡动画、元素入场动画，完整支持 `prefers-reduced-motion`
@@ -435,6 +436,7 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 - 卡片（`.post-card`）的亚克力放在 `::after` 伪元素上，而不是直接加到卡片：卡片有 JS 驱动的行内 `transform`（鼠标 3D 倾斜）与 `transform-style: preserve-3d`，而 `backdrop-filter` 属于分组属性，与变换同元素会强制扁平化，子元素的 `translateZ(10px)` 深度会失效；放进伪元素两者才能共存。卡片自身保持 `background: transparent`，否则 `backdrop-filter` 会把卡片自己的底当作背景来模糊，不透出背后网格
 - 上下篇导航（`.post-nav a`）没有 3D 子元素，亚克力直接加在 `<a>` 上；hover 的 SVG 液态滤镜作用在合成结果之上，与毛玻璃不冲突。浮动的移动端目录面板（`.toc-panel`）刻意保持不透明：它覆盖在正文之上，透出正文会难以辨读
 - 打印时卡片与阅读面的亚克力全部重置（`background: none`、取消 `backdrop-filter`、`position/z-index` 归零），避免 PDF 背景发灰或分页错乱
+- 卡片角标（四角描边）用**一个伪元素叠 16 层 `background`** 画四个角，不增加 DOM：每角每边叠“短而粗 + 长而细”两层，超出粗线只剩细线，所以向外既变淡也变细；顶点处横竖两线重叠，自然最浓。token 在 `:root` 的 `--cn-*`，颜色取 `--accent`。该层必须 `z-index: 1`：亚克力/光泽伪元素是 `z-index: 0` 且晚于 `::before` 绘制，不提升会被半透底盖淡；卡片内容是 `z-index: 1` 但晚于伪元素，文字仍在角标之上。打印时隐藏
 - 暗色下 `post-content::before`（顶部光泽层）直接 `display: none`：它在暗色已是全透明，留着只是白白的合成层
 - 主题在 `<head>` 中用一个内联脚本完成引导，避免深色模式闪烁（FOUC）
 - 评论区、Mermaid / ECharts / Graphviz / abc.js / SmilesDrawer 全部懒加载，仅在进入视口或正文实际用到时才请求
