@@ -72,7 +72,11 @@ export const FRIEND_LINKS: FriendLink[] = [
     url: "https://www.techmc.wiki/",
     // 该站 /favicon.ico 是有效图标文件（ICO 内嵌 PNG），已验证可访问
     avatar: "https://www.techmc.wiki/favicon.ico",
-    // 未取到可靠的简介，留空时卡片副标题显示域名
+    description: {
+      // 取自该站首页的自我介绍（Graduate Texts in Minecraft 的缩写）
+      zh: "Graduate Texts in Minecraft：社区编写的技术性 MC 开放教科书，涵盖红石、游戏机制与引擎内部原理",
+      en: "Community-written open textbook on technical Minecraft: redstone, mechanics, chunk systems and engine internals",
+    },
   },
 ];
 
