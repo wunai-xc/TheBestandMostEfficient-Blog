@@ -58,7 +58,7 @@ export const SITE = {
     body: "仓库完全公开，欢迎 clone、参考与自定义修改（文章内容请注明出处）。发现问题或有想聊的，随时找我。",
     email: "3234319738@qq.com",
     github: "https://github.com/wunai-xc",
-    repo: "https://github.com/wunai-xc/TheBestandMostEfficient-Blog",
+    repo: "https://github.com/wunai-xc/wunai-blog",
     repoLabel: "本站仓库",
   },
   homeInfo: {

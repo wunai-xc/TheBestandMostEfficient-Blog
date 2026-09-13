@@ -10,7 +10,7 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 
-const REPO = "wunai-xc/TheBestandMostEfficient-Blog";
+const REPO = "wunai-xc/wunai-blog";
 const LIMIT = 5;
 const OUT = path.join(process.cwd(), "public", "changelog.json");
 

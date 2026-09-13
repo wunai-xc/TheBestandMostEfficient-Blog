@@ -286,7 +286,7 @@ contact: {
   body: "仓库完全公开，欢迎 clone、参考与自定义修改（文章内容请注明出处）。……",
   email: "3234319738@qq.com",
   github: "https://github.com/wunai-xc",
-  repo: "https://github.com/wunai-xc/TheBestandMostEfficient-Blog",
+  repo: "https://github.com/wunai-xc/wunai-blog",
   repoLabel: "本站仓库",
 },
 ```
@@ -385,11 +385,11 @@ export const SITE = {
 `my-app/wrangler.toml` 已声明输出目录：
 
 ```toml
-name = "thebestandmostefficient-blog"
+name = "wunai-blog"
 pages_build_output_dir = "out"
 ```
 
-**自动部署**：向 `main` 或 `master` 分支推送即触发 `.github/workflows/deploy.yml`——安装依赖（Node 20，启用 npm 缓存）→ `npm run build` → `wrangler pages deploy out --project-name=thebestandmostefficient-blog`。
+**自动部署**：向 `main` 或 `master` 分支推送即触发 `.github/workflows/deploy.yml`——安装依赖（Node 20，启用 npm 缓存）→ `npm run build` → `wrangler pages deploy out --project-name=wunai-blog`。
 
 需要在仓库 Settings → Secrets and variables → Actions 中配置两个 Secret：
 
@@ -403,7 +403,7 @@ pages_build_output_dir = "out"
 ```bash
 cd my-app
 npm run build
-npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
+npx wrangler pages deploy out --project-name=wunai-blog
 ```
 
 > 若同时启用了 Cloudflare Pages 的 Git 集成构建，每次推送会构建两次。两条管线请只保留一条：要么断开 Pages 的 Git 集成、只跑 GitHub Actions；要么在 Pages 的 Build configuration 里把**根目录**设为 `my-app`、构建命令设为 `npm run build`、输出目录设为 `out`（否则安装步骤会在仓库根目录找不到 `package.json`，构建报 `next: not found`）。
