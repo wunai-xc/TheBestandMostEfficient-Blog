@@ -15,7 +15,8 @@ export interface FriendLink {
  * 友链列表
  *
  * 头像与简介取自各位的 GitHub 主页（Github 头像用 avatars.githubusercontent.com 的
- * 直链并带 s=96，够 48px 卡片两倍图用，不浪费流量）。
+ * 直链并带 s=96，够 48px 卡片两倍图用，不浪费流量）；没有 GitHub 的则用对方站点自己的
+ * 头像图或 favicon（均已验证可访问）。
  * 若对方改了简介，按下面格式更新即可；`avatar` 也可以换成本地图：
  * 图片放进 `public/avatars/`，这里写 `/avatars/xxx.png`。
  */
@@ -53,6 +54,24 @@ export const FRIEND_LINKS: FriendLink[] = [
       zh: "立春天，风渐暖，伊人一去不复返",
       en: "立春天，风渐暖，伊人一去不复返",
     },
+  },
+  {
+    name: "subear",
+    url: "https://subear.net/",
+    // 该站首页未声明 favicon，这里用它自己的站内头像图（已验证可访问）
+    avatar: "https://subear.net/src/ProfilePhoto.jpg",
+    description: {
+      // 取自该站自己的副标题（brand-role），不是编造的描述
+      zh: "Seeing · Living · Sleeping",
+      en: "Seeing · Living · Sleeping",
+    },
+  },
+  {
+    name: "GTMC",
+    url: "https://www.techmc.wiki/",
+    // 该站 /favicon.ico 是有效图标文件（ICO 内嵌 PNG），已验证可访问
+    avatar: "https://www.techmc.wiki/favicon.ico",
+    // 未取到可靠的简介，留空时卡片副标题显示域名
   },
 ];
 

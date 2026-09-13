@@ -302,7 +302,7 @@ contact: {
 
 - `avatar` 留空时用名称首字生成占位方块，不会出现碎图
 - `description` 省略时卡片副标题回退显示域名（`friendHost()`），不会留一行空白
-- **头像可以直接用对方的站点头像**，例如 GitHub 头像直链 `https://avatars.githubusercontent.com/u/<id>?v=4&s=96`（`s=96` 对 48px 卡片刚好够两倍图）；也可以把图片放 `public/avatars/` 后用站内路径
+- **头像优先级**：优先用对方 GitHub 头像直链 `https://avatars.githubusercontent.com/u/<id>?v=4&s=96`（`s=96` 对 48px 卡片刚好够两倍图）；没有 GitHub 的则用其站点自己的头像图或 `/favicon.ico`（**加前先实测该 URL 确实返回图片**，否则会碎图）；最后才是 `public/avatars/` 下的本地图
 - 卡片图片用原生 `<img>` 而非 `next/image`：友链图片可能来自任意域名，`next/image` 需要预先声明 `remotePatterns` 且这里也不需要优化；同时带 `referrerPolicy="no-referrer"`，不向对方泄露本站地址
 - 友链页面顶部的介绍文案是 `SITE.i18n.<lang>.linksIntro`
 
