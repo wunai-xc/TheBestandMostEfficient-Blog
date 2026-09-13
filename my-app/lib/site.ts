@@ -34,6 +34,9 @@ export interface Post {
   description?: string;
   pinned: boolean;
   about: boolean;
+  /* 卡片右侧缩略图：优先 frontmatter 的 cover.image，否则取正文第一张图。
+     两者都没有则为 undefined，卡片不渲染图片。 */
+  thumbnail?: string;
   pinnedDescription?: string;
   hiddenInHomeList: boolean;
   showToc: boolean;

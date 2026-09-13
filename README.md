@@ -50,6 +50,7 @@
 - **站点标题差异混合**：正文以外的标题用白字 + `mix-blend-difference`，在两个主题下自动反色（详见[性能与可访问性](#性能与可访问性)）
 - 动态可互动背景（点网格 + 细连线：网格被光标 / 触点拨动后自行回弹，明暗主题自适应，详见[性能与可访问性](#性能与可访问性)）
 - 友链页：卡片列表（图片 / 名称 / 一句话介绍），数据在 `lib/links.ts`
+- 文章卡片右侧缩略图：优先 frontmatter 的 `cover.image`，没写封面则自动取正文第一张图；取不到就不渲染图片（见[性能与可访问性](#性能与可访问性)）
 - 页脚：欢迎语 + 邮箱 / GitHub / 本站仓库三个联系方式卡片（数据在 `SITE.contact`）
 - 首页：首屏只露一屏「关于」文章（底部渐隐 + 继续阅读）+ 最近 5 次更新 + 滚动到位渐入的展示位
 - 文章页单栏居中，无侧栏；文章目录 / 阅读进度 / 回到顶部以浮动导航形式提供
@@ -211,7 +212,7 @@ TOML 写法（`+++` 包裹，字段名相同，用 `=` 赋值）同样支持。
 | `draft` | bool | 草稿，不参与构建 |
 | `keywords` | string[] | 关键词，写入 JSON-LD |
 | `canonicalURL` | string | 规范链接 |
-| `cover` | object | 封面：`{ image, caption, hidden, relative }` |
+| `cover` | object | 封面：`{ image, caption, hidden, relative }`。`image` 会作为**卡片右侧缩略图**；`hidden: true` 则不展示 |
 | `references` | array | 参考文献：`[{ title, url, author, year }]`，自动渲染为文末「参考文献」区块 |
 
 排序规则：**非 AI 文章在前、AI 文章在后，各自按日期降序**。阅读时长按 `字数 / 400` 估算，字数统计为「汉字数 + 英文单词数」。
@@ -462,6 +463,11 @@ npx wrangler pages deploy out --project-name=wunai-blog
 - 阅读面自身不带变换：正文入场动画（`unfold-from-title`）作用在内层 `.article` 上，因此 `backdrop-filter` 所在的元素始终零变换，只有其子元素在跑 `transform/opacity` 动画，避免在长文上逐帧重采样背景模糊
 - **阅读面的毛玻璃只在 ≥1024px 启用**（`@media (min-width: 1024px)`）：`backdrop-filter` 会为元素整个高度分配一张模糊层，而正文可以长到上万像素，一张约 800×10000px 的层就吃掉 ≈31MB 显存 —— 手机上极易把合成器压垮，症状正是“文章页很长时间打不开”（只有文章页有 `.post-content`，所以只它慢）。阅读面本身不透明度已到 0.965，模糊的视觉贡献极小，关掉几乎看不出来。窄屏因此在 `@media (max-width: 1023px)` 里把暗色 `--reading-bg` 提到 0.88，避免没了模糊兜底后背底透字形
 - 阅读面的顶部光泽层 `.post-content::before` 高度**写死 220px**（原来 `inset: 0` + 渐变里 28% 的落点，在长文上会把高光拖到两三千像素，既不好看又多一整张满尺寸图层）
+- 文章卡片右侧缩略图的取图优先级：`cover.image` → 正文第一张图 → 不渲染。解析在**构建期**完成（`lib/content.ts` 的 `pickThumbnail()`，结果存在 `post.thumbnail`），不在客户端扫 DOM
+  - 路径规则与 `rehypeImages` 一致：绝对 URL / 站内绝对路径直接用，相对路径补成 `/<lang>/posts/<slug>/<src>`
+  - **提取前必须先剥掉围栏代码块与行内代码**：否则像《Markdown 基本语法》里那张语法表（`` `![alt](url "title")` ``）会把示例文本当成真图，卡片上就会出现一个坏图
+  - 缩略图可能是外链（正文本就允许贴外站图），对方可能禁外链；`<img onError>` 时隐藏整个缩略图，不留碎图占位
+  - 卡片用 `display: flex`，正文包在 `.post-card-body` 里（否则 h2/meta/summary 会各自成为 flex 子项被摆成一行）；`.post-card-body` 必须 `min-width: 0`，否则长标题会把缩略图挤出容器；无缩略图时用 `.post-card:not(.has-thumb)` 退回纵向排版
 - 卡片（`.post-card`）的亚克力放在 `::after` 伪元素上，而不是直接加到卡片：卡片有 JS 驱动的行内 `transform`（鼠标 3D 倾斜）与 `transform-style: preserve-3d`，而 `backdrop-filter` 属于分组属性，与变换同元素会强制扁平化，子元素的 `translateZ(10px)` 深度会失效；放进伪元素两者才能共存。卡片自身保持 `background: transparent`，否则 `backdrop-filter` 会把卡片自己的底当作背景来模糊，不透出背后网格
 - 上下篇导航（`.post-nav a`）没有 3D 子元素，亚克力直接加在 `<a>` 上；hover 的 SVG 液态滤镜作用在合成结果之上，与毛玻璃不冲突。浮动的移动端目录面板（`.toc-panel`）刻意保持不透明：它覆盖在正文之上，透出正文会难以辨读
 - 打印时卡片与阅读面的亚克力全部重置（`background: none`、取消 `backdrop-filter`、`position/z-index` 归零），避免 PDF 背景发灰或分页错乱

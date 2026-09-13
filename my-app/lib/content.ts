@@ -86,6 +86,45 @@ function isAI(author?: string): boolean {
   return !!author && author.toLowerCase() === "ai";
 }
 
+/* ===== 卡片缩略图 =====
+   优先 frontmatter 的 cover.image；没写封面则回退到正文第一张图，
+   这样已有文章不用逐个补封面就能看到效果。cover.hidden 为 true 时不展示。 */
+
+/** 与 lib/markdown.ts 的 rehypeImages 保持同一套路径规则：
+    绝对 URL / 站内绝对路径直接用，相对路径补成 /<lang>/posts/<slug>/<src> */
+function resolveAsset(lang: Lang, slug: string, src: string): string {
+  const s = src.trim();
+  if (/^(https?:)?\/\//i.test(s) || s.startsWith("/") || s.startsWith("data:")) return s;
+  return `/${lang}/posts/${slug}/${s}`;
+}
+
+/* 必须先去掉代码块与行内代码再找图片：
+   否则像 Markdown 语法演示文章里那张语法表（`![alt](url "title")`）
+   会把示例文本当成真图片，卡片上就会出现一个坏图。 */
+function firstImageInMarkdown(content: string): string | undefined {
+  const stripped = content
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/~~~[\s\S]*?~~~/g, "")
+    .replace(/`[^`\n]*`/g, "");
+  const md = stripped.match(/!\[[^\]]*\]\(\s*([^)\s]+)/);
+  if (md) return md[1];
+  const html = stripped.match(/<img[^>]*\ssrc=["']([^"']+)/i);
+  return html ? html[1] : undefined;
+}
+
+function pickThumbnail(
+  fm: PostFrontmatter,
+  content: string,
+  lang: Lang,
+  slug: string
+): string | undefined {
+  if (fm.cover?.hidden) return undefined;
+  const declared = fm.cover?.image;
+  if (declared) return resolveAsset(lang, slug, declared);
+  const fromBody = firstImageInMarkdown(content);
+  return fromBody ? resolveAsset(lang, slug, fromBody) : undefined;
+}
+
 function loadPostsForLang(lang: Lang): Post[] {
   const dir = path.join(CONTENT_ROOT, lang, "posts");
   if (!fs.existsSync(dir)) return [];
@@ -109,6 +148,7 @@ function loadPostsForLang(lang: Lang): Post[] {
       description: fm.description,
       pinned: !!fm.pinned,
       about: !!fm.about,
+      thumbnail: pickThumbnail(fm, content, lang, slug),
       pinnedDescription: fm.pinnedDescription,
       hiddenInHomeList: !!fm.hiddenInHomeList,
       showToc: fm.showToc !== false,

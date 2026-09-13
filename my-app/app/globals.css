@@ -685,11 +685,44 @@ html[data-font-scale="1.30"] { font-size: clamp(16.9px, 3.38vw, 20.8px); }
   transform-style: preserve-3d;
   backface-visibility: hidden;
   overflow: hidden;
+  /* 正文与右侧缩略图并排 */
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
   /* 常态不写 will-change：列表页一屏可能十几张卡片，
      每张都带 backdrop-filter 图层，若再常驻提升合成层，
      显存占用会成倍上涨（手机上直接表现为掉帧）。
      鼠标移上去、真正开始 3D 倾斜时再提升即可。 */
 }
+
+/* 正文部分：min-width:0 是必须的 —— flex 子项默认 min-width:auto，
+   长标题/长摘要会把右侧缩略图挤出去 */
+.post-card-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 右侧缩略图。宽度用 clamp 跟随屏幕，窄屏自动收小。 */
+.post-card-thumb {
+  flex: 0 0 auto;
+  width: clamp(84px, 20vw, 132px);
+  aspect-ratio: 16 / 11;
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+.post-card-thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.5s var(--ease-silk);
+}
+.post-card:hover .post-card-thumb img { transform: scale(1.06); }
+
+/* 没有缩略图的卡片回到原来的纵向排版 */
+.post-card:not(.has-thumb) { display: block; }
 
 .post-card:hover { will-change: transform; }
 
