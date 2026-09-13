@@ -1,4 +1,4 @@
-# The Best and Most Efficient Blog
+# WuNai Blog
 
 一个双语（中文 / English）、纯静态、Markdown 驱动的轻量级技术博客。基于 **Next.js 16 App Router** 构建，通过 `output: "export"` 导出为纯静态文件，部署在 **Cloudflare Pages**。
 
