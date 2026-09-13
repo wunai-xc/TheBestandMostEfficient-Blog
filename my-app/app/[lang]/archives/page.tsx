@@ -6,7 +6,7 @@ export default async function ArchivesPage({ params }: { params: Promise<{ lang:
   const years = Object.keys(byYear).sort((a, b) => b.localeCompare(a));
   return (
     <div className="container">
-      <h1 style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>{lang === "zh" ? "归档" : "Archives"}</h1>
+      <h1 className="page-title" style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>{lang === "zh" ? "归档" : "Archives"}</h1>
       {years.map((year) => (
         <div key={year}>
           <div className="archive-year">{year}</div>

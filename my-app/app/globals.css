@@ -93,6 +93,18 @@
   }
 }
 
+/* 设置页的“动画强度 = 关闭”：与 prefers-reduced-motion 同等效果。
+   两者分开写而不是合并选择器：@media 里的规则无法直接写 html[data-motion] 的前缀。 */
+html[data-motion="off"] *,
+html[data-motion="off"] *::before,
+html[data-motion="off"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 /* 页面进入后台（切 App / 切标签页）：暂停全站 CSS 动画。
    后台标签页仍然可能存在合成器侧的持续开销，而本站有若干无限循环动画
    （滑动图标上下浮动、进度圆点脉冲、加载图标旋转等）；
@@ -130,6 +142,8 @@ html[data-page-hidden] *::after {
      浅色下必须足够不透明（文字是深色），否则背底亮点会穿透字形；
      同时通过约 0.03 的出射透射保留材质感，噪点已被衰减到几乎不可见 */
   --reading-bg: rgba(255, 251, 251, 0.965);
+  /* 正文栏宽（设置页可切） */
+  --post-width: 800px;
   --reading-border: rgba(60, 20, 20, 0.07);
   --reading-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 28%);
@@ -143,7 +157,7 @@ html[data-page-hidden] *::after {
      术语：CSS 只能画有界的色块，画出来的必然是「线段」（有两个端点）；
      真正的「直线」（向两端无限延伸）与「射线」（一端无限）都无法表达。
      让线段读起来像直线的方法：端点淡出到与底色相同 —— 淡出暗示线还在继续。 */
-  --cn-color: #2563eb;  /* 交点处：亮色主题为蓝（暗色主题在 html.dark 里覆盖为暗红） */
+  --cn-color: var(--accent);  /* 交点色跟随配色方案（暗色主题在 html.dark 里单独覆盖） */
   --cn-end: #ffffff;    /* 向外渐变到的终点色（亮色为白 = 底色；暗色被覆盖为黑） */
   --cn-inset: 5px;      /* 框线距元素边框的距离 */
   --cn-arm: 3.5px;      /* 十字到交点的臂长（线段全长 = 2×）
@@ -214,6 +228,76 @@ html.dark {
   --card-acrylic-glow: inset 0 1px 0 rgba(255, 255, 255, 0);
   --card-acrylic-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0));
   --card-acrylic-blur: 16px;
+}
+
+/* ===== 配色方案（设置页可切） =====
+   data-palette 挂在 <html> 上，亮 / 暗各一套主色，只改 --accent。
+   正文色、底纹色都不动，所以任何配色都不会影响可读性；
+   链接、标签、按钮 hover、四角角标（--cn-color 跟随 --accent）会跟着变。
+   色值需与 lib/settings.ts 的 PALETTES.swatch 保持一致。 */
+html[data-palette="teal"] { --accent: #0d9488; }
+html.dark[data-palette="teal"] { --accent: #2dd4bf; }
+html[data-palette="violet"] { --accent: #7c3aed; }
+html.dark[data-palette="violet"] { --accent: #a78bfa; }
+html[data-palette="green"] { --accent: #16a34a; }
+html.dark[data-palette="green"] { --accent: #4ade80; }
+html[data-palette="orange"] { --accent: #ea580c; }
+html.dark[data-palette="orange"] { --accent: #fb923c; }
+html[data-palette="rose"] { --accent: #e11d48; }
+html.dark[data-palette="rose"] { --accent: #fb7185; }
+/* 自定义主色：由 JavaScript 写成行内变量（--accent-custom / --accent-custom-dark）。
+   两个变量存在时优先级高于上面任何预设，所以直接用 inline style 设置即可。 */
+html[data-palette="custom"] { --accent: var(--accent-custom, #2563eb); }
+html.dark[data-palette="custom"] { --accent: var(--accent-custom-dark, #60a5fa); }
+
+/* ===== 阅读宽度 ===== */
+html[data-width="narrow"] { --post-width: 680px; }
+html[data-width="wide"] { --post-width: 960px; }
+
+/* ===== 背景动效 ===== */
+html[data-bg="dim"] .bg-canvas { opacity: 0.35; }
+html[data-bg="off"] .bg-canvas { display: none; }
+
+/* ===== 亚克力材质开关 =====
+   关掉时不是逐条改选择器，而是把两组材质 token 换成“实色 + 零模糊”，
+   所有用到它们的元素（阅读面 / 卡片 / 上下篇 / 友链 / 页脚按钮）自动跟着变。
+   sheen 与 glow 要写成透明渐变而不是 none —— 它们在 CSS 里是逗号列表的一项。 */
+html[data-acrylic="off"] {
+  --reading-bg: var(--bg);
+  --reading-blur: 0px;
+  --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0));
+  --reading-inner-glow: inset 0 1px 0 rgba(0, 0, 0, 0);
+  --card-acrylic-bg: var(--card);
+  --card-acrylic-blur: 0px;
+  --card-acrylic-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0));
+  --card-acrylic-glow: inset 0 1px 0 rgba(0, 0, 0, 0);
+}
+/* blur(0) 仍然会建立毛玻璃层，所以还得把 backdrop-filter 整个关掉 */
+html[data-acrylic="off"] .post-content,
+html[data-acrylic="off"] .post-card::after,
+html[data-acrylic="off"] .post-nav a,
+html[data-acrylic="off"] .friend-card,
+html[data-acrylic="off"] .changelog-list,
+html[data-acrylic="off"] .footer-link,
+html[data-acrylic="off"] .settings-panel,
+html[data-acrylic="off"] .site-footer {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* 暗色的顶部光泽层本来就被隐藏，这里只处理浅色 */
+html[data-acrylic="off"] .post-content::before { display: none; }
+
+/* ===== 动画强度 =====
+   lite：只停“常驻的无限循环动画”与 hover 触发的旋转类（纯装饰），
+         入场与原过渡保留；
+   off：等同于 prefers-reduced-motion。
+   注意 hover 的液态脉冲（btn-liquid-pulse）只持续 0.6s 且需交互才触发，
+   所以 lite 下不动它。 */
+html[data-motion="lite"] .scroll-hint svg,
+html[data-motion="lite"] .progress-dot.active .progress-dot-core::after,
+html[data-motion="lite"] .back-to-top:hover .back-top-ring,
+html[data-motion="lite"] .icon-btn:hover svg {
+  animation: none !important;
 }
 
 @theme inline {
@@ -790,7 +874,8 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 .changelog-list::after,
 .post-content::after,
 .collection-card::after,
-.toc-panel::after {
+.toc-panel::after,
+.settings-panel::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -834,11 +919,149 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
    一是它们在页面上数量多，叠上去显得吵；
    二是 20px 高的标签塞不下 5px 内缩的框，本来就得单独调一套数值。 */
 
+/* ===== 站点级标题：白字 + 差异混合 =====
+   原理：difference 混合算的是 |背景 − 文字|。文字固定为纯白时：
+     浅色底 (255,251,251) → (0,4,4)      近纯黑
+     暗色底 (14,14,16)    → (241,241,239) 近纯白
+   所以一套取值就能在两个主题下自动反色，在任意彩色块上也自动保持对比。
+   若把文字写成 --fg（近黑）再混合，浅色底上会算出 rgb(232,228,228)，
+   与背景对比约 1.15:1 —— 基本看不见，方向是反的。
+
+   代价：混合会强制独立合成层，浏览器会关掉次像素抗锯齿，
+   文字改用灰度抗锯齿，浅色底上会略显发虚（这是技术固有成本）。
+
+   为什么逐个点名、而不是写 main :is(h1, h2)：
+   文章卡片里的 .post-card h2 也是 h2，而它的 <a> 自带 color: var(--fg)（近黑），
+   父级一旦建立混合组，里面的文字会被混成接近背景的颜色而看不见。
+
+   为什么 .changelog-head 故意不在名单里：
+   它在 ScrollReveal 内部，而 .reveal 在动画期间带 transform 与 opacity < 1，
+   这两者都会使它成为 backdrop root。backdrop root 内部的透明背底会让
+   difference 算出“原色”（也就是白），于是它会在动画中先以白色淡入、
+   动画结束后才突变成黑色。小写标签本就不需要这个效果，直接不参与。 */
+.post-header h1,
+.home-hero h1,
+.home-about-title,
+.page-title,
+.archive-year,
+.not-found h1 {
+  color: #fff;
+  mix-blend-mode: difference;
+}
+
+/* ===== 设置页 ===== */
+.settings-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 20px;
+}
+
+/* 每个分项一块面板，复用卡片的亚克力与直角风格，
+   也加进角标列表（.settings-panel 已在共享规则里）。 */
+.settings-panel {
+  position: relative;
+  padding: 16px 18px;
+  margin: 0 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--card-acrylic-sheen), var(--card-acrylic-bg);
+  box-shadow: var(--card-acrylic-glow);
+  backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+}
+.settings-panel > * {
+  position: relative;
+  z-index: 2; /* 压在角标层之上 */
+}
+.settings-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+/* 选项组：分段按钮，直角 */
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.settings-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+  transition: border-color 0.25s var(--ease-silk), background 0.25s var(--ease-silk);
+}
+.settings-opt:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.settings-opt[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.settings-opt .opt-check { opacity: 0; transition: opacity 0.2s var(--ease-silk); }
+.settings-opt[aria-pressed="true"] .opt-check { opacity: 1; }
+
+/* 配色色块 */
+.settings-swatches { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.settings-swatch {
+  width: 34px; height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+  background: none;
+  position: relative;
+}
+/* 色块内部再画一层，避免直接给按钮上色时选中态描边被盖住 */
+.settings-swatch > span {
+  position: absolute;
+  inset: 3px;
+  display: block;
+}
+.settings-swatch[aria-pressed="true"] { border-color: var(--fg); }
+.settings-swatch[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px solid var(--accent);
+}
+
+/* 取色器：跟色块同高，去掉原生控件感 */
+.settings-color {
+  width: 44px; height: 34px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  cursor: pointer;
+}
+.settings-color::-webkit-color-swatch-wrapper { padding: 2px; }
+.settings-color::-webkit-color-swatch { border: none; }
+
+.settings-reset {
+  margin-top: 6px;
+}
+
+@media (max-width: 480px) {
+  .settings-panel { padding: 14px; }
+  .settings-opt { padding: 6px 11px; font-size: 0.8rem; }
+}
+
 /* ===== 文章详情：单栏居中 ===== */
 /* 原先的「左栏全部文章 + 正文」两列（加上右侧浮动导航即三栏）已移除，
    现为单栏；最大宽度沿用侧栏存在的正文实测宽度，阅读尺度不变 */
 .post-layout {
-  max-width: 800px;
+  max-width: var(--post-width, 800px);
   margin: 0 auto;
   padding: 24px 16px;
 }
@@ -1694,6 +1917,17 @@ html.dark .katex-error { color: #fca5a5; }
   .scroll-hint,
   .print-controls, .print-header, .print-footer { display: none !important; }
 
+  /* 差异混合在 PDF 里可能被光栅化或失效，打印时恢复普通混合与黑字 */
+  .post-header h1,
+  .home-hero h1,
+  .home-about-title,
+  .page-title,
+  .archive-year,
+  .not-found h1 {
+    mix-blend-mode: normal !important;
+    color: #000 !important;
+  }
+
   /* 打印时不要裁切，「继续阅读」也没意义 */
   .home-about-body {
     max-height: none !important;
@@ -1726,7 +1960,8 @@ html.dark .katex-error { color: #fca5a5; }
   /* 装饰性角标不进 PDF，省墨 */
   .post-card::before,
   .post-nav a::after, .friend-card::after, .changelog-list::after,
-  .post-content::after, .collection-card::after, .toc-panel::after
+  .post-content::after, .collection-card::after, .toc-panel::after,
+  .settings-panel::after
     { display: none !important; }
   /* 列表页若被打印：去掉卡片的毛玻璃与半透底，避免发灰 */
   .post-card::after { display: none !important; }

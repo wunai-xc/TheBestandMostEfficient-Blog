@@ -44,6 +44,8 @@
 
 - 深色 / 浅色 / 跟随系统三态主题，`localStorage` 持久化且首屏无闪烁
 - 7 档正文字号调节
+- **设置页**（`/{lang}/settings/`）：配色方案（6 套预设 + 取色器自定义）、阅读宽度、背景动效、亚克力材质开关、动画强度，全部只存本机
+- **站点标题差异混合**：正文以外的标题用白字 + `mix-blend-difference`，在两个主题下自动反色（详见[性能与可访问性](#性能与可访问性)）
 - 动态可互动背景（点网格 + 细连线：网格被光标 / 触点拨动后自行回弹，明暗主题自适应，详见[性能与可访问性](#性能与可访问性)）
 - 友链页：卡片列表（图片 / 名称 / 一句话介绍），数据在 `lib/links.ts`
 - 页脚：欢迎语 + 邮箱 / GitHub / 本站仓库三个联系方式卡片（数据在 `SITE.contact`）
@@ -98,11 +100,13 @@
 │   │       ├── tags/、categories/  # 标签 / 分类索引与详情
 │   │       ├── archives/           # 按年份归档
 │   │       ├── links/              # 友链（卡片列表，数据在 lib/links.ts）
+│   │       ├── settings/           # 设置页（配色 / 宽度 / 背景 / 亚克力 / 动画）
 │   │       └── search/             # 站内搜索
 │   ├── components/
 │   │   ├── InteractiveBackground.tsx  # 点网格交互背景（Canvas）
 │   │   ├── PostBody.tsx            # 正文渲染 + 复制按钮 + 图表按需加载
 │   │   ├── ScrollReveal.tsx        # 滚动到位后渐入（IntersectionObserver）
+│   │   ├── SiteSettings.tsx        # 设置页客户端组件（读写 localStorage 并同步到 <html>）
 │   │   ├── Header.tsx / Footer.tsx / PostCard.tsx / PostNav.tsx
 │   │   ├── ThemeToggle.tsx / FontSizeControl.tsx / LangSwitcher.tsx
 │   │   ├── Comments.tsx / PrintControls.tsx / Search.tsx / RouteLoading.tsx
@@ -112,6 +116,7 @@
 │   ├── lib/
 │   │   ├── content.ts              # 文章读取、frontmatter 解析、排序、聚合
 │   │   ├── links.ts                # 友链数据（名称 / 地址 / 图片 / 介绍）
+│   │   ├── settings.ts             # 设置项定义、localStorage 键名、自定义主色的明度换算
 │   │   ├── markdown.ts             # unified 渲染管线、短代码、TOC 提取
 │   │   ├── site.ts                 # 站点配置与 i18n 文案（客户端安全）
 │   │   └── icons.ts                # Iconify 图标集合
@@ -287,6 +292,26 @@ contact: {
 - 三个按钮分别渲染为 `mailto:`、GitHub 主页、仓库地址（后两个新窗口打开）；显示文本会自动去掉 `https://` 前缀
 - 按钮文案（邮箱 / GitHub）与「感谢你的阅读 :D」在 `SITE.i18n.<lang>` 的 `email` / `github` / `thanks`
 
+### 站点设置页
+
+页面位于 `/{lang}/settings/`，顶栏的⚙按钮进入；组件是 `components/SiteSettings.tsx`，选项定义与键名在 `lib/settings.ts`。
+
+| 设置项 | 取值 | 作用点 |
+| --- | --- | --- |
+| 配色方案 | `blue` / `teal` / `violet` / `green` / `orange` / `rose` / `custom` | `html[data-palette]` → 改 `--accent`（链接、标签、按钮 hover、角标都跟随） |
+| 阅读宽度 | `narrow` / `normal` / `wide` | `html[data-width]` → `--post-width`（680 / 800 / 960px，仅文章页） |
+| 背景动效 | `full` / `dim` / `off` | `html[data-bg]`；`off` 时 canvas 隐藏**并停帧**（避免隐藏层空转） |
+| 亚克力材质 | `on` / `off` | `html[data-acrylic]`；`off` 时把两组材质 token 换成实色 + 零模糊，所有面板自动跟着变 |
+| 动画强度 | `full` / `lite` / `off` | `html[data-motion]`；`lite` 只停装饰性无限动画，`off` 等同 `prefers-reduced-motion` |
+
+三个实现要点：
+
+1. **不闪**：所有项都在 `app/layout.tsx` 的 `<head>` 内联脚本里预读并写到 `<html>`，与既有 `theme` / `fontscale` 同一套做法。
+2. **三个地方必须同步**：`lib/settings.ts` 的 `KEYS`（键名）、`layout.tsx` 的内联脚本、`SiteSettings.tsx` 的 `applyToDom`（属性名）。改一处要同时改另两处。
+3. **自定义主色的明度会收敛**：取色器取的颜色只在浅色主题下合适，直接用会在暗色主题里看不见（反之亦然）。所以 `deriveAccents()` 会算出浅/暗两个变体：浅色主题明度上限 62%、暗色主题夹在 62%~78%，并把**换算后的结果**回显到色块上 —— 所见即所得，不会出现“我选的与实际显示不一致”。
+
+> 预设配色的色值定义在 `globals.css` 的 `html[data-palette=…]` 块里，而预览色块的颜色在 `lib/settings.ts` 的 `PALETTES[].swatch`，**两处要一起改**。
+
 ### 友链
 
 友链数据在 **`my-app/lib/links.ts`** 的 `FRIEND_LINKS` 数组里，页面位于 `/{lang}/links/`，菜单入口在 `SITE.menu`：
@@ -438,6 +463,12 @@ npx wrangler pages deploy out --project-name=thebestandmostefficient-blog
 - 打印时卡片与阅读面的亚克力全部重置（`background: none`、取消 `backdrop-filter`、`position/z-index` 归零），避免 PDF 背景发灰或分页错乱
 - 角标用**一个伪元素叠 8 层 `background`**（4 条框边 + 4 条十字臂）画完，不增加 DOM。关键在于**没有任何恒定色段**：十字臂用 `--cn-h / --cn-v`（终点色→交点色→终点色，交点处满色），框边用 `--cn-e-tl-r / --cn-e-tl-d / --cn-e-br-l / --cn-e-br-u`（四条边各从所在交点角**单向**渐变到终点色），因此全图只有左上、右下两个交点最深。若框边写成“两端淡出、中间固定色”，边线中段会一直满色，就不是“只有交点最深”。颜色分主题：`--cn-color` 亮色 `#2563eb` 蓝 / 暗色 `#7f1d1d` 暗红，`--cn-end` 亮色 `#ffffff` 白 / 暗色 `#000000` 黑（终点接近底色，两个主题都是淡出效果）。`--cn-solid` 备用。**不能用 `border` 代替背景层**：伪元素必须保持 `inset: 0`，否则 `background-clip: border-box` 会裁掉十字伸出框外的部分。定位用 calc + 百分比镜像（`--cn-span = 100% - inset × 2`，下/右再减一个线宽）；内缩 5px、臂长 3.5px（臂长需比内缩短，否则臂尖会顶到元素自己的边框）。该层必须 `z-index: 1`：亚克力/光泽伪元素是 `z-index: 0` 且晚于 `::before` 绘制，不提升会被半透底盖淡；内容也是 `z-index: 1` 但晚于伪元素，文字仍在角标之上。打印时隐藏
 - **亮色主题带极淡暖红调**：`--bg` `#fffbfb`、`--card` `#fbf5f5`、`--border` `#e7dede`、`--muted` `#797070`，阅读面与卡片玻璃色也同步偏暖（`rgba(255,251,251,…)`）。只到“成片底色才能看出”的程度，文字色（`--fg`）不动以免影响可读性。暗色主题不变
+- **站点标题用差异混合（`mix-blend-difference`）**：正文以外的标题（`.post-header h1` / `.home-hero h1` / `.home-about-title` / `.page-title` / `.archive-year` / `.not-found h1`）写白字 + 差异混合，靠 `|背景 − 文字|` 自动反色：浅色底得到近黑、暗色底得到近白、彩色块上自动保持对比。要点：
+  - **文字必须是纯白**。写成 `--fg`（近黑）再混合会在白底上算出 `rgb(232,228,228)`，对比度约 1.15:1，基本看不见 —— 方向是反的。
+  - **逐个点名，不用 `main :is(h1,h2)`**：列表页的文章卡片 `.post-card h2` 也是 h2，而它的 `<a>` 自带 `color: var(--fg)`，父级一旦建立混合组，里面的字会被混成近背景色而消失。
+  - **`changelog-head` 故意不参与**：它在 `ScrollReveal` 里，而 `.reveal` 动画期间带 `transform` 与 `opacity < 1`，这两者都会让它成为 backdrop root；backdrop root 内部的透明背底会让 difference 算出原色（白），于是它会先以白色淡入、动画结束才突变成黑。
+  - **代价**：混合强制独立合成层，浏览器会关掉次像素抗锯齿，文字改用灰度抗锯齿，浅色底上略显发虚。这是技术固有成本，不能优化。
+  - 打印时恢复 `mix-blend-mode: normal` + 黑字（差异混合在 PDF 里可能被光栅化或失效）。
 - 暗色下 `post-content::before`（顶部光泽层）直接 `display: none`：它在暗色已是全透明，留着只是白白的合成层
 - 主题在 `<head>` 中用一个内联脚本完成引导，避免深色模式闪烁（FOUC）
 - 评论区、Mermaid / ECharts / Graphviz / abc.js / SmilesDrawer 全部懒加载，仅在进入视口或正文实际用到时才请求

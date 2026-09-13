@@ -31,17 +31,40 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh" suppressHydrationWarning>
       <head>
-        {/* 主题/字号 初始化（避免闪烁） */}
+        {/* 主题 / 字号 / 设置 初始化（避免闪烁）
+            localStorage 键名与属性名必须与 lib/settings.ts 的 KEYS 及
+            components/SiteSettings.tsx 的 applyToDom 保持一致。 */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
 (function(){
+  var el = document.documentElement;
   try {
     var t = localStorage.getItem('theme') || 'auto';
     var dark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if (dark) document.documentElement.classList.add('dark');
+    if (dark) el.classList.add('dark');
     var fs = localStorage.getItem('fontscale');
-    if (fs) document.documentElement.setAttribute('data-font-scale', fs);
+    if (fs) el.setAttribute('data-font-scale', fs);
+
+    // 设置页的可选项。任何一项缺失就不写属性，让 CSS 走默认值。
+    var pal = localStorage.getItem('palette');
+    if (pal) el.setAttribute('data-palette', pal);
+    var w = localStorage.getItem('readwidth');
+    if (w) el.setAttribute('data-width', w);
+    var b = localStorage.getItem('bgmode');
+    if (b) el.setAttribute('data-bg', b);
+    var a = localStorage.getItem('acrylic');
+    if (a) el.setAttribute('data-acrylic', a);
+    var m = localStorage.getItem('motion');
+    if (m) el.setAttribute('data-motion', m);
+
+    // 自定义主色：两个变体在设置页保存时已算好，这里直接写行内变量
+    if (pal === 'custom') {
+      var cl = localStorage.getItem('accentL');
+      var cd = localStorage.getItem('accentD');
+      if (cl) el.style.setProperty('--accent-custom', cl);
+      if (cd) el.style.setProperty('--accent-custom-dark', cd);
+    }
   } catch(e){}
 })();
 `,

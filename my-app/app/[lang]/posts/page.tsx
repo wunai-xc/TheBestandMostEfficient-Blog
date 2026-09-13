@@ -8,7 +8,7 @@ export default async function PostsPage({ params }: { params: Promise<{ lang: st
   const posts = getPosts(lang);
   return (
     <div className="container">
-      <h1 style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>{lang === "zh" ? "文章" : "Posts"}</h1>
+      <h1 className="page-title" style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>{lang === "zh" ? "文章" : "Posts"}</h1>
       {posts.map((p) => (
         <PostCard key={p.slug} post={p} lang={lang} />
       ))}

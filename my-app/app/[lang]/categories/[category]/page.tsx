@@ -12,7 +12,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ lang:
   const posts = getPostsByCategory(lang, category);
   return (
     <div className="container">
-      <h1 style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>
+      <h1 className="page-title" style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>
         {category} <span style={{ fontSize: "0.85rem", color: "var(--muted)" }}>({posts.length})</span>
       </h1>
       {posts.map((p) => (

@@ -16,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entries.push({ url: `${base}/${lang}/categories/` });
     entries.push({ url: `${base}/${lang}/archives/` });
     entries.push({ url: `${base}/${lang}/links/` });
+    entries.push({ url: `${base}/${lang}/settings/` });
     for (const p of getPosts(lang)) {
       entries.push({
         url: `${base}/${lang}/posts/${encodeURIComponent(p.slug)}/`,

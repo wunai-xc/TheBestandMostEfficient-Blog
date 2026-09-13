@@ -5,7 +5,7 @@ export default async function CategoriesPage({ params }: { params: Promise<{ lan
   const cats = getAllCategories(lang);
   return (
     <div className="container">
-      <h1 style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>{lang === "zh" ? "分类" : "Categories"}</h1>
+      <h1 className="page-title" style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>{lang === "zh" ? "分类" : "Categories"}</h1>
       <div className="term-cloud">
         {cats.map((c) => (
           <a key={c} href={`/${lang}/categories/${encodeURIComponent(c)}/`} className="term-item">

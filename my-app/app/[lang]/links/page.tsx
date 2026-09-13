@@ -8,7 +8,7 @@ export default async function LinksPage({ params }: { params: Promise<{ lang: st
 
   return (
     <div className="container">
-      <h1 style={{ fontSize: "1.6rem", margin: "24px 0 12px" }}>{t.links}</h1>
+      <h1 className="page-title" style={{ fontSize: "1.6rem", margin: "24px 0 12px" }}>{t.links}</h1>
       <p className="links-intro">{t.linksIntro}</p>
 
       <div className="friend-grid">

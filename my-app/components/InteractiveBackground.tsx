@@ -344,8 +344,14 @@ export default function InteractiveBackground() {
 
     /* ---------- 循环控制（后台/减弱动画时彻底停帧，省电） ---------- */
 
+    /* 设置页把背景动效设为关闭时（data-bg="off"），本层由 CSS 隐藏，
+       这里同时把循环停掉 —— 不然一个 display:none 的 canvas 还会按 60fps 空转 */
+    function isBgOff(): boolean {
+      return document.documentElement.getAttribute("data-bg") === "off";
+    }
+
     function start() {
-      if (running || (motionQuery && motionQuery.matches)) return;
+      if (isBgOff() || running || (motionQuery && motionQuery.matches)) return;
       running = true;
       idle = false;
       lastTs = 0;
@@ -388,13 +394,15 @@ export default function InteractiveBackground() {
       if (!document.hidden) start();
     }
 
-    function onMotionChange() {
-      if (motionQuery && motionQuery.matches) {
+    /* <html> 上的 class（明暗主题）或 data-bg（设置页的背景动效）变化时重算 */
+    function onHtmlAttrChange() {
+      readTheme();
+      if (isBgOff()) {
         stop();
-        render();
-      } else {
-        start();
+        return;
       }
+      if (!running) start();
+      else render();
     }
 
     function onPointerMove(e: PointerEvent) {
@@ -443,6 +451,16 @@ export default function InteractiveBackground() {
       wake();
     }
 
+    /* 「减弱动画」偏好变化：停/起循环，并重画一帧让静态图跟上 */
+    function onMotionChange() {
+      if (motionQuery && motionQuery.matches) {
+        stop();
+        render();
+      } else {
+        start();
+      }
+    }
+
     function onThemeChange() {
       readTheme();
       if (!running) render();
@@ -470,7 +488,17 @@ export default function InteractiveBackground() {
     document.documentElement.addEventListener("pointerleave", onPointerLeave);
 
     const themeObserver = new MutationObserver(onThemeChange);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-palette"],
+    });
+
+    // 背景动效的开关是另一个属性，单独盯
+    const bgObserver = new MutationObserver(onHtmlAttrChange);
+    bgObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-bg"],
+    });
 
     if (motionQuery) {
       // 旧版 Safari 只有已废弃的 addListener/removeListener，做个兼容分支
@@ -491,6 +519,7 @@ export default function InteractiveBackground() {
       stop();
       if (resizeRaf) cancelAnimationFrame(resizeRaf);
       themeObserver.disconnect();
+      bgObserver.disconnect();
       if (motionQuery) {
         const legacy = motionQuery as MediaQueryList & {
           removeListener?: (cb: (e: MediaQueryListEvent) => void) => void;

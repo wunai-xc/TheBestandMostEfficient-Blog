@@ -12,7 +12,7 @@ export default async function TagPage({ params }: { params: Promise<{ lang: stri
   const posts = getPostsByTag(lang, tag);
   return (
     <div className="container">
-      <h1 style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>
+      <h1 className="page-title" style={{ fontSize: "1.6rem", margin: "24px 0 16px" }}>
         #{tag} <span style={{ fontSize: "0.85rem", color: "var(--muted)" }}>({posts.length})</span>
       </h1>
       {posts.map((p) => (
