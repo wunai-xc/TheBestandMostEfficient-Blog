@@ -923,30 +923,42 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
    原理：difference 混合算的是 |背景 − 文字|。文字固定为纯白时：
      浅色底 (255,251,251) → (0,4,4)      近纯黑
      暗色底 (14,14,16)    → (241,241,239) 近纯白
-   所以一套取值就能在两个主题下自动反色，在任意彩色块上也自动保持对比。
+   所以一套取值就能在两个主题下自动反色，在彩色块上也自动保持对比。
    若把文字写成 --fg（近黑）再混合，浅色底上会算出 rgb(232,228,228)，
    与背景对比约 1.15:1 —— 基本看不见，方向是反的。
 
    代价：混合会强制独立合成层，浏览器会关掉次像素抗锯齿，
-   文字改用灰度抗锯齿，浅色底上会略显发虚（这是技术固有成本）。
+   文字改用灰度抗锯齿，浅色底上会略显发虚。这是技术固有成本。
 
-   为什么逐个点名、而不是写 main :is(h1, h2)：
-   文章卡片里的 .post-card h2 也是 h2，而它的 <a> 自带 color: var(--fg)（近黑），
-   父级一旦建立混合组，里面的文字会被混成接近背景的颜色而看不见。
+   四条入选门槛（不满足的宁可不加）：
 
-   为什么 .changelog-head 故意不在名单里：
-   它在 ScrollReveal 内部，而 .reveal 在动画期间带 transform 与 opacity < 1，
-   这两者都会使它成为 backdrop root。backdrop root 内部的透明背底会让
-   difference 算出“原色”（也就是白），于是它会在动画中先以白色淡入、
-   动画结束后才突变成黑色。小写标签本就不需要这个效果，直接不参与。 */
-.post-header h1,
-.home-hero h1,
-.home-about-title,
-.page-title,
-.archive-year,
-.not-found h1 {
-  color: #fff;
-  mix-blend-mode: difference;
+   1. 文字必须是纯白。见上。
+
+   2. 不能有 backdrop-filter / filter / transform / opacity<1 / mask 的祖先。
+      这类属性会把祖先变成 backdrop root，而 backdrop root 内部的“背底”
+      退化为透明，difference 于是算出原色（白）—— 白字在白底上直接消失。
+      正文标题 .post-header h1 就是因为祖先是带 backdrop-filter 的 .post-content
+      而被排除的（该选择器旁有重复说明，防止日后再加回去）。
+
+   3. 动画容器内的标题不要加。ScrollReveal 的 .reveal 在动画期间带
+      transform 与 opacity<1，同样是 backdrop root；标题会先以白色淡入、
+      动画结束才突变成黑。.changelog-head 就是因此不参与。
+
+   4. 逐个点名，不用 main :is(h1, h2)。列表页的 .post-card h2 也是 h2，
+      而它的 <a> 自带 color: var(--fg)（近黑）；父级一旦建立混合组，
+      里面的字会被混成接近背景的颜色而消失。
+
+   外面包 @supports：万一浏览器不支持 mix-blend-mode，
+   那 color: #fff 就会变成“白字白底”，比不生效更糟。*/
+@supports (mix-blend-mode: difference) {
+  .home-hero h1,
+  .home-about-title,
+  .page-title,
+  .archive-year,
+  .not-found h1 {
+    color: #fff;
+    mix-blend-mode: difference;
+  }
 }
 
 /* ===== 设置页 ===== */
@@ -1137,6 +1149,11 @@ html.dark .post-content::before { display: none; }
 }
 
 .post-header { margin-bottom: 24px; }
+/* 文章标题**不参与**差异混合（它继承 --fg）。
+   原因：祖先是带 backdrop-filter 的 .post-content，而 backdrop-filter 会把
+   它变成 backdrop root，backdrop root 内部的“背底”退化为透明，
+   difference 于是算出原色 —— 白字在白板上彻底消失（亮色模式下复现）。
+   详见上面「站点级标题」注释里的入选门槛第 2 条。 */
 .post-header h1 { font-size: clamp(1.4rem, 4vw, 1.8rem); margin: 0 0 12px; line-height: 1.3; word-break: break-word; }
 .post-meta {
   font-size: 0.85rem; color: var(--muted);
@@ -1917,8 +1934,8 @@ html.dark .katex-error { color: #fca5a5; }
   .scroll-hint,
   .print-controls, .print-header, .print-footer { display: none !important; }
 
-  /* 差异混合在 PDF 里可能被光栅化或失效，打印时恢复普通混合与黑字 */
-  .post-header h1,
+  /* 差异混合在 PDF 里可能被光栅化或失效，打印时恢复普通混合与黑字。
+     名单与上面的 @supports 块保持一致。 */
   .home-hero h1,
   .home-about-title,
   .page-title,
