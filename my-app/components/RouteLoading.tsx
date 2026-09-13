@@ -44,6 +44,10 @@ const COMPLETE_DURATION = 0.15;     // 进度条 95→100% 快速完成
 const FLASH_DURATION = 0.35;       // 闪光扫过时长
 const FADE_DURATION = 0.4;          // 透明淡出时长
 const EXIT_DURATION = 0.4;         // 向右淡出时长
+/* 看门狗：点击后若 pathname 始终没变（客户端导航失败或未完成），
+   强制收尾遮罩。这个遮罩的退出条件只有“pathname 变化”，
+   一旦导航失败就会无期限卡在那里 —— 必须有超时兜底。 */
+const NAV_TIMEOUT_MS = 4000;
 
 // 响应式尺寸：基于屏幕尺寸的百分比 + 最小/最大值边界
 // 弹窗宽度 = 屏幕宽的 8%，范围 [80, 160]px
@@ -113,6 +117,7 @@ export default function RouteLoading() {
   const pendingRef = useRef<string | null>(null);
   const mountedRef = useRef(false);
   const autoExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const watchdogTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const rafRef = useRef<number | null>(null);
 
@@ -192,6 +197,17 @@ export default function RouteLoading() {
         autoExitTimer.current = null;
       }
       startLoading();
+
+      // 看门狗：pathname 若在 NAV_TIMEOUT_MS 内没变，就说明客户端导航没成功，
+      // 主动收尾。这个遮罩的退出条件只有“pathname 变化”，没有兜底就会被永久卡住。
+      if (watchdogTimer.current) clearTimeout(watchdogTimer.current);
+      watchdogTimer.current = setTimeout(() => {
+        watchdogTimer.current = null;
+        if (pendingRef.current) {
+          pendingRef.current = null;
+          stopLoading();
+        }
+      }, NAV_TIMEOUT_MS);
     }
 
     function onTriggerClick(e: MouseEvent) {
@@ -209,6 +225,7 @@ export default function RouteLoading() {
       document.removeEventListener("click", onClick, true);
       document.removeEventListener("click", onTriggerClick);
       if (autoExitTimer.current) clearTimeout(autoExitTimer.current);
+      if (watchdogTimer.current) clearTimeout(watchdogTimer.current);
     };
   }, [pathname, startLoading, stopLoading]);
 
@@ -217,6 +234,10 @@ export default function RouteLoading() {
     if (!mountedRef.current) {
       mountedRef.current = true;
       return;
+    }
+    if (watchdogTimer.current) {
+      clearTimeout(watchdogTimer.current);
+      watchdogTimer.current = null;
     }
     if (!pendingRef.current) return;
     pendingRef.current = null;
