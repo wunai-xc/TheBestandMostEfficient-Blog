@@ -105,16 +105,19 @@ html[data-page-hidden] *::after {
 }
 
 /* ===== 主题变量（PaperMod 风格） ===== */
+/* 亮色主题整体带一点极淡的暖红调（约 1–2% 红偏），
+   只在成片的底色/面板上看得出，单看某个元素几乎察觉不到。
+   文字颜色不动，避免发红影响可读性。 */
 :root {
-  --bg: #ffffff;
+  --bg: #fffbfb;
   --fg: #171717;
   --primary: #0a0a0a;
-  --border: #e5e5e5;
-  --muted: #737373;
+  --border: #e7dede;
+  --muted: #797070;
   --code-bg: #272822;
   --accent: #2563eb;
   --ai-color: #2563eb;
-  --card: #fafafa;
+  --card: #fbf5f5;
   --mark-bg: #fef08a;
   /* 3D 卡片阴影参数 */
   --card-shadow-1: 0 1px 2px rgba(0,0,0,0.04);
@@ -126,42 +129,44 @@ html[data-page-hidden] *::after {
   /* 亚克力阅读面：半透底 + 毛玻璃，背后的网格保持"隔着材质"的若隐若现
      浅色下必须足够不透明（文字是深色），否则背底亮点会穿透字形；
      同时通过约 0.03 的出射透射保留材质感，噪点已被衰减到几乎不可见 */
-  --reading-bg: rgba(255, 255, 255, 0.965);
-  --reading-border: rgba(0, 0, 0, 0.07);
+  --reading-bg: rgba(255, 251, 251, 0.965);
+  --reading-border: rgba(60, 20, 20, 0.07);
   --reading-inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 28%);
   --reading-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.09), 0 32px 64px rgba(0,0,0,0.05);
   --reading-blur: 14px;
   /* ===== 角标：内缩矩形框 + 对角两枚十字 =====
-     暗红色线条。整张图上只有两个交点（左上、右下）颜色最深，
-     所有线条从交点出发向外连续变淡。
+     蓝色线条。整张图上只有两个交点（左上、右下）是纯蓝，
+     所有线条从交点出发向外渐变到白；浅色下白即背景色，
+     所以读起来就是“从交点淡出”。
 
      术语：CSS 只能画有界的色块，画出来的必然是「线段」（有两个端点）；
      真正的「直线」（向两端无限延伸）与「射线」（一端无限）都无法表达。
-     让线段读起来像直线的方法：端点淡出到透明 —— 淡出暗示线还在继续。 */
-  --cn-color: #7f1d1d;  /* 暗红：白底上清晰且不刺眼 */
+     让线段读起来像直线的方法：端点淡出到与底色相同 —— 淡出暗示线还在继续。 */
+  --cn-color: #2563eb;  /* 交点处：蓝 */
+  --cn-end: #ffffff;    /* 向外渐变到的白（浅色下白 = 背景色，所以读起来就是淡出） */
   --cn-inset: 5px;      /* 框线距元素边框的距离 */
   --cn-arm: 3.5px;      /* 十字到交点的臂长（线段全长 = 2×）
                            随 --cn-inset 调小：框离边框只有 5px 了，
                            臂再长 4.5px 就会顶到元素自己的边框上 */
   --cn-w: 1px;          /* 线宽（发丝级） */
-  /* 十字的臂：以交点为最浓，向两端淡出 */
-  --cn-h: linear-gradient(90deg, transparent, var(--cn-color), transparent);
-  --cn-v: linear-gradient(180deg, transparent, var(--cn-color), transparent);
-  /* 框的四条边：从有十字的那个角（交点）出发向外连续变淡，
-     全程没有恒定色段 —— 所以整张图上只有两个交点颜色最深。
-     左上角的两条边：向右 / 向下淡出；右下角的两条边：向左 / 向上淡出 */
-  --cn-e-tl-r: linear-gradient(90deg, var(--cn-color), transparent);
-  --cn-e-tl-d: linear-gradient(180deg, var(--cn-color), transparent);
-  --cn-e-br-l: linear-gradient(270deg, var(--cn-color), transparent);
-  --cn-e-br-u: linear-gradient(0deg, var(--cn-color), transparent);
+  /* 十字的臂：中段为蓝（交点），向两端淡到白 */
+  --cn-h: linear-gradient(90deg, var(--cn-end), var(--cn-color), var(--cn-end));
+  --cn-v: linear-gradient(180deg, var(--cn-end), var(--cn-color), var(--cn-end));
+  /* 框的四条边：从有十字的那个角（交点）出发向外渐变到白，
+     全程没有恒定色段 —— 所以整张图上只有两个交点最深。
+     左上角的两条边：向右 / 向下；右下角的两条边：向左 / 向上 */
+  --cn-e-tl-r: linear-gradient(90deg, var(--cn-color), var(--cn-end));
+  --cn-e-tl-d: linear-gradient(180deg, var(--cn-color), var(--cn-end));
+  --cn-e-br-l: linear-gradient(270deg, var(--cn-color), var(--cn-end));
+  --cn-e-br-u: linear-gradient(0deg, var(--cn-color), var(--cn-end));
   /* 若要某处不带渐变的实线（真线段），用它 */
   --cn-solid: linear-gradient(var(--cn-color), var(--cn-color));
   /* 框内可用长度（两边各内缩后剩下的部分），供背景层计算 */
   --cn-span: calc(100% - var(--cn-inset) * 2);
   /* 卡片亚克力：与阅读面同材质、但面积小得多，可以做得更透，
      让背后的网格若隐若现；模糊半径也相应调小以控制开销 */
-  --card-acrylic-bg: rgba(255, 255, 255, 0.82);
+  --card-acrylic-bg: rgba(255, 251, 251, 0.82);
   --card-acrylic-glow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --card-acrylic-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 30%);
   --card-acrylic-blur: 10px;
@@ -187,8 +192,9 @@ html.dark {
   --card-shadow-hover-1: 0 2px 6px rgba(0,0,0,0.4);
   --card-shadow-hover-2: 0 8px 24px rgba(0,0,0,0.5);
   --card-shadow-hover-3: 0 20px 48px rgba(0,0,0,0.6);
-  /* 角标：暗色下用略亮一档的红，真正的暗红在深底上几乎看不见 */
-  --cn-color: #a63a34;
+  /* 角标：暗色下也用蓝 → 白（按要求两主题一致） */
+  --cn-color: #3b82f6;
+  --cn-end: #ffffff;
   /* ===== 暗色：只保留毛玻璃，不要任何白色渐变 =====
      两个原因：
      1. 白高光/白渐变在深底上显得脏，像蒙了一层灰；
@@ -683,7 +689,6 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 /* ===== 分页 ===== */
 .pagination { display: flex; justify-content: space-between; padding: 24px 0; }
 .pagination a, .pagination span {
-  position: relative;
   padding: 8px 16px; border: 1px solid var(--border); border-radius: 0;
   color: var(--fg);
 }
@@ -759,20 +764,22 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 
 /* ===== 角标：内缩矩形框 + 对角两枚十字 =====
    四条边连成一个内缩的矩形框；只在左上、右下两角额外画十字。
-   整张图上只有这两个交点颜色最深，所有线条从交点出发向外连续变淡。
+   整张图上只有这两个交点是纯蓝，所有线条从交点出发向外渐变到白。
 
    实现要点：
    - 一个伪元素叠 **8 层 background** 画完（4 条框边 + 4 条十字臂），
      不增加任何 DOM。
    - **没有恒定色段**：4 条框边各自是从交点角出发的单向渐变
-     （`--cn-e-tl-*` / `--cn-e-br-*`），4 条十字臂是以交点为最浓的
+     （`--cn-e-tl-*` / `--cn-e-br-*`），4 条十字臂是以交点为纯蓝的
      对称渐变（`--cn-h` / `--cn-v`）。若框边写成“两端淡出、中间固定色”，
      边线中段会一直是满色，就不是“只有交点最深”了。
    - 背景层不能用 `border` 代替：伪元素必须保持 `inset: 0`，
      否则 `background-clip: border-box` 会裁掉十字伸出框外的部分。
    - 框边长度用 `--cn-span`（`100% - inset × 2`）；下、右两条定位再减一个
      线宽；右侧/下侧用 `calc(100% - …)` 镜像，元素尺寸怎么变都适配。
-   - 暗色下 --cn-color 换成略亮一档的红（真正的暗红在深底上看不见）。
+   - 蓝→白两个主题一致（浅色下白即底色，看起来就是淡出；
+     暗色下白会真的亮出来，这是按要求保留的效果）。
+   - 小元件（分页/标签/徽标/按钮）不加角标。
 
    伪元素分配：.post-card 的 ::after 已被亚克力层占用，所以它用 ::before；
    其余均用 ::after。 */
@@ -782,11 +789,7 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 .changelog-list::after,
 .post-content::after,
 .collection-card::after,
-.toc-panel::after,
-.pagination a::after, .pagination span::after,
-.term-item::after, .footer-link::after,
-.print-btn::after, .tag::after,
-.author-badge::after, .back-to-top::after, .toc-fab::after {
+.toc-panel::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -826,14 +829,9 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
       calc(100% - var(--cn-inset) - var(--cn-arm));
 }
 
-/* 小尺寸元素：按钮、标签、徽标。内缩与臂长都要收，
-   否则 5px 的内缩在 20px 高的标签上会把框挤到中间去 */
-.pagination a, .pagination span,
-.term-item, .footer-link, .print-btn,
-.tag, .author-badge, .back-to-top, .toc-fab {
-  --cn-inset: 4px;
-  --cn-arm: 2px;
-}
+/* 小尺寸元素（分页、标签、徽标、按钮、回到顶部、目录浮钮）不加角标：
+   一是它们在页面上数量多，叠上去显得吵；
+   二是 20px 高的标签塞不下 5px 内缩的框，本来就得单独调一套数值。 */
 
 /* ===== 文章详情：单栏居中 ===== */
 /* 原先的「左栏全部文章 + 正文」两列（加上右侧浮动导航即三栏）已移除，
@@ -939,7 +937,6 @@ html.dark .post-content::before { display: none; }
 .post-tags::-webkit-scrollbar { display: none; }
 .post-tags .tag { flex-shrink: 0; }
 .tag {
-  position: relative;
   display: inline-block; padding: 2px 10px; border-radius: 0;
   background: var(--card); border: 1px solid var(--border);
   font-size: 0.78rem; color: var(--fg);
@@ -948,7 +945,6 @@ html.dark .post-content::before { display: none; }
 
 /* 作者徽章 */
 .author-badge {
-  position: relative;
   display: inline-block; padding: 4px 12px; border-radius: 0;
   font-size: 0.78rem; font-weight: 500;
 }
@@ -1476,7 +1472,7 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
 
 /* ===== 标签/分类云 ===== */
 .term-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
-.term-item { position: relative; padding: 6px 14px; border: 1px solid var(--border); border-radius: 0; color: var(--fg); }
+.term-item { padding: 6px 14px; border: 1px solid var(--border); border-radius: 0; color: var(--fg); }
 .term-item:hover { background: var(--card); text-decoration: none; }
 
 /* ===== Giscus ===== */
@@ -1520,7 +1516,6 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
   margin-bottom: 24px;
 }
 .footer-link {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1667,7 +1662,6 @@ html.dark .katex-error { color: #fca5a5; }
   display: inline-flex; gap: 6px; flex-shrink: 0;
 }
 .print-btn {
-  position: relative;
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 10px;
   font-size: 0.78rem;
@@ -1731,11 +1725,8 @@ html.dark .katex-error { color: #fca5a5; }
   /* 装饰性角标不进 PDF，省墨 */
   .post-card::before,
   .post-nav a::after, .friend-card::after, .changelog-list::after,
-  .post-content::after, .collection-card::after, .toc-panel::after,
-  .pagination a::after, .pagination span::after,
-  .term-item::after, .footer-link::after, .print-btn::after,
-  .tag::after, .author-badge::after,
-  .back-to-top::after, .toc-fab::after { display: none !important; }
+  .post-content::after, .collection-card::after, .toc-panel::after
+    { display: none !important; }
   /* 列表页若被打印：去掉卡片的毛玻璃与半透底，避免发灰 */
   .post-card::after { display: none !important; }
   .post-card { background: none !important; box-shadow: none !important; }
