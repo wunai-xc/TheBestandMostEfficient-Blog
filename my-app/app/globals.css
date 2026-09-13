@@ -673,6 +673,7 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 /* ===== 分页 ===== */
 .pagination { display: flex; justify-content: space-between; padding: 24px 0; }
 .pagination a, .pagination span {
+  position: relative;
   padding: 8px 16px; border: 1px solid var(--border); border-radius: 0;
   color: var(--fg);
 }
@@ -756,11 +757,24 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
    - 顶点处横竖两条线重叠，自然形成最浓的一点，不需额外提亮。
    - 位置用百分比对齐（0 / 100%），所以卡片尺寸怎么变都贴角。
 
-   伪元素分配：.post-card 的 ::after 已被亚克力层占用，所以它用 ::before。 */
+   伪元素分配：.post-card 的 ::after 已被亚克力层占用，所以它用 ::before；
+   其余均用 ::after。
+   尺寸用 --cn-scale 缩放：卡片用默认 1，小按钮/徽标类设 0.45，
+   否则 72px 的细线会明显长于元素本身。 */
 .post-card::before,
 .post-nav a::after,
 .friend-card::after,
-.changelog-list::after {
+.changelog-list::after,
+.post-content::after,
+.collection-card::after,
+.toc-panel::after,
+.pagination a::after, .pagination span::after,
+.term-item::after, .footer-link::after,
+.print-btn::after, .tag::after,
+.author-badge::after, .back-to-top::after, .toc-fab::after {
+  --cn-lt: calc(var(--cn-len-thick) * var(--cn-scale, 1));
+  --cn-ln: calc(var(--cn-len-thin) * var(--cn-scale, 1));
+  --cn-wt: calc(var(--cn-w-thick) * var(--cn-scale, 1));
   content: "";
   position: absolute;
   inset: 0;
@@ -782,19 +796,27 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
     /* 右下：向左 + 向上 */
     var(--cn-l1), var(--cn-u1), var(--cn-l2), var(--cn-u2);
   background-size:
-    var(--cn-len-thick) var(--cn-w-thick), var(--cn-w-thick) var(--cn-len-thick),
-    var(--cn-len-thin) var(--cn-w-thin), var(--cn-w-thin) var(--cn-len-thin),
-    var(--cn-len-thick) var(--cn-w-thick), var(--cn-w-thick) var(--cn-len-thick),
-    var(--cn-len-thin) var(--cn-w-thin), var(--cn-w-thin) var(--cn-len-thin),
-    var(--cn-len-thick) var(--cn-w-thick), var(--cn-w-thick) var(--cn-len-thick),
-    var(--cn-len-thin) var(--cn-w-thin), var(--cn-w-thin) var(--cn-len-thin),
-    var(--cn-len-thick) var(--cn-w-thick), var(--cn-w-thick) var(--cn-len-thick),
-    var(--cn-len-thin) var(--cn-w-thin), var(--cn-w-thin) var(--cn-len-thin);
+    var(--cn-lt) var(--cn-wt), var(--cn-wt) var(--cn-lt),
+    var(--cn-ln) var(--cn-wt), var(--cn-wt) var(--cn-ln),
+    var(--cn-lt) var(--cn-wt), var(--cn-wt) var(--cn-lt),
+    var(--cn-ln) var(--cn-wt), var(--cn-wt) var(--cn-ln),
+    var(--cn-lt) var(--cn-wt), var(--cn-wt) var(--cn-lt),
+    var(--cn-ln) var(--cn-wt), var(--cn-wt) var(--cn-ln),
+    var(--cn-lt) var(--cn-wt), var(--cn-wt) var(--cn-lt),
+    var(--cn-ln) var(--cn-wt), var(--cn-wt) var(--cn-ln);
   background-position:
     0 0, 0 0, 0 0, 0 0,
     100% 0, 100% 0, 100% 0, 100% 0,
     0 100%, 0 100%, 0 100%, 0 100%,
     100% 100%, 100% 100%, 100% 100%, 100% 100%;
+}
+
+/* 小尺寸元素：按钮、标签、徽标。线长按 0.45 缩放，
+   否则细线（默认 72px）会远长于元素本身，被裁成一根贴边的实线 */
+.pagination a, .pagination span,
+.term-item, .footer-link, .print-btn,
+.tag, .author-badge, .back-to-top, .toc-fab {
+  --cn-scale: 0.45;
 }
 
 /* ===== 文章详情：单栏居中 ===== */
@@ -901,6 +923,7 @@ html.dark .post-content::before { display: none; }
 .post-tags::-webkit-scrollbar { display: none; }
 .post-tags .tag { flex-shrink: 0; }
 .tag {
+  position: relative;
   display: inline-block; padding: 2px 10px; border-radius: 0;
   background: var(--card); border: 1px solid var(--border);
   font-size: 0.78rem; color: var(--fg);
@@ -909,6 +932,7 @@ html.dark .post-content::before { display: none; }
 
 /* 作者徽章 */
 .author-badge {
+  position: relative;
   display: inline-block; padding: 4px 12px; border-radius: 0;
   font-size: 0.78rem; font-weight: 500;
 }
@@ -1436,7 +1460,7 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
 
 /* ===== 标签/分类云 ===== */
 .term-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
-.term-item { padding: 6px 14px; border: 1px solid var(--border); border-radius: 0; color: var(--fg); }
+.term-item { position: relative; padding: 6px 14px; border: 1px solid var(--border); border-radius: 0; color: var(--fg); }
 .term-item:hover { background: var(--card); text-decoration: none; }
 
 /* ===== Giscus ===== */
@@ -1480,6 +1504,7 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
   margin-bottom: 24px;
 }
 .footer-link {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1626,6 +1651,7 @@ html.dark .katex-error { color: #fca5a5; }
   display: inline-flex; gap: 6px; flex-shrink: 0;
 }
 .print-btn {
+  position: relative;
   display: inline-flex; align-items: center; gap: 4px;
   padding: 4px 10px;
   font-size: 0.78rem;
@@ -1687,8 +1713,13 @@ html.dark .katex-error { color: #fca5a5; }
   .post-content > * { position: static !important; }
   .post-content::before { display: none !important; }
   /* 装饰性角标不进 PDF，省墨 */
-  .post-card::before, .post-nav a::after,
-  .friend-card::after, .changelog-list::after { display: none !important; }
+  .post-card::before,
+  .post-nav a::after, .friend-card::after, .changelog-list::after,
+  .post-content::after, .collection-card::after, .toc-panel::after,
+  .pagination a::after, .pagination span::after,
+  .term-item::after, .footer-link::after, .print-btn::after,
+  .tag::after, .author-badge::after,
+  .back-to-top::after, .toc-fab::after { display: none !important; }
   /* 列表页若被打印：去掉卡片的毛玻璃与半透底，避免发灰 */
   .post-card::after { display: none !important; }
   .post-card { background: none !important; box-shadow: none !important; }
