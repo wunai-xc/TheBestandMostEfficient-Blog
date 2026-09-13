@@ -132,25 +132,21 @@ html[data-page-hidden] *::after {
   --reading-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 28%);
   --reading-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.09), 0 32px 64px rgba(0,0,0,0.05);
   --reading-blur: 14px;
-  /* ===== 卡片角标 =====
-     在卡片的四个角描边：顶点颜色最深，沿边向外逐渐变淡、变细。
-     每个角由两条边线组成，各从顶点渐变到透明；顶点处两条线重叠，
-     自然成为最浓的一点。每条边再叠一条更细更长的延伸线
-     （短粗 + 长细），形成“越往外越细”的收尾。 */
-  --cn: var(--accent);
-  --cn-len-thick: 26px; /* 粗线长度 */
-  --cn-len-thin: 72px;  /* 细线（延伸）长度 */
-  --cn-w-thick: 2px;
-  --cn-w-thin: 1px;
-  /* 四个方向的渐变形态：向右 / 向左 / 向下 / 向上 */
-  --cn-r1: linear-gradient(90deg, var(--cn), transparent);
-  --cn-l1: linear-gradient(270deg, var(--cn), transparent);
-  --cn-d1: linear-gradient(180deg, var(--cn), transparent);
-  --cn-u1: linear-gradient(0deg, var(--cn), transparent);
-  --cn-r2: linear-gradient(90deg, color-mix(in srgb, var(--cn) 75%, transparent), transparent);
-  --cn-l2: linear-gradient(270deg, color-mix(in srgb, var(--cn) 75%, transparent), transparent);
-  --cn-d2: linear-gradient(180deg, color-mix(in srgb, var(--cn) 75%, transparent), transparent);
-  --cn-u2: linear-gradient(0deg, color-mix(in srgb, var(--cn) 75%, transparent), transparent);
+  /* ===== 十字角标 =====
+     带边框的面板/按钮在四角内侧各有一枚小金十字：两条短臂交叉，
+     交叉点最浓，沿臂向两端逐渐变淡、变细（渐变两端都是 transparent）。
+     十字中心距相邻两边各 --cn-inset，用 calc 与百分比定位，
+     因此元素尺寸与内边距怎么变都跟着走。 */
+  --cn-cross: #b08d3f;  /* 深金：白底上更清楚 */
+  --cn-inset: 13px;     /* 十字中心到两边的距离 */
+  --cn-arm: 4.5px;      /* 单臂长度（总线长 = 2×） */
+  --cn-w: 1px;          /* 线宽（保持发丝级） */
+  /* 两条臂：中段最浓、两端淡出（两端都是 transparent） */
+  --cn-h: linear-gradient(90deg, transparent, var(--cn-cross), transparent);
+  --cn-v: linear-gradient(180deg, transparent, var(--cn-cross), transparent);
+  /* 定位辅助：--cn-a 为臂起点距边距，--cn-b 为垂直方向居中偏移 */
+  --cn-a: calc(var(--cn-inset) - var(--cn-arm));
+  --cn-b: calc(var(--cn-inset) - var(--cn-w) / 2);
   /* 卡片亚克力：与阅读面同材质、但面积小得多，可以做得更透，
      让背后的网格若隐若现；模糊半径也相应调小以控制开销 */
   --card-acrylic-bg: rgba(255, 255, 255, 0.82);
@@ -179,6 +175,8 @@ html.dark {
   --card-shadow-hover-1: 0 2px 6px rgba(0,0,0,0.4);
   --card-shadow-hover-2: 0 8px 24px rgba(0,0,0,0.5);
   --card-shadow-hover-3: 0 20px 48px rgba(0,0,0,0.6);
+  /* 十字角标：暗色下换成浅金，深金在深底上几乎看不见 */
+  --cn-cross: #e0c383;
   /* ===== 暗色：只保留毛玻璃，不要任何白色渐变 =====
      两个原因：
      1. 白高光/白渐变在深底上显得脏，像蒙了一层灰；
@@ -747,20 +745,20 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   overflow: hidden;
 }
 
-/* ===== 卡片角标 =====
-   四角描边：顶点最深，沿边向外逐渐变淡、变细（token 定义见 :root 的 --cn-*）。
+/* ===== 十字角标 =====
+   四角内侧各一枚小金十字：交叉点最浓，沿臂向两端逐渐变淡、变细。
 
    实现要点：
-   - 一个伪元素叠 16 层 background 就能画完四个角，不需要额外 DOM。
-   - 每个角每条边叠两层：短而粗（先列 = 在上）+ 长而细（后列 = 在下），
-     超出粗线范围后只剩细线，这就是“向外变细”。
-   - 顶点处横竖两条线重叠，自然形成最浓的一点，不需额外提亮。
-   - 位置用百分比对齐（0 / 100%），所以卡片尺寸怎么变都贴角。
+   - 一个伪元素叠 **8 层 background**（4 角 × 2 臂）画完，不增加任何 DOM。
+     比上一版（4 角 × 2 边 × 2 粗细 = 16 层）少一半，光栅化开销随之降低。
+   - 每条臂是“透明 → 金 → 透明”的对称渐变：中段最浓、两端淡出，
+     两条臂在中心交叠，自然形成最浓的交叉点。
+   - 定位用 calc + 百分比：--cn-a 是臂起点距边距，--cn-b 是垂直方向居中偏移；
+     右侧/下侧用 calc(100% - …) 镜像，所以元素尺寸怎么变都贴角。
+   - 十字内缩（--cn-inset），不再压在边框上，留出呼吸。
 
    伪元素分配：.post-card 的 ::after 已被亚克力层占用，所以它用 ::before；
-   其余均用 ::after。
-   尺寸用 --cn-scale 缩放：卡片用默认 1，小按钮/徽标类设 0.45，
-   否则 72px 的细线会明显长于元素本身。 */
+   其余均用 ::after。 */
 .post-card::before,
 .post-nav a::after,
 .friend-card::after,
@@ -772,51 +770,44 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 .term-item::after, .footer-link::after,
 .print-btn::after, .tag::after,
 .author-badge::after, .back-to-top::after, .toc-fab::after {
-  --cn-lt: calc(var(--cn-len-thick) * var(--cn-scale, 1));
-  --cn-ln: calc(var(--cn-len-thin) * var(--cn-scale, 1));
-  --cn-wt: calc(var(--cn-w-thick) * var(--cn-scale, 1));
   content: "";
   position: absolute;
   inset: 0;
-  /* 必须高于同层的亚克力/光泽伪元素（它们均为 z-index: 0 且晚于 ::before 绘制），
-     否则会被半透底盖住变得很淡；卡片内容自己是 z-index: 1，且都晚于伪元素，
-     所以文字仍在角标之上。四周有内边距，角标不会与内容重叠。 */
+  /* 高于同层的亚克力/光泽伪元素（它们为 z-index: 0 且晚于 ::before 绘制），
+     否则十字会被半透底盖淡；内容也是 z-index: 1 但晚于伪元素，文字仍在十字之上。 */
   z-index: 1;
   pointer-events: none;
-  border-radius: inherit;
-  opacity: 0.55;
+  opacity: 0.8;
   background-repeat: no-repeat;
   background-image:
-    /* 左上：向右 + 向下 */
-    var(--cn-r1), var(--cn-d1), var(--cn-r2), var(--cn-d2),
-    /* 右上：向左 + 向下 */
-    var(--cn-l1), var(--cn-d1), var(--cn-l2), var(--cn-d2),
-    /* 左下：向右 + 向上 */
-    var(--cn-r1), var(--cn-u1), var(--cn-r2), var(--cn-u2),
-    /* 右下：向左 + 向上 */
-    var(--cn-l1), var(--cn-u1), var(--cn-l2), var(--cn-u2);
+    var(--cn-h), var(--cn-v),   /* 左上 */
+    var(--cn-h), var(--cn-v),   /* 右上 */
+    var(--cn-h), var(--cn-v),   /* 左下 */
+    var(--cn-h), var(--cn-v);   /* 右下 */
   background-size:
-    var(--cn-lt) var(--cn-wt), var(--cn-wt) var(--cn-lt),
-    var(--cn-ln) var(--cn-wt), var(--cn-wt) var(--cn-ln),
-    var(--cn-lt) var(--cn-wt), var(--cn-wt) var(--cn-lt),
-    var(--cn-ln) var(--cn-wt), var(--cn-wt) var(--cn-ln),
-    var(--cn-lt) var(--cn-wt), var(--cn-wt) var(--cn-lt),
-    var(--cn-ln) var(--cn-wt), var(--cn-wt) var(--cn-ln),
-    var(--cn-lt) var(--cn-wt), var(--cn-wt) var(--cn-lt),
-    var(--cn-ln) var(--cn-wt), var(--cn-wt) var(--cn-ln);
+    calc(var(--cn-arm) * 2) var(--cn-w), var(--cn-w) calc(var(--cn-arm) * 2),
+    calc(var(--cn-arm) * 2) var(--cn-w), var(--cn-w) calc(var(--cn-arm) * 2),
+    calc(var(--cn-arm) * 2) var(--cn-w), var(--cn-w) calc(var(--cn-arm) * 2),
+    calc(var(--cn-arm) * 2) var(--cn-w), var(--cn-w) calc(var(--cn-arm) * 2);
   background-position:
-    0 0, 0 0, 0 0, 0 0,
-    100% 0, 100% 0, 100% 0, 100% 0,
-    0 100%, 0 100%, 0 100%, 0 100%,
-    100% 100%, 100% 100%, 100% 100%, 100% 100%;
+    /* 左上：横臂右移，竖臂下移 */
+    var(--cn-a) var(--cn-b), var(--cn-b) var(--cn-a),
+    /* 右上：镜像 */
+    calc(100% - var(--cn-a)) var(--cn-b), calc(100% - var(--cn-b)) var(--cn-a),
+    /* 左下 */
+    var(--cn-a) calc(100% - var(--cn-b)), var(--cn-b) calc(100% - var(--cn-a)),
+    /* 右下 */
+    calc(100% - var(--cn-a)) calc(100% - var(--cn-b)),
+    calc(100% - var(--cn-b)) calc(100% - var(--cn-a));
 }
 
-/* 小尺寸元素：按钮、标签、徽标。线长按 0.45 缩放，
-   否则细线（默认 72px）会远长于元素本身，被裁成一根贴边的实线 */
+/* 小尺寸元素：按钮、标签、徽标。内缩与臂长都要收，
+   否则 13px 的内缩在 20px 高的标签上会把十字挤到中间去 */
 .pagination a, .pagination span,
 .term-item, .footer-link, .print-btn,
 .tag, .author-badge, .back-to-top, .toc-fab {
-  --cn-scale: 0.45;
+  --cn-inset: 6px;
+  --cn-arm: 2.5px;
 }
 
 /* ===== 文章详情：单栏居中 ===== */
