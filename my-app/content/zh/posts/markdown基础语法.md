@@ -9,8 +9,7 @@ author: ""
 
 ---
 
-![md](md/Markdown.jpg)
----
+![md](/md/Markdown.jpg)
 
 
 ## 什么是 Markdown

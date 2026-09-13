@@ -98,14 +98,35 @@ function resolveAsset(lang: Lang, slug: string, src: string): string {
   return `/${lang}/posts/${slug}/${s}`;
 }
 
-/* 必须先去掉代码块与行内代码再找图片：
-   否则像 Markdown 语法演示文章里那张语法表（`![alt](url "title")`）
-   会把示例文本当成真图片，卡片上就会出现一个坏图。 */
+/* 按行剥掉围栏代码块与行内代码。
+
+   为什么不用正则 replace(/```[\s\S]*?```/g)：
+   本站文档里会用四个反引号包裹含三反引号的示例（````` ```` ```markdown … ``` ```` `````），
+   而四个反引号里本身就包含三个反引号 —— 正则会先与它其中的三个配对，
+   配对就此错位，把后面的真图片从代码块里“漏”出来，当成缩略图 → 碎图。
+   按行处理、并要求闭合符字符相同且长度不短于开启符，才符合 CommonMark 的规则。 */
+function stripCodeBlocks(md: string): string {
+  const out: string[] = [];
+  let fence: string | null = null; // 开启时的围栏标记，如 "```" 或 "````"
+  for (const line of md.split("\n")) {
+    const m = line.match(/^\s{0,3}(`{3,}|~{3,})/);
+    if (fence) {
+      // 块内：只有同字符且不短于开启符的围栏才算闭合
+      if (m && m[1][0] === fence[0] && m[1].length >= fence.length) fence = null;
+      continue;
+    }
+    if (m) {
+      fence = m[1];
+      continue;
+    }
+    out.push(line);
+  }
+  // 行内代码（示例文本如 `![alt](url)`）同样要去掉
+  return out.join("\n").replace(/`[^`\n]*`/g, "");
+}
+
 function firstImageInMarkdown(content: string): string | undefined {
-  const stripped = content
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/~~~[\s\S]*?~~~/g, "")
-    .replace(/`[^`\n]*`/g, "");
+  const stripped = stripCodeBlocks(content);
   const md = stripped.match(/!\[[^\]]*\]\(\s*([^)\s]+)/);
   if (md) return md[1];
   const html = stripped.match(/<img[^>]*\ssrc=["']([^"']+)/i);

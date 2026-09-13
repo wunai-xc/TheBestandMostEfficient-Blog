@@ -270,6 +270,7 @@ C D E F G A B c
 ### 图片与链接
 
 - 相对路径图片 `![图](./img/a.png)` 会自动解析为 `/<lang>/posts/<slug>/img/a.png`，并加上 `loading="lazy"` 与 `decoding="async"`
+  - ⚠️ **建议一律用绝对路径**（`/images/xxx.png`）。相对路径要求图片真的放在 `public/<lang>/posts/<slug>/` 下（要在 `public/` 里手工搭出与文章 URL 相同的目录层级），很容易写成 `![图](a.png)` 却把文件放在 `public/a.png` → 404
 - 指向 `xxx.md` 的链接会自动改写成 `/posts/xxx/` 的站内链接
 - 正文 HTML 会经过协议过滤，`javascript:` / `vbscript:` / `data:` 一律被替换为 `#`
 
@@ -465,7 +466,7 @@ npx wrangler pages deploy out --project-name=wunai-blog
 - 阅读面的顶部光泽层 `.post-content::before` 高度**写死 220px**（原来 `inset: 0` + 渐变里 28% 的落点，在长文上会把高光拖到两三千像素，既不好看又多一整张满尺寸图层）
 - 文章卡片右侧缩略图的取图优先级：`cover.image` → 正文第一张图 → 不渲染。解析在**构建期**完成（`lib/content.ts` 的 `pickThumbnail()`，结果存在 `post.thumbnail`），不在客户端扫 DOM
   - 路径规则与 `rehypeImages` 一致：绝对 URL / 站内绝对路径直接用，相对路径补成 `/<lang>/posts/<slug>/<src>`
-  - **提取前必须先剥掉围栏代码块与行内代码**：否则像《Markdown 基本语法》里那张语法表（`` `![alt](url "title")` ``）会把示例文本当成真图，卡片上就会出现一个坏图
+  - **提取前必须剥掉围栏代码块与行内代码**，否则文档里的示例会被当成真图。剥法必须**按行**处理、并要求闭合符字符相同且长度不短于开启符。用正则找三反引号会出错：四反引号（某些文档用它包裹 ```markdown 示例）里本身就含三个反引号，正则会先与自己那三个配对、配对错位，把代码块内的图片“漏”出来当缩略图 → 卡片上挂一个碎图（《博客书写规范》就中过这个）。
   - 缩略图可能是外链（正文本就允许贴外站图），对方可能禁外链；`<img onError>` 时隐藏整个缩略图，不留碎图占位
   - 卡片用 `display: flex` + `align-items: stretch`：文字占左侧 2/3，缩略图占右侧 1/3 并撑满内容高度。文字包在 `.post-card-body` 里（否则 h2/meta/summary 会各自成为 flex 子项被摆成一行），且必须 `min-width: 0`，否则长标题会把缩略图挤出容器；无缩略图时用 `.post-card:not(.has-thumb)` 退回纵向排版
   - **缩略图不能写 `aspect-ratio`**：高度要由文字那一侧决定、图跟着撑满；用宽高比定高的话，文字比图高时右侧会空一块
