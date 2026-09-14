@@ -2134,6 +2134,8 @@ html.dark .katex-error { color: #fca5a5; }
     white-space: pre-wrap !important;
     word-wrap: break-word;
     color: #000 !important;
+    /* 屏幕版是 overflow-x:auto；打印时按 pre-wrap 换行，不能再裁切 */
+    overflow: visible !important;
     break-inside: auto;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
@@ -2170,6 +2172,12 @@ html.dark .katex-error { color: #fca5a5; }
 
   /* ===== 表格：10px 紧凑，允许跨页 ===== */
   .article table {
+    /* 屏幕版把表格做成了 display:block + overflow-x:auto 的横向滚动容器。
+       打印必须改回真表格：block 会让 thead 的「每页重复表头」失效，
+       overflow:auto 则会把超出页宽的部分直接裁掉。 */
+    display: table !important;
+    overflow: visible !important;
+    width: 100% !important;
     font-size: 10px !important;
     break-inside: auto;
     margin: 4px 0 !important;
@@ -2204,6 +2212,9 @@ html.dark .katex-error { color: #fca5a5; }
 
   /* 图片/图/化学结构：整体不跨页 */
   .article figure, .article img, .article .chem { break-inside: avoid; }
+
+  /* 图表容器在屏幕上是横向滚动区，打印时放开，避免图形被裁掉 */
+  .mermaid, .echarts, .graphviz, .abc { overflow: visible !important; }
 
   /* 引用块、列表 */
   .article blockquote {
