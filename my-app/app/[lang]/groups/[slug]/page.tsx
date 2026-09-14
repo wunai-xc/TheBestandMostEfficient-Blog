@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getGroup, getGroups, SITE, readingMinutes, type Lang } from "@/lib/content";
+import { EMPTY_PARAM, getGroup, getGroups, SITE, readingMinutes, type Lang } from "@/lib/content";
 import PostCard from "@/components/PostCard";
 import { Icon } from "@iconify/react/offline";
 import { icons } from "@/lib/icons";
@@ -7,7 +7,11 @@ import { icons } from "@/lib/icons";
 export const dynamicParams = false;
 
 export function generateStaticParams({ params }: { params: { lang: string } }) {
-  return getGroups(params.lang as Lang).map((g) => ({ slug: g.slug }));
+  const groups = getGroups(params.lang as Lang);
+  // 还没有任何卡组时不能返回空数组，否则 output: "export" 会直接构建失败；
+  // 给一个占位值，页面里查不到就走 notFound()
+  if (!groups.length) return [{ slug: EMPTY_PARAM }];
+  return groups.map((g) => ({ slug: g.slug }));
 }
 
 /** 卡组详情：组内文章按 order / 文件名前缀的顺序列出 */

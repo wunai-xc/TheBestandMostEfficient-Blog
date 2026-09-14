@@ -1,14 +1,20 @@
-import { getAllCategories, getPostsByCategory, type Lang } from "@/lib/content";
+import { notFound } from "next/navigation";
+
+import { EMPTY_PARAM, getAllCategories, getPostsByCategory, type Lang } from "@/lib/content";
 
 export const dynamicParams = false;
 
 export function generateStaticParams({ params }: { params: { lang: string } }) {
-  return getAllCategories(params.lang as Lang).map((category) => ({ category }));
+  const categories = getAllCategories(params.lang as Lang);
+  // 空数组会让 output: "export" 构建失败，用占位值兑成 notFound()
+  if (!categories.length) return [{ category: EMPTY_PARAM }];
+  return categories.map((category) => ({ category }));
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ lang: string; category: string }> }) {
   const p = await params; const lang = p.lang as Lang;
   const category = decodeURIComponent(p.category);
+  if (category === EMPTY_PARAM) notFound();
   const posts = getPostsByCategory(lang, category);
   return (
     <div className="container">

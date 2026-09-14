@@ -335,6 +335,14 @@ export function getGroups(lang: Lang): PostGroup[] {
   return bundle(lang).groups;
 }
 
+/**
+ * output: ".export" 要求每个动态路由至少产出一个页面，而 generateStaticParams
+ * 返回空数组会直接令构建失败（如“一个卡组都还没有”时）。
+ * 列表为空时改写回这个占位参数，页面里查不到对应实体就会走 notFound()，
+ * 最终只多生成一个 404 页，站点照常可构建。
+ */
+export const EMPTY_PARAM = "__none__";
+
 export function getGroup(lang: Lang, slug: string): PostGroup | undefined {
   return getGroups(lang).find((g) => g.slug === slug);
 }

@@ -1,14 +1,20 @@
-import { getAllTags, getPostsByTag, type Lang } from "@/lib/content";
+import { notFound } from "next/navigation";
+
+import { EMPTY_PARAM, getAllTags, getPostsByTag, type Lang } from "@/lib/content";
 
 export const dynamicParams = false;
 
 export function generateStaticParams({ params }: { params: { lang: string } }) {
-  return getAllTags(params.lang as Lang).map((tag) => ({ tag }));
+  const tags = getAllTags(params.lang as Lang);
+  // 空数组会让 output: "export" 构建失败，用占位值兑成 notFound()
+  if (!tags.length) return [{ tag: EMPTY_PARAM }];
+  return tags.map((tag) => ({ tag }));
 }
 
 export default async function TagPage({ params }: { params: Promise<{ lang: string; tag: string }> }) {
   const p = await params; const lang = p.lang as Lang;
   const tag = decodeURIComponent(p.tag);
+  if (tag === EMPTY_PARAM) notFound();
   const posts = getPostsByTag(lang, tag);
   return (
     <div className="container">
