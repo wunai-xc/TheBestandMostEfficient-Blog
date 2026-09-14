@@ -146,11 +146,15 @@ function pickThumbnail(
   return fromBody ? resolveAsset(lang, slug, fromBody) : undefined;
 }
 
-/* ===== 内容加载：平铺文章 + 卡组 =====
-   卡组的约定：content/<lang>/posts/<组名>/_index.md 存在即视为一个卡组，
-   同目录下的其它 .md 是组内文章。组内文章在全局仍是普通文章
-   （归档 / 标签 / 搜索 / RSS 都照旧能用），只是多带一个 group 字段；
-   首页与文章列表页会把它折叠成一张卡组卡片。 */
+/* ===== 内容加载：平铺文章 + 单篇文件夹 + 卡组 =====
+
+   支持三种写法（都在 content/<lang>/posts/ 下）：
+     ① 平铺：  我的文章.md                                  → slug = 文件名
+     ② 单篇文件夹：我的文章/index.md                        → slug = 目录名
+     ③ 卡组：   我的文章/_index.md + 若干 .md             → 文件夹名即组名
+
+   卡组内的文章在全局仍是普通文章（归档 / 标签 / 搜索 / RSS 照旧能用），
+   只是多带一个 group 字段；首页与文章列表页会把它折叠成一张卡组卡片。 */
 
 /** 组内排序：order 优先；没有 order 时按文件名数字前缀（如 01-xxx）；
     再没有就按 slug 字典序。 */
@@ -241,16 +245,29 @@ function loadContent(lang: Lang): ContentBundle {
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (entry.isDirectory()) {
-      const groupDir = path.join(dir, entry.name);
-      const indexFile = path.join(groupDir, "_index.md");
-      if (!fs.existsSync(indexFile)) continue; // 没有 _index.md 就不当卡组
+      const sub = path.join(dir, entry.name);
+      const groupIndex = path.join(sub, "_index.md");
+      const leafIndex = path.join(sub, "index.md");
 
-      const meta = readMarkdown(indexFile).data as PostFrontmatter;
+      // ① 单篇文件夹（leaf bundle）：index.md 就是这篇文章，slug 用目录名
+      if (!fs.existsSync(groupIndex)) {
+        if (fs.existsSync(leafIndex)) {
+          const post = parsePost(leafIndex, lang, uniqueSlug(entry.name));
+          if (post) {
+            used.add(post.slug);
+            standalone.push(post);
+          }
+        }
+        continue;
+      }
+
+      // ② 卡组：_index.md 是组元信息，同目录下其它 .md 是组内文章
+      const meta = readMarkdown(groupIndex).data as PostFrontmatter;
       const members: Post[] = [];
-      for (const f of fs.readdirSync(groupDir).filter((f) => f.endsWith(".md"))) {
-        if (f === "_index.md") continue;
+      for (const f of fs.readdirSync(sub).filter((f) => f.endsWith(".md"))) {
+        if (f === "_index.md" || f === "index.md") continue;
         const base = f.replace(/\.md$/, "");
-        const post = parsePost(path.join(groupDir, f), lang, uniqueSlug(base, entry.name), entry.name);
+        const post = parsePost(path.join(sub, f), lang, uniqueSlug(base, entry.name), entry.name);
         if (post) {
           used.add(post.slug);
           members.push(post);
