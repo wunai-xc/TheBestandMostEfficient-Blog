@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { getPosts, type Lang } from "../lib/content";
+import { getGroups, getPosts, type Lang } from "../lib/content";
 import { SITE } from "../lib/site";
 
 export const dynamic = "force-static";
@@ -16,6 +16,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entries.push({ url: `${base}/${lang}/archives/` });
     entries.push({ url: `${base}/${lang}/links/` });
     entries.push({ url: `${base}/${lang}/settings/` });
+    for (const g of getGroups(lang)) {
+      entries.push({ url: `${base}/${lang}/groups/${encodeURIComponent(g.slug)}/` });
+    }
     for (const p of getPosts(lang)) {
       entries.push({
         url: `${base}/${lang}/posts/${encodeURIComponent(p.slug)}/`,

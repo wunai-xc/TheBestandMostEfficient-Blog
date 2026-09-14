@@ -23,6 +23,8 @@ import mdiCogOutline from "@iconify/icons-mdi/cog-outline";
 import mdiPaletteOutline from "@iconify/icons-mdi/palette-outline";
 import mdiCheck from "@iconify/icons-mdi/check";
 import mdiRestore from "@iconify/icons-mdi/restore";
+import mdiFolderMultipleOutline from "@iconify/icons-mdi/folder-multiple-outline";
+import mdiArrowLeft from "@iconify/icons-mdi/arrow-left";
 
 export const icons = {
   "mdi:calendar-month-outline": mdiCalendarMonthOutline,
@@ -49,6 +51,8 @@ export const icons = {
   "mdi:palette-outline": mdiPaletteOutline,
   "mdi:check": mdiCheck,
   "mdi:restore": mdiRestore,
+  "mdi:folder-multiple-outline": mdiFolderMultipleOutline,
+  "mdi:arrow-left": mdiArrowLeft,
 } as const;
 
 export type IconName = keyof typeof icons;

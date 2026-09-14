@@ -802,18 +802,128 @@ html.dark .post-card:hover {
 }
 html.dark .pinned-badge { background: #78350f; color: #fde68a; }
 
-/* 合集卡片 */
+/* ===== 卡组卡片（多张卡片叠在一起） ===== */
 .collection-card {
-  position: relative; padding: 20px; margin: 16px 0;
-  background: var(--card); border-radius: 0;
-  border: 1px solid var(--border);
+  position: relative;
+  margin: 20px 0;
+  /* 光圈与堆叠层都可能超出卡片，但不能裁掉堆叠层，所以不设 overflow: hidden；
+     封面自己用 border-radius: 0 且贴齐边框，靠 .collection-cover 单独裁切 */
+  isolation: isolate;
 }
+
+/* 背后两层层叠：默认各上移 6/12px、缩 0.98/0.96，
+   鼠标移入后按指针位置往反方向摊开（--fan-x / --fan-y 由组件写入） */
+.collection-stack { position: absolute; inset: 0; pointer-events: none; z-index: -1; }
 .collection-card .stack {
-  position: absolute; inset: 0; border-radius: 0;
-  border: 1px solid var(--border); background: var(--card);
-  transform: translateY(-6px) scale(0.98); z-index: -1;
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--border);
+  background: var(--card);
+  transform: translate(var(--fan-x, 0px), calc(-6px + var(--fan-y, 0px))) scale(0.98);
+  transition: transform 0.45s var(--ease-silk), border-color 0.45s var(--ease-silk);
 }
-.collection-card .stack-2 { transform: translateY(-12px) scale(0.96); z-index: -2; }
+.collection-card .stack-2 {
+  transform: translate(calc(var(--fan-x, 0px) * 1.8), calc(-12px + var(--fan-y, 0px) * 1.8)) scale(0.96);
+  opacity: 0.85;
+}
+.collection-card:hover .stack { border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+
+.collection-link {
+  position: relative;
+  display: block;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  background: var(--card-acrylic-sheen), var(--card-acrylic-bg);
+  box-shadow: var(--card-acrylic-glow);
+  backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  -webkit-backdrop-filter: blur(var(--card-acrylic-blur)) saturate(1.1);
+  /* 封面要贴齐边框，这里裁切 */
+  overflow: hidden;
+  transition: transform 0.45s var(--ease-silk), box-shadow 0.45s var(--ease-silk),
+              border-color 0.45s var(--ease-silk);
+}
+.collection-link:hover { text-decoration: none; border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+.collection-card:hover .collection-link { box-shadow: var(--card-shadow-hover-1), var(--card-shadow-hover-2); }
+
+/* 跟随指针的光斑：区别于 PostCard 的 3D 倾斜 */
+.collection-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--accent) 18%, transparent),
+    transparent 65%
+  );
+  transition: opacity 0.35s var(--ease-silk);
+}
+.collection-card:hover .collection-link::after { opacity: 1; }
+
+/* 封面：填满边框内部 —— 无内边距、无圆角、撑满宽度并定高 */
+.collection-cover {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+.collection-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s var(--ease-silk);
+}
+.collection-card:hover .collection-cover img { transform: scale(1.04); }
+
+.collection-body { display: block; padding: 18px 22px; }
+
+.collection-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.collection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.collection-kind {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.collection-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.1rem, 3.4vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.collection-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.collection-summary {
+  margin: 8px 0 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
 
 /* ===== 分页 ===== */
 .pagination { display: flex; justify-content: space-between; padding: 24px 0; }
@@ -1527,8 +1637,8 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .scroll-thumb {
   position: absolute;
   left: 50%;
-  width: 16px; height: 10px;
-  margin-left: -8px; margin-top: -5px;
+  width: 12px; height: 12px;
+  margin-left: -6px; margin-top: -6px;
   border-radius: 0;
   background: var(--accent);
   box-shadow:
@@ -1559,23 +1669,25 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .progress-dot {
   position: absolute;
   left: 50%;
-  width: 16px; height: 16px;
-  margin-left: -8px; margin-top: -8px;
+  width: 12px; height: 12px;
+  margin-left: -6px; margin-top: -6px;
   padding: 0; border: none;
   background: transparent;
   cursor: pointer;
   z-index: 2;
   transition: transform 0.3s var(--ease-elastic);
 }
+/* 节点：圆形小点。按钮尺寸 = 点击热区，.progress-dot-core = 看得见的圆点；
+   比原来又缩一档并改成圆形，与方滑块形成对比 */
 .progress-dot-core {
-  position: absolute; inset: 3px;
-  border-radius: 0;
+  position: absolute; inset: 2px;
+  border-radius: 50%;
   background: var(--muted);
   transition: background 0.3s, box-shadow 0.3s;
 }
-.progress-dot.lvl-1, .progress-dot.lvl-2 { width: 16px; height: 16px; }
-.progress-dot.lvl-3 { width: 13px; height: 13px; margin-left: -6.5px; margin-top: -6.5px; }
-.progress-dot.lvl-4, .progress-dot.lvl-5, .progress-dot.lvl-6 { width: 10px; height: 10px; margin-left: -5px; margin-top: -5px; }
+.progress-dot.lvl-1, .progress-dot.lvl-2 { width: 12px; height: 12px; margin-left: -6px; margin-top: -6px; }
+.progress-dot.lvl-3 { width: 10px; height: 10px; margin-left: -5px; margin-top: -5px; }
+.progress-dot.lvl-4, .progress-dot.lvl-5, .progress-dot.lvl-6 { width: 8px; height: 8px; margin-left: -4px; margin-top: -4px; }
 .progress-dot.reached .progress-dot-core {
   background: var(--accent);
 }
@@ -1600,8 +1712,8 @@ html.dark .author-badge.ai { background: #450a0a; color: #fca5a5; }
 .progress-dot.active .progress-dot-core::after {
   content: "";
   position: absolute;
-  inset: -6px;
-  border-radius: 0;
+  inset: -5px;
+  border-radius: 50%;
   background: color-mix(in srgb, var(--accent) 45%, transparent);
   z-index: -1;
   animation: dot-pulse 1.8s ease-in-out infinite;
@@ -1909,6 +2021,40 @@ html.dark .katex-error { color: #fca5a5; }
 /* ===== 缓存红点（SW） ===== */
 .cache-dot { display: inline-block; width: 8px; height: 8px; border-radius: 0; background: #ef4444; margin-left: 4px; }
 
+/* ===== 卡组详情页 ===== */
+.group-header { margin-bottom: 8px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.group-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.group-header .page-title { margin: 0 0 8px; font-size: 1.6rem; }
+.group-description { margin: 0 0 10px; color: var(--muted); line-height: 1.7; max-width: 46em; }
+
+/* 组内文章列表：带序号，序号即组内顺序 */
+.group-posts { list-style: none; margin: 0; padding: 0; counter-reset: gp; }
+.group-posts > li { position: relative; counter-increment: gp; }
+.group-posts > li::before {
+  content: counter(gp, decimal-leading-zero);
+  position: absolute;
+  left: -2.4em;
+  top: 26px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.group-posts .post-card { margin: 12px 0; }
+
+.group-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 20px 0 32px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.group-back:hover { color: var(--accent); text-decoration: none; }
+
+@media (max-width: 768px) {
+  .group-posts > li::before { display: none; }
+}
+
 /* ===== 响应式：平板（≤ 768px） ===== */
 @media (max-width: 768px) {
   .header-inner { height: 52px; padding: 0 12px; gap: 8px; }
@@ -1921,7 +2067,9 @@ html.dark .katex-error { color: #fca5a5; }
   .post-card { padding: 16px; margin: 10px 0; }
   .post-card .meta { gap: 10px; font-size: 0.75rem; }
 
-  .collection-card { padding: 16px; }
+  /* 卡组卡片：内边距改到 .collection-body 上；加到外层会把堆叠层撑得比卡片大 */
+  .collection-body { padding: 15px 16px; }
+  .collection-cover { height: 150px; }
 
   .pagination a, .pagination span { padding: 8px 12px; font-size: 0.85rem; }
 
@@ -2125,6 +2273,14 @@ html.dark .katex-error { color: #fca5a5; }
     { display: none !important; }
   /* 列表页若被打印：去掉卡片的毛玻璃与半透底，避免发灰 */
   .post-card::after { display: none !important; }
+  /* 卡组的堆叠层与跟随指针的光斑都不该进 PDF */
+  .collection-stack, .collection-link::after { display: none !important; }
+  .collection-link {
+    background: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
   .post-card { background: none !important; box-shadow: none !important; }
   /* 打印不参与入场动画：否则加载后立刻点「制作PDF」可能截到动画中间态 */
   .post-header h1, .post-content .article { animation: none !important; }

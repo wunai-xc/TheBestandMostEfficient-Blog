@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@iconify/react/offline";
 import { icons } from "@/lib/icons";
 import {
-  getPost, getAllSlugs, getPrevNext, SITE, readingMinutes, type Lang,
+  getPost, getAllSlugs, getPrevNext, getGroup, SITE, readingMinutes, type Lang,
 } from "@/lib/content";
 import { renderMarkdown, extractToc } from "@/lib/markdown";
 import PostBody from "@/components/PostBody";
@@ -51,6 +51,8 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
   const { prev, next } = getPrevNext(lang, decodedSlug);
   const t = SITE.i18n[lang];
   const readingTime = readingMinutes(post.wordCount);
+  // 卡组内文章：面包屑里多一层回卡组的入口
+  const group = post.group ? getGroup(lang, post.group) : undefined;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -78,6 +80,12 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
           <span>/</span>
           <a href={`/${lang}/posts/`}>{t.posts}</a>
           <span>/</span>
+          {group && (
+            <>
+              <a href={`/${lang}/groups/${encodeURIComponent(group.slug)}/`}>{group.title}</a>
+              <span>/</span>
+            </>
+          )}
           <span>{post.title}</span>
         </nav>
 
