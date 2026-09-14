@@ -1843,6 +1843,12 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
   transform: translateY(-2px);
 }
+/* 不可点击的条目（微信 ID、Discord 说明）：去掉 hover 抬升，避免误认为链接 */
+.footer-link-static { cursor: default; }
+.footer-link-static:hover {
+  border-color: var(--border);
+  transform: none;
+}
 .footer-link-label {
   font-size: 0.7rem;
   text-transform: uppercase;
