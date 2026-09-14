@@ -72,7 +72,6 @@ export const SITE = {
     zh: [
       { name: "首页", href: "/zh/" },
       { name: "文章", href: "/zh/posts/" },
-      { name: "标签", href: "/zh/tags/" },
       { name: "搜索", href: "/zh/search/" },
       { name: "归档", href: "/zh/archives/" },
       { name: "友链", href: "/zh/links/" },
@@ -81,7 +80,6 @@ export const SITE = {
     en: [
       { name: "Home", href: "/en/" },
       { name: "Posts", href: "/en/posts/" },
-      { name: "Tags", href: "/en/tags/" },
       { name: "Search", href: "/en/search/" },
       { name: "Archives", href: "/en/archives/" },
       { name: "Links", href: "/en/links/" },

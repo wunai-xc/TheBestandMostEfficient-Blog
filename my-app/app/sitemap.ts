@@ -12,7 +12,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
   for (const lang of ["zh", "en"] as Lang[]) {
     entries.push({ url: `${base}/${lang}/posts/` });
-    entries.push({ url: `${base}/${lang}/tags/` });
     entries.push({ url: `${base}/${lang}/categories/` });
     entries.push({ url: `${base}/${lang}/archives/` });
     entries.push({ url: `${base}/${lang}/links/` });

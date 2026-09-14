@@ -6,11 +6,12 @@ import { SITE } from "@/lib/site";
 
 interface SearchDoc { slug: string; title: string; summary: string; content: string; tags: string[]; }
 
-export default function Search({ lang }: { lang: string }) {
+export default function Search({ lang, tags = [] }: { lang: string; tags?: string[] }) {
   const t = SITE.i18n[lang === "en" ? "en" : "zh"];
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchDoc[]>([]);
   const fuseRef = useRef<Fuse<SearchDoc> | null>(null);
+  const searching = query.trim().length > 0;
 
   useEffect(() => {
     fetch(`/search-index.${lang}.json`)
@@ -58,6 +59,15 @@ export default function Search({ lang }: { lang: string }) {
         onChange={(e) => setQuery(e.target.value)}
         autoFocus
       />
+      {!searching && tags.length > 0 && (
+        <div className="term-cloud">
+          {tags.map((tag) => (
+            <a key={tag} href={`/${lang}/tags/${encodeURIComponent(tag)}/`} className="term-item">
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )}
       {results.map((r) => (
         <div className="search-result" key={r.slug}>
           <a href={`/${lang}/posts/${encodeURIComponent(r.slug)}/`} className="title">
@@ -66,7 +76,7 @@ export default function Search({ lang }: { lang: string }) {
           <div className="snippet">{highlight(r.summary, query)}</div>
         </div>
       ))}
-      {query && results.length === 0 && <p style={{ color: "var(--muted)" }}>{t.noResults}</p>}
+      {searching && results.length === 0 && <p style={{ color: "var(--muted)" }}>{t.noResults}</p>}
     </div>
   );
 }
