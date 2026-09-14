@@ -107,7 +107,7 @@ export default async function PostPage({ params }: { params: Promise<{ lang: str
             <span><Icon icon={icons["mdi:file-document-outline"]} width="1em" height="1em" /> {post.wordCount} {t.words}</span>
             {post.author && (
               <span className={`author-badge ${post.isAI ? "ai" : "normal"}`}>
-                {post.isAI ? <><Icon icon={icons["mdi:alert-outline"]} width="1em" height="1em" /> {t.aiWarning}</> : `作者：${post.author}`}
+                {post.isAI ? <><Icon icon={icons["mdi:alert-outline"]} width="1em" height="1em" /> {t.aiWarning}</> : `${t.authorPrefix}${post.author}`}
               </span>
             )}
           </div>

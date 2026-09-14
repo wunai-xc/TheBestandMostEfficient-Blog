@@ -7,8 +7,8 @@ export default function Footer({ lang }: { lang: Lang }) {
   return (
     <footer className="site-footer">
       <div className="footer-inner">
-        <p className="footer-label">{c.label}</p>
-        <p className="footer-body">{c.body}</p>
+        <p className="footer-label">{t.contactLabel}</p>
+        <p className="footer-body">{t.contactBody}</p>
 
         <div className="footer-links">
           <a className="footer-link" href={`mailto:${c.email}`}>
@@ -30,7 +30,7 @@ export default function Footer({ lang }: { lang: Lang }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <span className="footer-link-label">{c.repoLabel}</span>
+            <span className="footer-link-label">{t.repoLabel}</span>
             <span className="footer-link-value">{c.repo.replace(/^https?:\/\//, "")}</span>
           </a>
           <a
