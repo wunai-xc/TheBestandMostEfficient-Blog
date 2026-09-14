@@ -1,8 +1,10 @@
 name: Deploy to Cloudflare Pages
 
+# 仅手动触发：推 main 不再跑本工作流。
+# Cloudflare Pages 自己的 Git 集成已在 push 时部署，两者重复；而且本工作流最后一步
+# （wrangler pages deploy）会报失败，却又不影响实际发布，只会给出误导性的红灯。
+# 需要时在仓库 Actions 页面「Run workflow」手动跑一次。
 on:
-  push:
-    branches: [master, main]
   workflow_dispatch:
 
 jobs:
