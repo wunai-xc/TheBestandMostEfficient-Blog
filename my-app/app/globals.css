@@ -1930,9 +1930,22 @@ html.dark .katex-error { color: #fca5a5; }
 
   .site-footer { margin-top: 28px; }
   .footer-inner { padding: 28px 14px 20px; }
-  .footer-links { gap: 8px; }
-  .footer-link { padding: 7px 12px; }
-  .footer-link-value { font-size: 0.8rem; }
+  /* 卡片改为等宽两列网格。
+     原来靠 flex 换行：每张卡宽度跟着内容走（邮箱很宽、“微信 wunaixc”很窄），
+     7 张卡会排成参差不齐的几行，行内高度也不一致，看着很乱。
+     minmax(0, 1fr) 防止长 URL 撑破列宽；网格项默认 stretch，同一行自动等高。 */
+  .footer-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .footer-link { padding: 8px 10px; min-width: 0; }
+  .footer-link-value {
+    font-size: 0.78rem;
+    /* anywhere 只在真放不下时才断，比 break-all 的逐字符硬断自然 */
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
 }
 
 /* ===== 响应式：手机（≤ 480px） ===== */
@@ -1957,6 +1970,13 @@ html.dark .katex-error { color: #fca5a5; }
   .pagination a, .pagination span { padding: 7px 10px; font-size: 0.8rem; }
 
   .search-box { padding: 10px 12px; font-size: 0.9rem; }
+
+  /* 页脚卡片：再窄也保持两列，只收内边距与字号 */
+  .footer-inner { padding: 24px 12px 18px; }
+  .footer-links { gap: 6px; }
+  .footer-link { padding: 7px 9px; }
+  .footer-link-label { font-size: 0.66rem; }
+  .footer-link-value { font-size: 0.74rem; }
 
   .not-found { padding: 40px 16px; }
   .not-found h1 { font-size: 2.5rem; }
