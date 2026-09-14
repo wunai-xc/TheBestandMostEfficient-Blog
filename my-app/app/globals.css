@@ -1996,17 +1996,41 @@ html.dark .katex-error { color: #fca5a5; }
   margin: 1.5cm;
 }
 
-/* 页脚只保留右下角「当前页 / 总页数」，页眉不要。
-   顶部三个盒必须显式声明并留空：浏览器会在「作者定义了页边距盒」的那条边上
-   抑制自带的页眉/页脚，不声明顶部就仍会印出默认页眉（标题 / 日期）。
+/* 页眉左侧「日期时间 · 作者」，页脚左侧文章标题、右侧「当前页 / 总页数」。
+
+   页眉/页脚里的日期时间与标题都不是 CSS 能取到的，由 components/PrintControls.tsx
+   在挂载时（并在 beforeprint 时刷新）把它们写成以下自定义属性，
+   值的引号已在 JS 侧用 JSON.stringify 处理，这里直接当作字符串内容使用：
+     --print-header  "2026-09-14 12:34 · wunai"
+     --print-title   "奎宁：从金鸡纳树到现代医学的全科视角"
+   两个属性都带空字符串兜底：自定义属性缺失时 content 会整条失效，
+   加兜底可保证退化成「不显示」而不是规则报错。
+
+   每个方向只需声明其中一个盒，浏览器就会在该方向抑制自带的页眉/页脚；
+   同侧其余盒显式留空，避免出现半截默认内容。
    counter(page) / counter(pages) 是 CSS Paged Media 的专用计数器。
    支持情况：Chrome / Edge 131+、Safari；不支持的浏览器忽略整条规则，
    此时仍是浏览器自带页眉页脚，只能靠打印对话框里取消勾选。 */
 @page {
-  @top-left { content: ""; }
+  @top-left {
+    content: var(--print-header, "");
+    font-size: 9px;
+    line-height: 1;
+    color: #555;
+    text-align: left;
+    vertical-align: bottom;
+  }
   @top-center { content: ""; }
   @top-right { content: ""; }
-  @bottom-left { content: ""; }
+  @bottom-left {
+    content: var(--print-title, "");
+    font-size: 9px;
+    line-height: 1;
+    color: #555;
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+  }
   @bottom-center { content: ""; }
   @bottom-right {
     content: counter(page) " / " counter(pages);
