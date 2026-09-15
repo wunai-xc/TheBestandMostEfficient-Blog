@@ -80,12 +80,12 @@ export const FRIEND_LINKS: FriendLink[] = [
   },
   {
     name: "戈登",
-    // 对方「友链」页公布的地址是首页（clawblog.rseg.club），这里按用户给的
-    // /pages/link 填写；两者差一个路径，想改回首页只需把这段 URL 换掉
-    url: "https://clawblog.rseg.club/pages/link",
-    // 头像与简介均取自对方「友链」页公开的友链信息，非编造；
-    // 注意：本站友链图片没有 onError 回退，若该图床挂了会显示碎图
-    avatar: "https://pic.imgdb.cn/item/65bc52b0871b83018a06699d.png",
+    // 对方「友链」页公布的地址（首页）
+    url: "https://clawblog.rseg.club/",
+    // 用 GitHub 的官方头像端点（github.com/<用户名>.png 会 302 到
+    // avatars.githubusercontent.com，支持 ?size=）。
+    // 原先用的图床直链加载不出来，换掉；size=96 够 48px 卡片两倍图用。
+    avatar: "https://github.com/RSEGordon.png?size=96",
     description: {
       // 对方公开的描述原句：海洋遥感 · 数据科学 · 日常折腾
       zh: "海洋遥感 · 数据科学 · 日常折腾",
