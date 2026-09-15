@@ -2057,9 +2057,11 @@ html[data-motion="off"] .footer-link:hover .footer-link-icon {
    装得下时自动居中；装不下时 auto 边距归零，从左边开始，右边可以正常滚。
 
    ④ 但横向滚动只算兜底
-   首选方案在 components/PostBody.tsx：超宽时把公式等比缩到刚好放下。
-   滚动会让读者永远只看到半截公式，所以只在缩得过大时才用它，
-   下面的 overflow 与滚动条样式即为此保留。 */
+   首选方案在 components/PostBody.tsx：超宽时把它缩小到刚好放下。
+   用的是降低 font-size（KaTeX 内部全用 em，宽度会真实变小），
+   不是 transform: scale —— 本元素同时是 overflow-x 的裁剪容器，
+   而 CSS 是「先裁剪再缩放」，被裁掉的右半截不会因缩放重新出现。
+   下面的 overflow 与滚动条样式只在缩得过大（低于下限）时才会用上。 */
 .katex-display {
   display: block;
   position: relative;

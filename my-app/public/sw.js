@@ -1,16 +1,18 @@
 /* 全站 Service Worker — 预缓存首页，页面 SWR，静态资源 cache-first，CDN network-first */
 /*
- * v3：把版本号提上来，让 activate 清掉旧缓存。
+ * v4：再次提版本，清掉旧缓存。
  *
- * 为什么必须提：静态资源（.js/.json）是 cache-first，而缓存名带着 VERSION，
+ * 为什么每个版本都要提：静态资源（.js/.css）走 cache-first，而缓存名带着 VERSION，
  * 只要 VERSION 不变，旧 chunk 就永远不会被清。多次部署后会出现这种错配：
  *   - HTML 走 SWR，很快更新到新版本
- *   - 但页面里正在跑的 JS 还是缓存里的旧 chunk
- * 于是“旧客户端 + 新部署的 RSC 数据”对不上，客户端路由跳转就会失败——
- * 表现正是：页面能打开，但点链接跳转没反应（加载动画一直转）。
- * 提版本号 = 清一次缓存，让客户端拿回一致的 HTML/JS。
+ *   - 但页面里正在跑的 JS / CSS 还是缓存里的旧文件
+ * 于是实际看到的是旧样式（例：改了好几次 KaTeX 公式溢出，页面却毫无变化）。
+ * 提版本号 = 清一次缓存，让客户端拿回一致的 HTML/JS/CSS。
+ *
+ * 注意 /sw.js 自身也匹配 cache-first 的 .js 规则，所以更新可能被延后一轮，
+ * 必要时手动注销 SW 或清站点数据能立即生效。
  */
-const VERSION = "v3";
+const VERSION = "v4";
 const STATIC_CACHE = `static-${VERSION}`;
 const PAGE_CACHE = `pages-${VERSION}`;
 const CDN_CACHE = `cdn-${VERSION}`;

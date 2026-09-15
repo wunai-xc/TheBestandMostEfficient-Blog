@@ -5,50 +5,65 @@ import { useEffect, useRef } from "react";
 export default function PostBody({ html, slug }: { html: string; slug: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  /* 长公式缩放到刚好放下。
+  /* 长公式缩到刚好放下。
 
-     KaTeX 的块级公式不换行（white-space: nowrap），比卡片宽时只有两种结局：
-     溢出卡片，或者横向滚动。读者看到的永远是半截公式，所以改用等比缩小：
-     超出多少就缩多少，整条公式完整落在卡片里。
-     缩得太小会读不清，所以给一个下限，低于下限就不缩、退回横向滚动。
+     为什么不用 transform: scale —— 试过，错的：
+     .katex-display 同时是 overflow-x: auto 的裁剪容器，而 CSS 的顺序是
+     「先按容器宽度裁剪，再对结果整体缩放」。也就是说被裁掉的右半截
+     不会因为缩放而重新出现，公式照样看不全。
 
-     时机很讲究：KaTeX 字体是 font-display: block，字体到位前后度量会变，
-     所以挂载时、字体就绪后、窗口变化时都要重算。 */
+     改用缩小字号：KaTeX 内部全用 em 计量，改 font-size 会真实改变布局宽度，
+     于是不再有溢出、不需要裁剪，容器高度也自然跟着收（无需负外边距补偿）。
+     缩得太多会读不清，所以给了下限，低于下限就不缩、退回横向滚动。 */
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const MIN_SCALE = 0.55;
+    const root = ref.current;
+    if (!root) return;
+    const MIN_RATIO = 0.55;
     let raf = 0;
 
-    const fit = () => {
-      el.querySelectorAll<HTMLElement>(".katex-display").forEach((box) => {
-        // 先清掉上一次的缩放与补偿，重新量原始宽度
-        box.style.transform = "";
-        box.style.transformOrigin = "";
-        box.style.marginBottom = "";
+    const fitOne = (box: HTMLElement) => {
+      const inner = box.firstElementChild as HTMLElement | null;
+      if (!inner) return;
+      // 先回到原始字号，再量真实宽度；否则会拿上一次的结果反复缩小
+      inner.style.fontSize = "";
+      // clientWidth 含内边距（暗色主题下左右各 16px），要扣掉才是可用内容宽
+      const cs = getComputedStyle(box);
+      const avail =
+        box.clientWidth - parseFloat(cs.paddingLeft || "0") - parseFloat(cs.paddingRight || "0");
+      if (avail <= 0) return;
+      const full = inner.getBoundingClientRect().width;
+      if (full <= avail + 1) return; // 放得下，什么都不做
 
-        const avail = box.clientWidth;
-        const full = box.scrollWidth;
-        if (!avail || full <= avail + 1) return;
+      const base = parseFloat(getComputedStyle(inner).fontSize) || 16;
+      let ratio = avail / full;
+      if (ratio < MIN_RATIO) return; // 缩太小反而读不清，交给横向滚动
 
-        const scale = avail / full;
-        if (scale < MIN_SCALE) return; // 缩太小反而看不清，交给横向滚动
-
-        box.style.transformOrigin = "left top";
-        box.style.transform = `scale(${scale})`;
-        // transform 不改变布局占位，补一个负外边距把多出的竖直空间收回去
-        const h = box.offsetHeight;
-        box.style.marginBottom = `${-(h * (1 - scale))}px`;
-      });
+      // 宽度与字号成正比，但会受取整影响，迭代几次收敛
+      for (let i = 0; i < 4; i++) {
+        inner.style.fontSize = `${(base * ratio).toFixed(2)}px`;
+        const w = inner.getBoundingClientRect().width;
+        if (w <= avail + 0.5) return; // 收敛，收工
+        ratio *= avail / w;
+        if (ratio < MIN_RATIO) break;
+      }
+      // 迭代完仍放不下：宁可退回横向滚动，也不留一点溢出被裁掉
+      if (inner.getBoundingClientRect().width > avail + 0.5) inner.style.fontSize = "";
     };
 
+    const fit = () => {
+      root.querySelectorAll<HTMLElement>(".katex-display").forEach(fitOne);
+    };
     const schedule = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(fit);
     };
 
     schedule();
+    // KaTeX 字体是 font-display: block，字体到位前后度量会变，必须重量
     document.fonts?.ready.then(schedule).catch(() => {});
+    // 外链的 katex.min.css 也可能晚于本脚本到达，再补两次
+    const t1 = setTimeout(schedule, 400);
+    const t2 = setTimeout(schedule, 1500);
     window.addEventListener("resize", schedule);
     // 字号调节是改 <html data-font-scale>，不触发 resize，单独盯这个属性
     const mo = new MutationObserver(schedule);
@@ -56,6 +71,8 @@ export default function PostBody({ html, slug }: { html: string; slug: string })
 
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(t1);
+      clearTimeout(t2);
       window.removeEventListener("resize", schedule);
       mo.disconnect();
     };
