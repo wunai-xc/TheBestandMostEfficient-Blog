@@ -25,6 +25,10 @@ export const FRIEND_LINKS: FriendLink[] = [
     name: "哈康",
     url: "https://hconzlvra.top/",
     avatar: "https://avatars.githubusercontent.com/u/273501356?v=4&s=96",
+    description: {
+      zh: "就让我自己登基，成为疯的君王.",
+      en: "Let me ascend the throne myself and become a mad monarch.",
+    },
     // GitHub 主页未填 bio，故不写 description，卡片副标题回退显示域名
   },
   {
@@ -42,7 +46,7 @@ export const FRIEND_LINKS: FriendLink[] = [
     avatar: "https://avatars.githubusercontent.com/u/97033226?v=4&s=96",
     description: {
       // 本人要求只写“开发者”这类中性说法，不要具体身份描述
-      zh: "开发者",
+      zh: "神秘开发者",
       en: "Developer",
     },
   },
