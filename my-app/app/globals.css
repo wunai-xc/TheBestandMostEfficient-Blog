@@ -1253,11 +1253,6 @@ html.dark .pinned-badge { background: #78350f; color: #fde68a; }
   background: var(--reading-bg);
   border: 1px solid var(--reading-border);
   box-shadow: var(--reading-shadow), var(--reading-inner-glow);
-  /* 兜底：任何内容都不许越出卡片边框。
-     正文里可能超宽的只有 KaTeX 公式、表格、代码块与图表，
-     这四者都各自带 overflow-x: auto 的滚动容器，所以这里裁剪
-     不会造成内容不可达，只是拦住万一从别处漏出来的溢出。 */
-  overflow: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -1991,18 +1986,23 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
 }
 
 /* ===== KaTeX ===== */
-/* 块级公式必须**自己**具备「不超宽 + 可横向滚动」这两件事。
+/* 块级公式必须**自己**具备「不超宽 + 可横向滚动」，不能依赖卡片去裁。
 
-   为什么要显式写 display: block：
+   ① display: block 必须显式写
    KaTeX 自己的样式表来自 CDN（jsdelivr），其中才有 .katex-display{display:block}。
-   而 overflow 对 inline 框无效 —— 一旦这份 CDN 样式没生效（离线首次访问、
-   CDN 不可达、被拦截），.katex-display 会退化成 <span> 的默认 inline，
-   下面这条 overflow-x: auto 就整个失效，超长公式会直接溢出阅读面。
+   而 overflow 对 inline 框无效 —— 这份 CDN 样式一旦没生效（离线首次访问、
+   CDN 不可达、被拦），.katex-display 会退化成 <span> 的默认 inline，
+   overflow-x: auto 就整个失效。
 
-   为什么还要 position: relative：
+   ② position: relative
    KaTeX 内部有绝对定位元素（.katex svg、.tag 等）。若本元素是 static，
-   它们会以最近的定位祖先（.post-content）作包含块，从而跳出本元素的
-   滚动裁剪；加了 relative 之后它们被关在本元素内，裁剪才能真正生效。 */
+   它们会以最近的定位祖先（.post-content）作包含块，跳出本元素的滚动裁剪。
+
+   ③ 居中不能用 text-align: center
+   CDN 样式给的是 .katex-display>.katex{display:block;text-align:center}。
+   内容比容器宽时，text-align: center 会把两侧均分溢出 —— 左半截落在滚动起点
+   之前，永远滚不到。改用「自身收缩宽度 + margin:auto」：
+   装得下时自动居中；装不下时 auto 边距归零，从左边开始，右边可以正常滚。 */
 .katex-display {
   display: block;
   position: relative;
@@ -2023,8 +2023,15 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
 .katex-display::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--muted) 65%, transparent);
 }
-/* 内层也不再允许超过容器，否则居中 + 超宽时两侧会被挖掉 */
-.katex-display > .katex { max-width: 100%; }
+/* 内层按内容收缩 + auto 边距：装得下时居中，装不下时自动左对齐（右侧可滚） */
+.katex-display > .katex {
+  display: block;
+  width: max-content;
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+  white-space: nowrap;
+}
 .katex { font-size: 1.05em; }
 /* 夜间模式：公式文字保持深色（KaTeX 默认黑色），公式块加亮底卡片增强对比 */
 html.dark .katex-display {
