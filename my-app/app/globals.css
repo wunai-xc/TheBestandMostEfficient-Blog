@@ -1339,6 +1339,22 @@ html.dark .post-content::before { display: none; }
   scrollbar-width: none; -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
 }
+/* AI 警告徽章被截断的根因：
+   .post-meta 是横向滚动容器（overflow-x: auto），同时 .author-badge 又被全局规则
+   设了 white-space: nowrap（见上方“单行元素不换行”那一组选择器）。
+   于是这句较长的 AI 警告既不能换行、又只能横向滑动，窄屏上直接被切掉。
+   窄屏改成换行排版：meta 行允许 wrap，徽章允许折行并独占整行。 */
+@media (max-width: 768px) {
+  .post-meta {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 6px;
+  }
+  .author-badge { white-space: normal; }
+  /* 徽章通常是最长的一项，给它整行宽度，避免和日期挤在同一行被压窄 */
+  .post-meta > .author-badge { flex: 1 1 100%; }
+}
+
 .post-meta::-webkit-scrollbar { display: none; }
 .post-meta > span { flex-shrink: 0; }
 .post-meta svg, .post-card .meta svg {
@@ -1962,10 +1978,46 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
   transform: none;
 }
 .footer-link-label {
+  /* 中文环境下的标签长，给一个可延展的基线对齐行 */
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
+}
+/* 图标默认静止，鼠标悬停到卡片时做一段小幅动作。
+   用 transform/opacity 这类合成层属性，不触发重排。
+   动作统一为「轻微上浮 + 小幅度摆」，不加无限循环：
+   页脚一排 7 张卡片全在循环动画会很吵，也会在白底标签页里持续耗电。 */
+.footer-link-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  transition: transform 0.35s var(--ease-silk), color 0.35s var(--ease-silk);
+}
+.footer-link:hover .footer-link-icon {
+  color: var(--accent);
+  animation: footer-icon-pop 0.5s var(--ease-elastic);
+}
+@keyframes footer-icon-pop {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); }
+  35%  { transform: translateY(-4px) rotate(-8deg) scale(1.15); }
+  70%  { transform: translateY(0) rotate(4deg) scale(1.05); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
+/* 静态卡片（微信 / Discord）不可点，不给 hover 动作，避免误认为可点 */
+.footer-link-static:hover .footer-link-icon {
+  color: inherit;
+  animation: none;
+}
+/* 动画减弱 / 关闭时不跑：与站内其它 hover 动画保持一致的处理 */
+@media (prefers-reduced-motion: reduce) {
+  .footer-link:hover .footer-link-icon { animation: none; }
+}
+html[data-motion="lite"] .footer-link:hover .footer-link-icon,
+html[data-motion="off"] .footer-link:hover .footer-link-icon {
+  animation: none;
 }
 .footer-link-value {
   font-size: 0.85rem;

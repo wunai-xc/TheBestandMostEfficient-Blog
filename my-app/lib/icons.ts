@@ -25,6 +25,18 @@ import mdiCheck from "@iconify/icons-mdi/check";
 import mdiRestore from "@iconify/icons-mdi/restore";
 import mdiFolderMultipleOutline from "@iconify/icons-mdi/folder-multiple-outline";
 import mdiArrowLeft from "@iconify/icons-mdi/arrow-left";
+/* 页脚联系方式图标。
+   关键：全部来自本地打包的 @iconify/icons-mdi，配合 @iconify/react/offline，
+   不会向任何外部图标 CDN 发请求 —— 国内网络下同样能显示。
+   命名逐个用 api.iconify.design/mdi/<name>.svg 验过存在；
+   注：mdi 没有 bilibili 图标，改用 television-classic 代替。 */
+import mdiEmailOutline from "@iconify/icons-mdi/email-outline";
+import mdiGithub from "@iconify/icons-mdi/github";
+import mdiSourceRepository from "@iconify/icons-mdi/source-repository";
+import mdiTelevisionClassic from "@iconify/icons-mdi/television-classic";
+import mdiYoutube from "@iconify/icons-mdi/youtube";
+import mdiWechat from "@iconify/icons-mdi/wechat";
+import mdiDiscord from "@iconify/icons-mdi/discord";
 
 export const icons = {
   "mdi:calendar-month-outline": mdiCalendarMonthOutline,
@@ -53,6 +65,13 @@ export const icons = {
   "mdi:restore": mdiRestore,
   "mdi:folder-multiple-outline": mdiFolderMultipleOutline,
   "mdi:arrow-left": mdiArrowLeft,
+  "mdi:email-outline": mdiEmailOutline,
+  "mdi:github": mdiGithub,
+  "mdi:source-repository": mdiSourceRepository,
+  "mdi:television-classic": mdiTelevisionClassic,
+  "mdi:youtube": mdiYoutube,
+  "mdi:wechat": mdiWechat,
+  "mdi:discord": mdiDiscord,
 } as const;
 
 export type IconName = keyof typeof icons;
