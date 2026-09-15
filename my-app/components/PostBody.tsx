@@ -5,6 +5,62 @@ import { useEffect, useRef } from "react";
 export default function PostBody({ html, slug }: { html: string; slug: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
+  /* 长公式缩放到刚好放下。
+
+     KaTeX 的块级公式不换行（white-space: nowrap），比卡片宽时只有两种结局：
+     溢出卡片，或者横向滚动。读者看到的永远是半截公式，所以改用等比缩小：
+     超出多少就缩多少，整条公式完整落在卡片里。
+     缩得太小会读不清，所以给一个下限，低于下限就不缩、退回横向滚动。
+
+     时机很讲究：KaTeX 字体是 font-display: block，字体到位前后度量会变，
+     所以挂载时、字体就绪后、窗口变化时都要重算。 */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const MIN_SCALE = 0.55;
+    let raf = 0;
+
+    const fit = () => {
+      el.querySelectorAll<HTMLElement>(".katex-display").forEach((box) => {
+        // 先清掉上一次的缩放与补偿，重新量原始宽度
+        box.style.transform = "";
+        box.style.transformOrigin = "";
+        box.style.marginBottom = "";
+
+        const avail = box.clientWidth;
+        const full = box.scrollWidth;
+        if (!avail || full <= avail + 1) return;
+
+        const scale = avail / full;
+        if (scale < MIN_SCALE) return; // 缩太小反而看不清，交给横向滚动
+
+        box.style.transformOrigin = "left top";
+        box.style.transform = `scale(${scale})`;
+        // transform 不改变布局占位，补一个负外边距把多出的竖直空间收回去
+        const h = box.offsetHeight;
+        box.style.marginBottom = `${-(h * (1 - scale))}px`;
+      });
+    };
+
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(fit);
+    };
+
+    schedule();
+    document.fonts?.ready.then(schedule).catch(() => {});
+    window.addEventListener("resize", schedule);
+    // 字号调节是改 <html data-font-scale>，不触发 resize，单独盯这个属性
+    const mo = new MutationObserver(schedule);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-font-scale"] });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", schedule);
+      mo.disconnect();
+    };
+  }, [html]);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;

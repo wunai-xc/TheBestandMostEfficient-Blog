@@ -2002,7 +2002,12 @@ mark.search-highlight { background: var(--mark-bg); padding: 0 2px; border-radiu
    CDN 样式给的是 .katex-display>.katex{display:block;text-align:center}。
    内容比容器宽时，text-align: center 会把两侧均分溢出 —— 左半截落在滚动起点
    之前，永远滚不到。改用「自身收缩宽度 + margin:auto」：
-   装得下时自动居中；装不下时 auto 边距归零，从左边开始，右边可以正常滚。 */
+   装得下时自动居中；装不下时 auto 边距归零，从左边开始，右边可以正常滚。
+
+   ④ 但横向滚动只算兜底
+   首选方案在 components/PostBody.tsx：超宽时把公式等比缩到刚好放下。
+   滚动会让读者永远只看到半截公式，所以只在缩得过大时才用它，
+   下面的 overflow 与滚动条样式即为此保留。 */
 .katex-display {
   display: block;
   position: relative;
